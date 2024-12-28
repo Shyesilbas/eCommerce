@@ -5,10 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @ControllerAdvice
 @Slf4j
@@ -21,6 +26,17 @@ public class GlobalExceptionHandler{
                         .message(ex.getMessage())
                         .build());
     }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        BindingResult bindingResult = ex.getBindingResult();
+
+        for (FieldError fieldError : bindingResult.getFieldErrors()) {
+            errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+        }
+
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
     @ExceptionHandler(InvalidTokenFormat.class)
     public ResponseEntity<ErrorResponse> handleInvalidTokenFormatException(InvalidTokenFormat e){
 
@@ -30,6 +46,27 @@ public class GlobalExceptionHandler{
                 LocalDateTime.now()
         );
         return new ResponseEntity<>(errorResponse,HttpStatus.FORBIDDEN);
+    }
+    @ExceptionHandler(EmailAlreadyExistException.class)
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyExistException(EmailAlreadyExistException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Email Exists!",
+                HttpStatus.BAD_REQUEST.value(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UsernameAlreadyExists.class)
+    public ResponseEntity<ErrorResponse> handleUsernameAlreadyExists(UsernameAlreadyExists e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Username Exists!",
+                HttpStatus.BAD_REQUEST.value(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
 
 }
