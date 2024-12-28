@@ -5,13 +5,13 @@ import com.serhat.security.dto.response.AuthResponse;
 import com.serhat.security.entity.Token;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.TokenStatus;
+import com.serhat.security.exception.InvalidTokenFormat;
 import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.repository.TokenRepository;
 import com.serhat.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,8 +25,6 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
-    private final UserDetailsServiceImpl userDetailsService;
-    private final PasswordEncoder passwordEncoder;
 
     @Value("${security.jwt.expiration-time}")
     private long expirationTime;
@@ -43,7 +41,7 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        String token = jwtUtil.generateToken((UserDetails) user, user.getRole());
+        String token = jwtUtil.generateToken(user, user.getRole());
         saveUserToken(user, token);
 
         log.info("Login successful for user: {}", request.username());
@@ -60,7 +58,7 @@ public class AuthService {
         log.info("Processing logout request");
 
         if (token == null || !token.startsWith("Bearer ")) {
-            throw new RuntimeException("Invalid token format");
+            throw new InvalidTokenFormat("Invalid token format");
         }
 
         String jwtToken = token.substring(7);
