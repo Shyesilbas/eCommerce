@@ -4,6 +4,7 @@ import com.serhat.security.entity.enums.Role;
 import com.serhat.security.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
@@ -32,25 +33,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
-          @NonNull HttpServletResponse response,
-          @NonNull  FilterChain filterChain
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         log.info("Processing request: {} {}", request.getMethod(), request.getRequestURI());
 
-        final String authHeader = request.getHeader("Authorization");
+        String jwt = null;
+        String username = null;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.debug("No Bearer token found in request");
-            filterChain.doFilter(request, response);
-            return;
+        final String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+            username = jwtUtil.extractUsername(jwt);
         }
 
-        try {
-            final String jwt = authHeader.substring(7);
-            final String username = jwtUtil.extractUsername(jwt);
-            log.info("Processing token for username: {}", username);
+        if (jwt == null) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("jwt".equals(cookie.getName())) {
+                        jwt = cookie.getValue();
+                        username = jwtUtil.extractUsername(jwt);
+                        break;
+                    }
+                }
+            }
+        }
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (jwt != null && username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            try {
+                log.info("Processing token for username: {}", username);
+
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
                 log.info("Loaded UserDetails for username: {} with authorities: {}", username, userDetails.getAuthorities());
 
@@ -71,9 +84,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 } else {
                     log.warn("Invalid token for user: {}", username);
                 }
+            } catch (Exception e) {
+                log.error("Error processing JWT token", e);
             }
-        } catch (Exception e) {
-            log.error("Error processing JWT token", e);
         }
 
         filterChain.doFilter(request, response);

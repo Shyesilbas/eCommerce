@@ -6,7 +6,11 @@ import com.serhat.security.dto.response.UserResponse;
 import com.serhat.security.entity.User;
 import com.serhat.security.exception.EmailAlreadyExistException;
 import com.serhat.security.exception.UsernameAlreadyExists;
+import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.repository.UserRepository;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +26,7 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Transactional
     public RegisterResponse register(RegisterRequest request){
@@ -51,10 +56,20 @@ public class UserService {
         );
     }
 
-    public UserResponse userInfo(Principal principal){
-        String username = principal.getName();
+    public UserResponse userInfo(HttpServletRequest request, HttpServletResponse response) {
+        String token = extractTokenFromRequest(request);
+
+        if (token == null) {
+            throw new RuntimeException("Token not found in request");
+        }
+
+        String username = jwtUtil.extractUsername(token);
+
         User user = userRepository.findByUsername(username)
-                .orElseThrow(()-> new UsernameNotFoundException(username+" not found"));
+                .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
+
+
+        response.setHeader("User-Info", "Fetched user information successfully");
 
         return new UserResponse(
                 user.getUserId(),
@@ -64,5 +79,29 @@ public class UserService {
                 user.getRole()
         );
     }
+
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String token = null;
+
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        }
+
+        if (token == null) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("jwt".equals(cookie.getName())) {
+                        token = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+        }
+
+        return token;
+    }
+
 
 }

@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -40,6 +41,7 @@ public class AuthController {
         return ResponseEntity.ok(userService.register(request));
     }
 
+    @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/test/CUSTOMER")
     public String testCustomer(){
         return "Only customer can access";
