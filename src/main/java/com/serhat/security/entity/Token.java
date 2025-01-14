@@ -33,4 +33,7 @@ public class Token {
     private TokenStatus tokenStatus;
 
 
+    private LocalDateTime expired_at;
+
+
 }

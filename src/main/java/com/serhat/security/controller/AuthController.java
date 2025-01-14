@@ -7,6 +7,8 @@ import com.serhat.security.dto.response.RegisterResponse;
 import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.service.AuthService;
 import com.serhat.security.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -21,15 +23,15 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request , HttpServletResponse response) {
         log.debug("Received login request for user: {}", request.username());
-        return ResponseEntity.ok(authService.login(request));
+        return ResponseEntity.ok(authService.login(request,response));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<AuthResponse> logout(@RequestHeader("Authorization") String bearerToken) {
+    public ResponseEntity<AuthResponse> logout(HttpServletResponse response , HttpServletRequest request) {
         log.debug("Received logout request");
-        return ResponseEntity.ok(authService.logout(bearerToken));
+        return ResponseEntity.ok(authService.logout(request, response));
     }
 
     @PostMapping("/register")

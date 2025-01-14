@@ -1,5 +1,5 @@
 package com.serhat.security.entity.enums;
 
 public enum TokenStatus {
-    ACTIVE , EXPIRED
+    ACTIVE , EXPIRED , LOGGED_OUT
 }
