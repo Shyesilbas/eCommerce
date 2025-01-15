@@ -1,4 +1,4 @@
-.login-container {
+.register-container {
     max-width: 450px;
     margin: 5% auto;
     text-align: center;
@@ -9,7 +9,7 @@
     font-family: 'Arial', sans-serif;
 }
 
-.login-container h2 {
+.register-container h2 {
     font-size: 24px;
     font-weight: 600;
     margin-bottom: 20px;
@@ -30,7 +30,8 @@
     font-weight: 500;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
     width: 90%;
     padding: 12px;
     border: 1px solid #ccc;
@@ -39,7 +40,8 @@
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
     border-color: #007bff;
     box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
     outline: none;
@@ -77,4 +79,18 @@
     background-color: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
+}
+
+.register-container p {
+    font-size: 14px;
+    color: #555;
+}
+
+.register-container p a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.register-container p a:hover {
+    text-decoration: underline;
 }

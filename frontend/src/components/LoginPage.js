@@ -52,6 +52,7 @@ const LoginPage = ({ setUser }) => {
                         value={formData.username}
                         onChange={handleChange}
                         required
+                        autoComplete={"off"}
                     />
                 </div>
                 <div className="form-group">
@@ -65,6 +66,7 @@ const LoginPage = ({ setUser }) => {
                     />
                 </div>
                 <button type="submit" className="submit-button">Login</button>
+                <p>Don't have an account? <a href="/register">Create</a></p>
             </form>
         </div>
     );
