@@ -1,5 +1,6 @@
 package com.serhat.security.controller;
 
+import com.serhat.security.dto.response.AddressResponse;
 import com.serhat.security.dto.response.UserResponse;
 import com.serhat.security.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,5 +27,11 @@ public class UserController {
     public ResponseEntity<UserResponse> getUserInfo(HttpServletRequest request, HttpServletResponse response) {
         UserResponse userResponse = userService.userInfo(request, response);
         return ResponseEntity.ok(userResponse);
+    }
+
+    @GetMapping("/addressInfo")
+    public ResponseEntity<List<AddressResponse>> getAddressInfo(HttpServletRequest request){
+        List<AddressResponse> addressResponse = userService.addressInfo(request);
+        return ResponseEntity.ok(addressResponse);
     }
 }

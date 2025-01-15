@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../style/LoginPage.css";
 
-const LoginPage = ({ setUser }) => {
+const LoginPage = ({ setUser, setAddress }) => {
     const [formData, setFormData] = useState({ username: "", password: "" });
     const [message, setMessage] = useState({ type: "", text: "" });
     const navigate = useNavigate();
@@ -23,18 +23,26 @@ const LoginPage = ({ setUser }) => {
                 { withCredentials: true }
             );
 
-            const token = loginResponse.data.token;
             const userInfoResponse = await axios.get("http://localhost:8080/user/myInfo", {
                 withCredentials: true,
             });
 
+            const addressInfoResponse = await axios.get("http://localhost:8080/user/addressInfo", {
+                withCredentials: true,
+            });
+
             setUser(userInfoResponse.data);
-            console.log(userInfoResponse.data)
+            setAddress(addressInfoResponse.data);
+
+            console.log("User Info:", userInfoResponse.data);
+            console.log("Address Info:", addressInfoResponse.data);
+
             navigate("/user-info");
         } catch (err) {
+            console.error("Login error:", err);
+            console.error("Error response:", err.response);
             const errorMessage = err.response?.data?.message || "Invalid credentials. Please try again.";
             setMessage({ type: "error", text: errorMessage });
-            console.error("Login error:", err);
         }
     };
 

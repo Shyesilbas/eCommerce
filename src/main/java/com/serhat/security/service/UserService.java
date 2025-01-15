@@ -1,12 +1,15 @@
 package com.serhat.security.service;
 
 import com.serhat.security.dto.request.RegisterRequest;
+import com.serhat.security.dto.response.AddressResponse;
 import com.serhat.security.dto.response.RegisterResponse;
 import com.serhat.security.dto.response.UserResponse;
+import com.serhat.security.entity.Address;
 import com.serhat.security.entity.User;
 import com.serhat.security.exception.EmailAlreadyExistException;
 import com.serhat.security.exception.UsernameAlreadyExists;
 import com.serhat.security.jwt.JwtUtil;
+import com.serhat.security.repository.AddressRepository;
 import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -29,16 +33,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final AddressRepository addressRepository;
 
     @Transactional
-    public RegisterResponse register(RegisterRequest request){
-
+    public RegisterResponse register(RegisterRequest request) {
         boolean isEmailExists = userRepository.findByEmail(request.email()).isPresent();
-        if(isEmailExists){
-            throw new EmailAlreadyExistException("Email  Exists!");
+        if (isEmailExists) {
+            throw new EmailAlreadyExistException("Email Exists!");
         }
         boolean isUsernameExists = userRepository.findByUsername(request.username()).isPresent();
-        if (isUsernameExists){
+        if (isUsernameExists) {
             throw new UsernameAlreadyExists("Username exists!");
         }
 
@@ -50,7 +54,25 @@ public class UserService {
                 .totalOrders(0)
                 .build();
 
+        if (request.address() != null && !request.address().isEmpty()) {
+            List<Address> addresses = request.address().stream()
+                    .map(addressDto -> Address.builder()
+                            .country(addressDto.getCountry())
+                            .city(addressDto.getCity())
+                            .street(addressDto.getStreet())
+                            .aptNo(addressDto.getAptNo())
+                            .flatNo(addressDto.getFlatNo())
+                            .description(addressDto.getDescription())
+                            .addressType(addressDto.getAddressType())
+                            .user(user)
+                            .build())
+                    .toList();
+
+            user.setAddresses(addresses);
+        }
+
         userRepository.save(user);
+
         return new RegisterResponse(
                 "Register Successful! Now you can login with your credentials.",
                 user.getUsername(),
@@ -82,6 +104,35 @@ public class UserService {
                 .totalOrders(user.getTotalOrders())
                 .role(user.getRole())
                 .build();
+    }
+
+    public List<AddressResponse> addressInfo(HttpServletRequest request) {
+        String token = extractTokenFromRequest(request);
+
+        if (token == null) {
+            throw new RuntimeException("Token not found in request");
+        }
+
+        String username = jwtUtil.extractUsername(token);
+
+        List<Address> addresses = addressRepository.findByUser_Username(username);
+
+        if (addresses.isEmpty()) {
+            throw new RuntimeException("No addresses found for user: " + username);
+        }
+
+        return addresses.stream()
+                .map(address -> AddressResponse.builder()
+                        .addressId(address.getAddressId())
+                        .country(address.getCountry())
+                        .city(address.getCity())
+                        .street(address.getStreet())
+                        .aptNo(address.getAptNo())
+                        .flatNo(address.getFlatNo())
+                        .description(address.getDescription())
+                        .addressType(address.getAddressType())
+                        .build())
+                .toList();
     }
 
 

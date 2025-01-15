@@ -1,45 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
-import RegisterPage from "./components/RegisterPage";
 import UserInfo from "./components/UserInfo";
 
-function App() {
-    const [user, setUser] = useState(() => {
-        const savedUser = localStorage.getItem("user");
-        return savedUser ? JSON.parse(savedUser) : null;
-    });
-
-    useEffect(() => {
-        if (user) {
-            localStorage.setItem("user", JSON.stringify(user));
-        } else {
-            localStorage.removeItem("user");
-        }
-    }, [user]);
+const App = () => {
+    const [user, setUser] = useState(null);
+    const [address, setAddress] = useState([]);
 
     return (
         <Router>
             <Routes>
                 <Route
                     path="/login"
-                    element={<LoginPage setUser={setUser} />}
-                />
-                <Route
-                    path="/register"
-                    element={<RegisterPage />}
+                    element={<LoginPage setUser={setUser} setAddress={setAddress} />}
                 />
                 <Route
                     path="/user-info"
-                    element={<UserInfo user={user} setUser={setUser} />}
-                />
-                <Route
-                    path="*"
-                    element={<UserInfo user={user} setUser={setUser} />}
+                    element={<UserInfo user={user} address={address} />}
                 />
             </Routes>
         </Router>
     );
-}
+};
 
 export default App;

@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Entity
 @Data
@@ -31,6 +32,9 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
     private int totalOrders;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Address> addresses;
 
     @Override
     public boolean isAccountNonExpired() {

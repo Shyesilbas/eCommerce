@@ -4,7 +4,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import "../style/UserInfo.css";
 
-const UserInfo = ({ user, setUser }) => {
+const UserInfo = ({ user, address }) => {
     const navigate = useNavigate();
     const [userInfo, setUserInfo] = useState(user);
 
@@ -44,7 +44,6 @@ const UserInfo = ({ user, setUser }) => {
                 willClose: async () => {
                     try {
                         await axios.post("http://localhost:8080/auth/logout", {}, { withCredentials: true });
-                        setUser(null);
                         localStorage.removeItem("user");
                         Swal.fire("Logged Out", "You have successfully logged out.", "success");
                         navigate("/login");
@@ -70,7 +69,30 @@ const UserInfo = ({ user, setUser }) => {
                 <p><strong>User ID:</strong> {userInfo?.userId || "N/A"}</p>
                 <p><strong>Username:</strong> {userInfo?.username || "N/A"}</p>
                 <p><strong>Email:</strong> {userInfo?.email || "N/A"}</p>
-                <p><strong>Total Orders:</strong> {userInfo?.totalOrders !== undefined ? userInfo.totalOrders : "N/A"}</p> </div>
+                <p><strong>Total Orders:</strong> {userInfo?.totalOrders !== undefined ? userInfo.totalOrders : "N/A"}</p>
+            </div>
+
+            <div className="address-info">
+                <h2>Addresses</h2>
+                {address.length > 0 ? (
+                    <ul>
+                        {address.map((addr, index) => (
+                            <li key={index}>
+                                <p><strong>Country:</strong> {addr.country}</p>
+                                <p><strong>City:</strong> {addr.city}</p>
+                                <p><strong>Street:</strong> {addr.street}</p>
+                                <p><strong>Apt No:</strong> {addr.aptNo}</p>
+                                <p><strong>Flat No:</strong> {addr.flatNo}</p>
+                                <p><strong>Description:</strong> {addr.description}</p>
+                                <p><strong>Address Type:</strong> {addr.addressType}</p>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p>No addresses found.</p>
+                )}
+            </div>
+
             <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>
     );
