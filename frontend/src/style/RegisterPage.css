@@ -1,30 +1,42 @@
-.register-container {
-    max-width: 450px;
-    margin: 5% auto;
-    text-align: center;
-    padding: 30px;
-    border-radius: 10px;
-    background-color: #fff;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-family: 'Arial', sans-serif;
 }
 
+.register-container {
+    max-width: 100%;
+    margin: 5% auto;
+    text-align: center;
+    padding: 40px;
+    border-radius: 15px;
+    background-color: #fff;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
 .register-container h2 {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 600;
-    margin-bottom: 20px;
-    color: #333;
+    margin-bottom: 25px;
+    color: #2c3e50;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     text-align: left;
     position: relative;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     font-size: 14px;
     color: #555;
     font-weight: 500;
@@ -32,12 +44,13 @@
 
 .form-group input,
 .form-group select {
-    width: 90%;
+    width: 100%;
     padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
     font-size: 16px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: #f9f9f9;
 }
 
 .form-group input:focus,
@@ -45,90 +58,129 @@
     border-color: #007bff;
     box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
     outline: none;
+    background-color: #fff;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.back-button {
+    width: 48%;
+    padding: 14px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.back-button:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+}
+
+.back-button:active {
+    transform: translateY(0);
 }
 
 .submit-button {
-    width: 30%;
-    padding: 12px;
+    width: 48%;
+    padding: 14px;
     background-color: #007bff;
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 16px;
+    font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .submit-button:hover {
     background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+.submit-button:active {
+    transform: translateY(0);
 }
 
 .message {
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    text-align: center;
 }
 
 .message.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
 }
 
 .message.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
 }
 
 .register-container p {
     font-size: 14px;
     color: #555;
+    margin-top: 20px;
 }
 
 .register-container p a {
     color: #007bff;
     text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
 }
 
 .register-container p a:hover {
+    color: #0056b3;
     text-decoration: underline;
 }
-.button-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 20px;
+
+/* Animasyonlar */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.back-button {
-    width: 48%;
-    padding: 12px;
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
+/* Responsive Tasarım */
+@media (max-width: 768px) {
+    .register-container {
+        padding: 20px;
+    }
 
-.back-button:hover {
-    background-color: #5a6268;
-}
+    .register-container h2 {
+        font-size: 24px;
+    }
 
-.submit-button {
-    width: 48%;
-    padding: 12px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
+    .form-group input,
+    .form-group select {
+        padding: 10px;
+        font-size: 14px;
+    }
 
-.submit-button:hover {
-    background-color: #0056b3;
+    .back-button,
+    .submit-button {
+        padding: 12px;
+        font-size: 14px;
+    }
 }

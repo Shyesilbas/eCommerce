@@ -35,3 +35,46 @@
     background-color: #c82333;
 }
 
+.address-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 10px 0;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.address-button:hover {
+    background-color: #45a049;
+}
+
+.address-info {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.address-info h2 {
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #333;
+}
+
+.address-info ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.address-info ul li {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.address-info ul li:last-child {
+    border-bottom: none;
+}

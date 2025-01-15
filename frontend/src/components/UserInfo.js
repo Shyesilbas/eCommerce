@@ -4,9 +4,11 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import "../style/UserInfo.css";
 
-const UserInfo = ({ user, address }) => {
+const UserInfo = ({ user }) => {
     const navigate = useNavigate();
     const [userInfo, setUserInfo] = useState(user);
+    const [address, setAddress] = useState([]);
+    const [showAddress, setShowAddress] = useState(false);
 
     useEffect(() => {
         const fetchUserInfo = async () => {
@@ -20,9 +22,22 @@ const UserInfo = ({ user, address }) => {
             }
         };
 
+        const fetchAddressInfo = async () => {
+            try {
+                const response = await axios.get("http://localhost:8080/user/addressInfo", {
+                    withCredentials: true,
+                });
+                setAddress(response.data);
+            } catch (err) {
+                console.error("Error fetching address info:", err);
+            }
+        };
+
         if (!userInfo) {
             fetchUserInfo();
         }
+
+        fetchAddressInfo();
     }, [userInfo]);
 
     const handleLogout = async () => {
@@ -56,6 +71,10 @@ const UserInfo = ({ user, address }) => {
         }
     };
 
+    const toggleAddress = () => {
+        setShowAddress(!showAddress);
+    };
+
     if (!userInfo) {
         return <div className="user-info-container">
             <p>Loading user information...</p>
@@ -72,26 +91,34 @@ const UserInfo = ({ user, address }) => {
                 <p><strong>Total Orders:</strong> {userInfo?.totalOrders !== undefined ? userInfo.totalOrders : "N/A"}</p>
             </div>
 
-            <div className="address-info">
-                <h2>Addresses</h2>
-                {address.length > 0 ? (
-                    <ul>
-                        {address.map((addr, index) => (
-                            <li key={index}>
-                                <p><strong>Country:</strong> {addr.country}</p>
-                                <p><strong>City:</strong> {addr.city}</p>
-                                <p><strong>Street:</strong> {addr.street}</p>
-                                <p><strong>Apt No:</strong> {addr.aptNo}</p>
-                                <p><strong>Flat No:</strong> {addr.flatNo}</p>
-                                <p><strong>Description:</strong> {addr.description}</p>
-                                <p><strong>Address Type:</strong> {addr.addressType}</p>
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p>No addresses found.</p>
-                )}
-            </div>
+            {/* Adres Bilgileri Butonu */}
+            <button onClick={toggleAddress} className="address-button">
+                {showAddress ? "Hide Address" : "Show Address"}
+            </button>
+
+            {/* Adres Bilgileri */}
+            {showAddress && (
+                <div className="address-info">
+                    <h2>Addresses</h2>
+                    {address.length > 0 ? (
+                        <ul>
+                            {address.map((addr, index) => (
+                                <li key={index}>
+                                    <p><strong>Country:</strong> {addr.country}</p>
+                                    <p><strong>City:</strong> {addr.city}</p>
+                                    <p><strong>Street:</strong> {addr.street}</p>
+                                    <p><strong>Apt No:</strong> {addr.aptNo}</p>
+                                    <p><strong>Flat No:</strong> {addr.flatNo}</p>
+                                    <p><strong>Description:</strong> {addr.description}</p>
+                                    <p><strong>Address Type:</strong> {addr.addressType}</p>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p>No addresses found.</p>
+                    )}
+                </div>
+            )}
 
             <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>

@@ -51,9 +51,9 @@ public class AuthService {
 
         Cookie cookie = new Cookie("jwt", token);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        cookie.setSecure(false);
         cookie.setPath("/");
-        cookie.setMaxAge(24 * 60 * 60);
+        cookie.setMaxAge(-1);
         response.addCookie(cookie);
 
 
