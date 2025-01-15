@@ -30,6 +30,7 @@ public class User implements UserDetails {
     private String email;
     @Enumerated(EnumType.STRING)
     private Role role;
+    private int totalOrders;
 
     @Override
     public boolean isAccountNonExpired() {

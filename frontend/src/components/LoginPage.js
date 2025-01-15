@@ -29,6 +29,7 @@ const LoginPage = ({ setUser }) => {
             });
 
             setUser(userInfoResponse.data);
+            console.log(userInfoResponse.data)
             navigate("/user-info");
         } catch (err) {
             const errorMessage = err.response?.data?.message || "Invalid credentials. Please try again.";

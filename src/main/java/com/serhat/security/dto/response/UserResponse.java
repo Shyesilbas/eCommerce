@@ -10,6 +10,7 @@ public record UserResponse(
         String email,
         String username,
         String password,
-        Role role
+        Role role,
+        int totalOrders
 ) {
 }

@@ -39,11 +39,8 @@ const UserInfo = ({ user, setUser }) => {
         if (confirmation.isConfirmed) {
             Swal.fire({
                 title: "Logging out...",
-                timer: 1500,
-                timerProgressBar: true,
-                didOpen: () => {
-                    Swal.showLoading();
-                },
+                timer: 500,
+                timerProgressBar: false,
                 willClose: async () => {
                     try {
                         await axios.post("http://localhost:8080/auth/logout", {}, { withCredentials: true });
@@ -61,16 +58,19 @@ const UserInfo = ({ user, setUser }) => {
     };
 
     if (!userInfo) {
-        return <p>Loading user information...</p>;
+        return <div className="user-info-container">
+            <p>Loading user information...</p>
+        </div>;
     }
 
     return (
         <div className="user-info-container">
             <h1>Welcome, {userInfo.username || "N/A"}</h1>
-            <p><strong>User ID:</strong> {userInfo?.userId || "N/A"}</p>
-            <p><strong>Email:</strong> {userInfo?.email || "N/A"}</p>
-            <p><strong>Role:</strong> {userInfo?.role || "N/A"}</p>
-            <p><strong>Password:</strong> {userInfo?.password ? "*****" : "N/A"}</p>
+            <div className="user-details">
+                <p><strong>User ID:</strong> {userInfo?.userId || "N/A"}</p>
+                <p><strong>Username:</strong> {userInfo?.username || "N/A"}</p>
+                <p><strong>Email:</strong> {userInfo?.email || "N/A"}</p>
+                <p><strong>Total Orders:</strong> {userInfo?.totalOrders !== undefined ? userInfo.totalOrders : "N/A"}</p> </div>
             <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>
     );

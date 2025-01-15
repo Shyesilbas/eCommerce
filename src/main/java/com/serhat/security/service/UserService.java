@@ -47,6 +47,7 @@ public class UserService {
                 .password(passwordEncoder.encode(request.password()))
                 .email(request.email())
                 .role(request.role())
+                .totalOrders(0)
                 .build();
 
         userRepository.save(user);
@@ -70,14 +71,15 @@ public class UserService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
 
-        log.info("User details: userId={}, email={}, username={}, role={}, password={}",
-                user.getUserId(), user.getEmail(), user.getUsername(), user.getRole(), user.getPassword());
+        log.info("User details: userId={}, email={}, username={}, role={}, password={}, total orders = {}",
+                user.getUserId(), user.getEmail(), user.getUsername(), user.getRole(), user.getPassword(),user.getTotalOrders());
 
         return UserResponse.builder()
                 .userId(user.getUserId())
                 .email(user.getEmail())
                 .username(user.getUsername())
                 .password(user.getPassword())
+                .totalOrders(user.getTotalOrders())
                 .role(user.getRole())
                 .build();
     }
