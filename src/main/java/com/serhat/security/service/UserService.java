@@ -12,6 +12,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -68,17 +70,18 @@ public class UserService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
 
+        log.info("User details: userId={}, email={}, username={}, role={}, password={}",
+                user.getUserId(), user.getEmail(), user.getUsername(), user.getRole(), user.getPassword());
 
-        response.setHeader("User-Info", "Fetched user information successfully");
-
-        return new UserResponse(
-                user.getUserId(),
-                user.getEmail(),
-                user.getUsername(),
-                user.getPassword(),
-                user.getRole()
-        );
+        return UserResponse.builder()
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .role(user.getRole())
+                .build();
     }
+
 
     private String extractTokenFromRequest(HttpServletRequest request) {
         String token = null;

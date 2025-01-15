@@ -4,60 +4,69 @@ import { useNavigate } from "react-router-dom";
 import "../style/LoginPage.css";
 
 const LoginPage = ({ setUser }) => {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
+    const [formData, setFormData] = useState({ username: "", password: "" });
+    const [message, setMessage] = useState({ type: "", text: "" });
     const navigate = useNavigate();
+
+    const handleChange = (e) => {
+        const { id, value } = e.target;
+        setFormData((prev) => ({ ...prev, [id]: value }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
-            const response = await axios.post("http://localhost:8080/auth/login", {
-                username,
-                password,
-            }, { withCredentials: true });
+            const loginResponse = await axios.post(
+                "http://localhost:8080/auth/login",
+                formData,
+                { withCredentials: true }
+            );
 
-            setSuccess(`Login successful! Role: ${response.data.role}`);
-            setError("");
-            console.log("Response:", response.data);
-            setUser(response.data);
+            const userInfoResponse = await axios.get("http://localhost:8080/user/myInfo", {
+                withCredentials: true,
+            });
+
+            setUser(userInfoResponse.data);
+
             navigate("/user-info");
         } catch (err) {
-            setError("Invalid credentials. Please try again.");
-            setSuccess("");
-            console.error(err);
+            const errorMessage = err.response?.data?.message || "Invalid credentials. Please try again.";
+            setMessage({ type: "error", text: errorMessage });
+            console.error("Login error:", err);
         }
     };
 
     return (
-        <div style={{ maxWidth: "400px", margin: "50px auto", textAlign: "center" }}>
+        <div className="login-container">
             <h2>Login</h2>
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            {success && <p style={{ color: "green" }}>{success}</p>}
+            {message.text && (
+                <p className={`message ${message.type}`}>{message.text}</p>
+            )}
             <form onSubmit={handleSubmit}>
-                <div>
+                <div className="form-group">
                     <label htmlFor="username">Username:</label>
                     <input
                         type="text"
                         id="username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        value={formData.username}
+                        onChange={handleChange}
                         required
+                        aria-label="Username"
                     />
                 </div>
-                <div>
+                <div className="form-group">
                     <label htmlFor="password">Password:</label>
                     <input
                         type="password"
                         id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={formData.password}
+                        onChange={handleChange}
                         required
+                        aria-label="Password"
                     />
                 </div>
-                <button type="submit">Login</button>
+                <button type="submit" className="submit-button">Login</button>
             </form>
         </div>
     );

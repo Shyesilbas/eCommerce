@@ -21,21 +21,9 @@ import java.security.Principal;
 public class UserController {
     private final UserService userService;
 
-    @PreAuthorize("hasRole('CUSTOMER')")
-    @GetMapping("/customerRole")
-    public String securedCustomer(){
-        return "Secured - Customer from Backend";
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/adminRole")
-    public String securedAdmin(){
-        return "Secured - Admin from Backend";
-    }
     @GetMapping("/myInfo")
     public ResponseEntity<UserResponse> getUserInfo(HttpServletRequest request, HttpServletResponse response) {
         UserResponse userResponse = userService.userInfo(request, response);
-
         return ResponseEntity.ok(userResponse);
     }
 }
