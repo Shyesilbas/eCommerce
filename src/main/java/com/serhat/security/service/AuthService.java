@@ -107,6 +107,7 @@ public class AuthService {
         log.info("Logout successful for user: {}", username);
 
         return AuthResponse.builder()
+                .token(jwtToken)
                 .message("Logout successful")
                 .username(username)
                 .role(jwtUtil.extractRole(jwtToken))

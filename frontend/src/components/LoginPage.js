@@ -23,12 +23,12 @@ const LoginPage = ({ setUser }) => {
                 { withCredentials: true }
             );
 
+            const token = loginResponse.data.token;
             const userInfoResponse = await axios.get("http://localhost:8080/user/myInfo", {
                 withCredentials: true,
             });
 
             setUser(userInfoResponse.data);
-
             navigate("/user-info");
         } catch (err) {
             const errorMessage = err.response?.data?.message || "Invalid credentials. Please try again.";
@@ -52,7 +52,6 @@ const LoginPage = ({ setUser }) => {
                         value={formData.username}
                         onChange={handleChange}
                         required
-                        aria-label="Username"
                     />
                 </div>
                 <div className="form-group">
@@ -63,7 +62,6 @@ const LoginPage = ({ setUser }) => {
                         value={formData.password}
                         onChange={handleChange}
                         required
-                        aria-label="Password"
                     />
                 </div>
                 <button type="submit" className="submit-button">Login</button>

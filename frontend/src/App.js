@@ -1,12 +1,21 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
 import UserInfo from "./components/UserInfo";
-import AdminPage from "./components/AdminPage";
-import CustomerPage from "./components/CustomerPage";
 
 function App() {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        const savedUser = localStorage.getItem("user");
+        return savedUser ? JSON.parse(savedUser) : null;
+    });
+
+    useEffect(() => {
+        if (user) {
+            localStorage.setItem("user", JSON.stringify(user));
+        } else {
+            localStorage.removeItem("user");
+        }
+    }, [user]);
 
     return (
         <Router>
@@ -17,35 +26,12 @@ function App() {
                 />
                 <Route
                     path="/user-info"
-                    element={
-                        user ? (
-                            <UserInfo user={user} setUser={setUser} />
-                        ) : (
-                            <Navigate to="/login" />
-                        )
-                    }
+                    element={<UserInfo user={user} setUser={setUser} />}
                 />
                 <Route
-                    path="/customerRole"
-                    element={
-                        user && user.role === "CUSTOMER" ? (
-                            <CustomerPage />
-                        ) : (
-                            <Navigate to="/user-info" />
-                        )
-                    }
+                    path="*"
+                    element={<UserInfo user={user} setUser={setUser} />}
                 />
-                <Route
-                    path="/adminRole"
-                    element={
-                        user && user.role === "ADMIN" ? (
-                            <AdminPage />
-                        ) : (
-                            <Navigate to="/user-info" />
-                        )
-                    }
-                />
-                <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
         </Router>
     );
