@@ -10,15 +10,16 @@ body {
 }
 
 .login-container {
-    max-width: 850px;
+    max-width: 450px;
     width: 100%;
-    margin: auto ;
+    margin: auto;
     text-align: center;
     padding: 40px;
     border-radius: 15px;
     background: linear-gradient(to bottom, #ffffff, #f8f9fa);
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
     font-family: 'Arial', sans-serif;
+    animation: fadeIn 0.5s ease-in-out;
 }
 
 .login-container h2 {
@@ -37,13 +38,13 @@ body {
 .form-group label {
     display: block;
     margin-bottom: 10px;
-    font-size: 14px;
-    color: #555;
-    font-weight: 500;
+    font-size: 16px; /* Yazı boyutunu artırdık */
+    color: #333; /* Daha koyu bir renk */
+    font-weight: 600; /* Daha kalın yazı */
 }
 
 .form-group input {
-    width: 9%;
+    width: 100%;
     padding: 12px;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -57,6 +58,16 @@ body {
     box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
     outline: none;
     background-color: #fff;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 20px;
+    color: #555;
 }
 
 .submit-button {
@@ -119,10 +130,6 @@ body {
     text-decoration: underline;
 }
 
-.login-container {
-    animation: fadeIn 0.5s ease-in-out;
-}
-
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -137,6 +144,7 @@ body {
 @media (max-width: 768px) {
     .login-container {
         padding: 20px;
+        max-width: 90%;
     }
 
     .login-container h2 {
@@ -144,8 +152,8 @@ body {
     }
 
     .form-group input {
-        padding: 8px;
-        font-size: 54px;
+        padding: 10px;
+        font-size: 14px;
     }
 
     .submit-button {

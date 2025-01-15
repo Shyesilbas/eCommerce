@@ -6,11 +6,16 @@ import "../style/LoginPage.css";
 const LoginPage = ({ setUser, setAddress }) => {
     const [formData, setFormData] = useState({ username: "", password: "" });
     const [message, setMessage] = useState({ type: "", text: "" });
+    const [showPassword, setShowPassword] = useState(false); // Şifre görünürlüğü için state
     const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { id, value } = e.target;
         setFormData((prev) => ({ ...prev, [id]: value }));
+    };
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword); // Şifre görünürlüğünü tersine çevir
     };
 
     const handleSubmit = async (e) => {
@@ -66,13 +71,21 @@ const LoginPage = ({ setUser, setAddress }) => {
                 </div>
                 <div className="form-group">
                     <label htmlFor="password">Password:</label>
-                    <input
-                        type="password"
-                        id="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                    />
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            id="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            required
+                            style={{ paddingRight: "10px" }}
+                        />
+                        <span
+                            onClick={togglePasswordVisibility}
+                            className="password-toggle"
+                            style={{ marginTop: '11px', display: 'inline-block' }}
+                        >
+                            {showPassword ? "👀" : "🔒"}
+                        </span>
                 </div>
                 <button type="submit" className="submit-button">Login</button>
                 <p>Don't have an account? <a href="/register">Create</a></p>

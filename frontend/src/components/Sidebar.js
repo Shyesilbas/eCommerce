@@ -1,6 +1,27 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
-const Sidebar = ({ isOpen, setIsOpen }) => {
+const Sidebar = ({ isOpen, setIsOpen, user }) => {
+    const navigate = useNavigate();
+
+    const handleProfileClick = () => {
+        if (!user) {
+            Swal.fire({
+                icon: "warning",
+                title: "Login Required",
+                text: "Please login to access your profile.",
+                confirmButtonText: "Go to Login",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    navigate("/login");
+                }
+            });
+        } else {
+            navigate("/user-info");
+        }
+    };
+
     return (
         <div style={styles.sidebar(isOpen)}>
             <button onClick={() => setIsOpen(!isOpen)} style={styles.toggleButton}>
@@ -8,6 +29,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             </button>
             {isOpen && (
                 <div style={styles.menuContent}>
+                    <div style={styles.menuItem} onClick={handleProfileClick}>
+                        Profile
+                    </div>
                 </div>
             )}
         </div>
@@ -36,6 +60,14 @@ const styles = {
     menuContent: {
         padding: "20px",
         color: "white",
+    },
+    menuItem: {
+        padding: "10px",
+        cursor: "pointer",
+        transition: "background-color 0.3s ease",
+    },
+    menuItemHover: {
+        backgroundColor: "#34495e",
     },
 };
 
