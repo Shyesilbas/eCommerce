@@ -26,8 +26,13 @@ public class ProductController {
 
 
     @GetMapping("/info/{productCode}")
-    public ResponseEntity<ProductDto> productInfo(@PathVariable String productCode){
+    public ResponseEntity<ProductDto> productInfoByCode(@PathVariable String productCode){
         return ResponseEntity.ok(productService.productInfo(productCode));
+    }
+
+    @GetMapping("/info/id/{productId}")
+    public ResponseEntity<ProductDto> productInfoById(@PathVariable Long productId) {
+        return ResponseEntity.ok(productService.productInfoById(productId));
     }
 
     @GetMapping("/categories")

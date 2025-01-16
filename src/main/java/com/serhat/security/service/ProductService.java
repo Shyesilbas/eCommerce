@@ -57,6 +57,26 @@ public class ProductService {
         );
     }
 
+    public ProductDto productInfoById(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found for: " + productId));
+
+        return new ProductDto(
+                product.getProductId(),
+                product.getName(),
+                product.getOriginOfCountry(),
+                product.getProductCode(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getBrand(),
+                product.getAverageRating(),
+                product.getStockStatus(),
+                product.getColor(),
+                product.getQuantity(),
+                product.getCategory()
+        );
+    }
+
 
     public ProductResponse addProduct(ProductRequest productRequest, HttpServletRequest request) {
         String jwtToken = jwtUtil.getTokenFromCookie(request);

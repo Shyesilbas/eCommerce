@@ -5,6 +5,7 @@ import UserInfo from "./components/UserInfo";
 import RegisterPage from "./components/RegisterPage";
 import ProductPage from "./components/ProductPage";
 import Sidebar from "./components/Sidebar";
+import ProductDetailPage from "./components/ProductDetailPage";
 
 const App = () => {
     const [user, setUser] = useState(null);
@@ -35,6 +36,14 @@ const App = () => {
                     />
                     <Route
                         path="/products"
+                        element={<ProductPage user={user} />}
+                    />
+                    <Route
+                        path="/product/:productId"
+                        element={<ProductDetailPage />}
+                    />
+                    <Route
+                        path="/"
                         element={<ProductPage user={user} />}
                     />
                 </Routes>

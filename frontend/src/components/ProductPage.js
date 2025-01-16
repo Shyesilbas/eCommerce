@@ -72,6 +72,10 @@ const ProductPage = ({ user }) => {
             });
     };
 
+    const navigateToProductDetail = (productId) => {
+        navigate(`/product/${productId}`);
+    };
+
     const handleAddProduct = (e) => {
         e.preventDefault();
         axios.post("http://localhost:8080/api/products/addProduct", newProduct, { withCredentials: true })
@@ -109,7 +113,6 @@ const ProductPage = ({ user }) => {
 
     return (
         <div className="product-page-container">
-            {/* Categories Section */}
             <div className="categories-section">
                 <h3>Categories</h3>
                 <ul>
@@ -160,12 +163,18 @@ const ProductPage = ({ user }) => {
                 <div className="products-by-category">
                     <h2>{selectedCategory ? `Products in ${selectedCategory}` : "All Products"}</h2>
                     <div className="product-list">
-                        {products.map((prod, index) => (
-                            <div key={index} className="product-card">
+                        {products.map((prod) => (
+                            <div key={prod.productId} className="product-card">
                                 <h3>{prod.name}</h3>
                                 <p><strong>Price:</strong> ${prod.price}</p>
                                 <p><strong>Stock Status:</strong> {prod.stockStatus}</p>
                                 <p><strong>Category:</strong> {prod.category}</p>
+                                <button
+                                    className="details-button"
+                                    onClick={() => navigateToProductDetail(prod.productId)}
+                                >
+                                    Details
+                                </button>
                             </div>
                         ))}
                     </div>
