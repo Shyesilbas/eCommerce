@@ -22,6 +22,10 @@ const Sidebar = ({ isOpen, setIsOpen, user }) => {
         }
     };
 
+    const handleProductsClick = () => {
+        navigate("/products");
+    };
+
     return (
         <div style={styles.sidebar(isOpen)}>
             <button onClick={() => setIsOpen(!isOpen)} style={styles.toggleButton}>
@@ -31,6 +35,9 @@ const Sidebar = ({ isOpen, setIsOpen, user }) => {
                 <div style={styles.menuContent}>
                     <div style={styles.menuItem} onClick={handleProfileClick}>
                         Profile
+                    </div>
+                    <div style={styles.menuItem} onClick={handleProductsClick}>
+                        Products
                     </div>
                 </div>
             )}

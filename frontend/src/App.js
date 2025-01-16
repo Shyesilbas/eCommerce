@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
 import UserInfo from "./components/UserInfo";
 import RegisterPage from "./components/RegisterPage";
+import ProductPage from "./components/ProductPage";
 import Sidebar from "./components/Sidebar";
 
 const App = () => {
@@ -31,6 +32,10 @@ const App = () => {
                     <Route
                         path="/register"
                         element={<RegisterPage />}
+                    />
+                    <Route
+                        path="/products"
+                        element={<ProductPage user={user} />}
                     />
                 </Routes>
             </div>

@@ -46,7 +46,7 @@ public class SecurityConfiguration {
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth->auth
-                        .requestMatchers("/auth/login","/auth/register","/auth/logout").permitAll()
+                        .requestMatchers("/auth/login","/auth/register","/auth/logout","/api/products/info/{productCode}").permitAll()
                         .requestMatchers("/auth/test/CUSTOMER").hasRole("CUSTOMER")
                         .anyRequest().authenticated()
                 )

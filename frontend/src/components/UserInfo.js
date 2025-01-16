@@ -10,14 +10,12 @@ const UserInfo = ({ user, onLogout }) => {
     const [address, setAddress] = useState([]);
     const [showAddress, setShowAddress] = useState(false);
 
-    // Kullanıcı oturum açmamışsa login sayfasına yönlendir
     useEffect(() => {
         if (!user) {
             navigate("/login");
         }
     }, [user, navigate]);
 
-    // Kullanıcı bilgilerini ve adres bilgilerini çek
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
@@ -27,7 +25,6 @@ const UserInfo = ({ user, onLogout }) => {
                 setUserInfo(response.data);
             } catch (err) {
                 console.error("Error fetching user info:", err);
-                // Eğer kullanıcı oturum açmamışsa, login sayfasına yönlendir
                 navigate("/login");
             }
         };
@@ -49,7 +46,6 @@ const UserInfo = ({ user, onLogout }) => {
         }
     }, [user, navigate]);
 
-    // Logout işlemi
     const handleLogout = async () => {
         const confirmation = await Swal.fire({
             title: "Are you sure?",
@@ -70,7 +66,7 @@ const UserInfo = ({ user, onLogout }) => {
                     try {
                         await axios.post("http://localhost:8080/auth/logout", {}, { withCredentials: true });
                         localStorage.removeItem("user");
-                        onLogout(); // App bileşenindeki user state'ini güncelle
+                        onLogout();
                         Swal.fire("Logged Out", "You have successfully logged out.", "success");
                         navigate("/login");
                     } catch (err) {
@@ -82,12 +78,10 @@ const UserInfo = ({ user, onLogout }) => {
         }
     };
 
-    // Adres bilgilerini göster/gizle
     const toggleAddress = () => {
         setShowAddress(!showAddress);
     };
 
-    // Kullanıcı bilgileri yüklenene kadar loading göster
     if (!userInfo) {
         return (
             <div className="user-info-container">
@@ -106,12 +100,10 @@ const UserInfo = ({ user, onLogout }) => {
                 <p><strong>Total Orders:</strong> {userInfo?.totalOrders !== undefined ? userInfo.totalOrders : "N/A"}</p>
             </div>
 
-            {/* Adres Bilgileri Butonu */}
             <button onClick={toggleAddress} className="address-button">
                 {showAddress ? "Hide Address" : "Show Address"}
             </button>
 
-            {/* Adres Bilgileri */}
             {showAddress && (
                 <div className="address-info">
                     <h2>Addresses</h2>
@@ -135,7 +127,6 @@ const UserInfo = ({ user, onLogout }) => {
                 </div>
             )}
 
-            {/* Logout Butonu */}
             <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>
     );
