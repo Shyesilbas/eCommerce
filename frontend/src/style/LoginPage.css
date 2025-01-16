@@ -38,9 +38,9 @@ body {
 .form-group label {
     display: block;
     margin-bottom: 10px;
-    font-size: 16px; /* Yazı boyutunu artırdık */
-    color: #333; /* Daha koyu bir renk */
-    font-weight: 600; /* Daha kalın yazı */
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
 }
 
 .form-group input {
@@ -70,26 +70,29 @@ body {
     color: #555;
 }
 
-.submit-button {
-    width: 100%;
+.login-container .submit-button {
+    width: 50%;
     padding: 14px;
-    background-color: #007bff;
+    background: linear-gradient(135deg, #b0b7bd 0%, #8a97a8 100%);
     color: white;
     border: none;
     border-radius: 8px;
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.submit-button:hover {
-    background-color: #0056b3;
+.login-container .submit-button:hover {
+    background: linear-gradient(135deg, #b0b7bd 0%, #8a97a8 100%);
     transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
 
-.submit-button:active {
+.login-container .submit-button:active {
     transform: translateY(0);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .message {

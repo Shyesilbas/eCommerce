@@ -66,45 +66,51 @@
 .back-button {
     width: 48%;
     padding: 14px;
-    background-color: #6c757d;
+    background: linear-gradient(135deg, #b0b7bd 0%, #8a97a8 100%);
     color: white;
     border: none;
     border-radius: 8px;
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .back-button:hover {
-    background-color: #5a6268;
+    background: linear-gradient(135deg, #b0b7bd 0%, #8a97a8 100%);
     transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
 
 .back-button:active {
     transform: translateY(0);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .submit-button {
     width: 48%;
     padding: 14px;
-    background-color: #007bff;
+    background: linear-gradient(135deg, #b0b7bd 0%, #8a97a8 100%);
     color: white;
     border: none;
     border-radius: 8px;
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .submit-button:hover {
-    background-color: #0056b3;
+    background: linear-gradient(135deg, #b0b7bd 0%, #8a97a8 100%);
     transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
 
 .submit-button:active {
     transform: translateY(0);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .message {
