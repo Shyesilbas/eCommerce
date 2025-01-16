@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
@@ -23,67 +23,112 @@ const ProductPage = ({ user }) => {
         quantity: "",
         category: "",
     });
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [products, setProducts] = useState([]);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
 
-    const fetchProductInfo = async () => {
+    useEffect(() => {
+        axios.get("http://localhost:8080/api/products/categories")
+            .then(response => setCategories(response.data))
+            .catch(() => setCategories([]));
+    }, []);
+
+    useEffect(() => {
+        const fetchProducts = () => {
+            const endpoint = selectedCategory
+                ? "http://localhost:8080/api/products/byCategory"
+                : "http://localhost:8080/api/products/allProducts";
+            const params = selectedCategory
+                ? { category: selectedCategory, page: currentPage, size: 10 }
+                : { page: currentPage, size: 10 };
+
+            axios.get(endpoint, { params })
+                .then(response => {
+                    if (response.data && Array.isArray(response.data.content)) {
+                        setProducts(response.data.content);
+                        setTotalPages(response.data.totalPages);
+                    }
+                })
+                .catch(() => setProducts([]));
+        };
+        fetchProducts();
+    }, [currentPage, selectedCategory]);
+
+    const fetchProductInfo = () => {
         if (!productCode) {
             setError("Please enter a product code.");
             return;
         }
-
-        try {
-            const response = await axios.get(`http://localhost:8080/api/products/info/${productCode}`);
-            setProduct(response.data);
-            setError("");
-        } catch (err) {
-            setProduct(null);
-            setError("Product not found or an error occurred.");
-        }
-    };
-
-    const handleAddProduct = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await axios.post(
-                "http://localhost:8080/api/products/addProduct",
-                newProduct,
-                { withCredentials: true }
-            );
-            Swal.fire("Success", response.data.message, "success");
-            setShowAddProductForm(false);
-            setNewProduct({
-                name: "",
-                originOfCountry: "",
-                productCode: "",
-                description: "",
-                price: "",
-                brand: "",
-                averageRating: "",
-                stockStatus: "",
-                color: "",
-                quantity: "",
-                category: "",
+        axios.get(`http://localhost:8080/api/products/info/${productCode}`)
+            .then(response => {
+                setProduct(response.data);
+                setError("");
+            })
+            .catch(() => {
+                setProduct(null);
+                setError("Product not found or an error occurred.");
             });
-        } catch (err) {
-            Swal.fire("Error", "Failed to add product. Only ADMIN users can add products.", "error");
-        }
     };
 
-    const toggleAddProductForm = () => {
-        setShowAddProductForm(!showAddProductForm);
+    const handleAddProduct = (e) => {
+        e.preventDefault();
+        axios.post("http://localhost:8080/api/products/addProduct", newProduct, { withCredentials: true })
+            .then(response => {
+                Swal.fire("Success", response.data.message, "success");
+                setShowAddProductForm(false);
+                setNewProduct({
+                    name: "",
+                    originOfCountry: "",
+                    productCode: "",
+                    description: "",
+                    price: "",
+                    brand: "",
+                    averageRating: "",
+                    stockStatus: "",
+                    color: "",
+                    quantity: "",
+                    category: "",
+                });
+            })
+            .catch(() => Swal.fire("Error", "Failed to add product. Only ADMIN users can add products.", "error"));
     };
+
+    const toggleAddProductForm = () => setShowAddProductForm(!showAddProductForm);
 
     const handleNewProductChange = (e) => {
         const { name, value } = e.target;
         setNewProduct({ ...newProduct, [name]: value });
     };
 
+    const handlePageChange = (direction) => {
+        if (direction === "prev" && currentPage > 0) setCurrentPage(currentPage - 1);
+        if (direction === "next" && currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
+    };
+
     return (
         <div className="product-page-container">
-            <h1>Product Management</h1>
+            {/* Categories Section */}
+            <div className="categories-section">
+                <h3>Categories</h3>
+                <ul>
+                    {categories.map((category, index) => (
+                        <li
+                            key={index}
+                            className={selectedCategory === category ? "active" : ""}
+                            onClick={() => setSelectedCategory(category)}
+                        >
+                            {category}
+                        </li>
+                    ))}
+                </ul>
+            </div>
 
-            <div className="product-info-section">
-                <h2>Product Information</h2>
-                <div className="search-bar">
+            {/* Main Content */}
+            <div className="main-content">
+                <h1>Product Management</h1>
+                <div className="search-bar-container">
                     <input
                         type="text"
                         placeholder="Enter Product Code"
@@ -93,137 +138,162 @@ const ProductPage = ({ user }) => {
                     <button onClick={fetchProductInfo}>Search</button>
                 </div>
 
-                {error && <p className="error-message">{error}</p>}
+                <div className="product-info-section">
+                    {error && <p className="error-message">{error}</p>}
+                    {product && (
+                        <div className="product-details">
+                            <h3>{product.name}</h3>
+                            <p><strong>Product ID:</strong> {product.productId}</p>
+                            <p><strong>Origin:</strong> {product.originOfCountry}</p>
+                            <p><strong>Description:</strong> {product.description}</p>
+                            <p><strong>Price:</strong> ${product.price}</p>
+                            <p><strong>Brand:</strong> {product.brand}</p>
+                            <p><strong>Rating:</strong> {product.averageRating}</p>
+                            <p><strong>Stock Status:</strong> {product.stockStatus}</p>
+                            <p><strong>Color:</strong> {product.color}</p>
+                            <p><strong>Quantity:</strong> {product.quantity}</p>
+                            <p><strong>Category:</strong> {product.category}</p>
+                        </div>
+                    )}
+                </div>
 
-                {product && (
-                    <div className="product-details">
-                        <h3>{product.name}</h3>
-                        <p><strong>Product ID:</strong> {product.productId}</p>
-                        <p><strong>Origin:</strong> {product.originOfCountry}</p>
-                        <p><strong>Description:</strong> {product.description}</p>
-                        <p><strong>Price:</strong> ${product.price}</p>
-                        <p><strong>Brand:</strong> {product.brand}</p>
-                        <p><strong>Rating:</strong> {product.averageRating}</p>
-                        <p><strong>Stock Status:</strong> {product.stockStatus}</p>
-                        <p><strong>Color:</strong> {product.color}</p>
-                        <p><strong>Quantity:</strong> {product.quantity}</p>
-                        <p><strong>Category:</strong> {product.category}</p>
+                <div className="products-by-category">
+                    <h2>{selectedCategory ? `Products in ${selectedCategory}` : "All Products"}</h2>
+                    <div className="product-list">
+                        {products.map((prod, index) => (
+                            <div key={index} className="product-card">
+                                <h3>{prod.name}</h3>
+                                <p><strong>Price:</strong> ${prod.price}</p>
+                                <p><strong>Stock Status:</strong> {prod.stockStatus}</p>
+                                <p><strong>Category:</strong> {prod.category}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="pagination">
+                    <button
+                        onClick={() => handlePageChange("prev")}
+                        disabled={currentPage === 0}
+                    >
+                        Previous
+                    </button>
+                    <span>Page {currentPage + 1} of {totalPages}</span>
+                    <button
+                        onClick={() => handlePageChange("next")}
+                        disabled={currentPage === totalPages - 1}
+                    >
+                        Next
+                    </button>
+                </div>
+
+                {user?.role === "ADMIN" && (
+                    <div className="add-product-section">
+                        <button onClick={toggleAddProductForm} className="add-product-button">
+                            {showAddProductForm ? "Hide Add Product Form" : "Add New Product"}
+                        </button>
+                        {showAddProductForm && (
+                            <form onSubmit={handleAddProduct} className="add-product-form">
+                                <input
+                                    type="text"
+                                    name="name"
+                                    placeholder="Name"
+                                    value={newProduct.name}
+                                    onChange={handleNewProductChange}
+                                    required
+                                />
+                                <input
+                                    type="text"
+                                    name="originOfCountry"
+                                    placeholder="Origin of Country"
+                                    value={newProduct.originOfCountry}
+                                    onChange={handleNewProductChange}
+                                    required
+                                />
+                                <input
+                                    type="text"
+                                    name="productCode"
+                                    placeholder="Product Code"
+                                    value={newProduct.productCode}
+                                    onChange={handleNewProductChange}
+                                    required
+                                />
+                                <textarea
+                                    name="description"
+                                    placeholder="Description"
+                                    value={newProduct.description}
+                                    onChange={handleNewProductChange}
+                                    required
+                                />
+                                <input
+                                    type="number"
+                                    name="price"
+                                    placeholder="Price"
+                                    value={newProduct.price}
+                                    onChange={handleNewProductChange}
+                                    required
+                                />
+                                <input
+                                    type="text"
+                                    name="brand"
+                                    placeholder="Brand"
+                                    value={newProduct.brand}
+                                    onChange={handleNewProductChange}
+                                    required
+                                />
+                                <input
+                                    type="number"
+                                    name="averageRating"
+                                    placeholder="Average Rating"
+                                    value={newProduct.averageRating}
+                                    onChange={handleNewProductChange}
+                                    required
+                                />
+                                <select
+                                    name="stockStatus"
+                                    value={newProduct.stockStatus}
+                                    onChange={handleNewProductChange}
+                                    required
+                                >
+                                    <option value="">Select Stock Status</option>
+                                    <option value="AVAILABLE">Available</option>
+                                    <option value="OUT_OF_STOCKS">Out of Stocks</option>
+                                </select>
+                                <input
+                                    type="text"
+                                    name="color"
+                                    placeholder="Color"
+                                    value={newProduct.color}
+                                    onChange={handleNewProductChange}
+                                    required
+                                />
+                                <input
+                                    type="number"
+                                    name="quantity"
+                                    placeholder="Quantity"
+                                    value={newProduct.quantity}
+                                    onChange={handleNewProductChange}
+                                    required
+                                />
+                                <select
+                                    name="category"
+                                    value={newProduct.category}
+                                    onChange={handleNewProductChange}
+                                    required
+                                >
+                                    <option value="">Select Category</option>
+                                    {categories.map((category, index) => (
+                                        <option key={index} value={category}>
+                                            {category}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button type="submit" className="submit-button">Add Product</button>
+                            </form>
+                        )}
                     </div>
                 )}
             </div>
-
-            {user?.role === "ADMIN" && (
-                <div className="add-product-section">
-                    <button onClick={toggleAddProductForm} className="add-product-button">
-                        {showAddProductForm ? "Hide Add Product Form" : "Add New Product"}
-                    </button>
-
-                    {showAddProductForm && (
-                        <form onSubmit={handleAddProduct} className="add-product-form">
-                            <input
-                                type="text"
-                                name="name"
-                                placeholder="Name"
-                                value={newProduct.name}
-                                onChange={handleNewProductChange}
-                                required
-                            />
-                            <input
-                                type="text"
-                                name="originOfCountry"
-                                placeholder="Origin of Country"
-                                value={newProduct.originOfCountry}
-                                onChange={handleNewProductChange}
-                                required
-                            />
-                            <input
-                                type="text"
-                                name="productCode"
-                                placeholder="Product Code"
-                                value={newProduct.productCode}
-                                onChange={handleNewProductChange}
-                                required
-                            />
-                            <textarea
-                                name="description"
-                                placeholder="Description"
-                                value={newProduct.description}
-                                onChange={handleNewProductChange}
-                                required
-                            />
-                            <input
-                                type="number"
-                                name="price"
-                                placeholder="Price"
-                                value={newProduct.price}
-                                onChange={handleNewProductChange}
-                                required
-                            />
-                            <input
-                                type="text"
-                                name="brand"
-                                placeholder="Brand"
-                                value={newProduct.brand}
-                                onChange={handleNewProductChange}
-                                required
-                            />
-                            <input
-                                type="number"
-                                name="averageRating"
-                                placeholder="Average Rating"
-                                value={newProduct.averageRating}
-                                onChange={handleNewProductChange}
-                                required
-                            />
-                            <select
-                                name="stockStatus"
-                                value={newProduct.stockStatus}
-                                onChange={handleNewProductChange}
-                                required
-                            >
-                                <option value="">Select Stock Status</option>
-                                <option value="AVAILABLE">Available</option>
-                                <option value="OUT_OF_STOCKS">Out of Stocks</option>
-                            </select>
-                            <input
-                                type="text"
-                                name="color"
-                                placeholder="Color"
-                                value={newProduct.color}
-                                onChange={handleNewProductChange}
-                                required
-                            />
-                            <input
-                                type="number"
-                                name="quantity"
-                                placeholder="Quantity"
-                                value={newProduct.quantity}
-                                onChange={handleNewProductChange}
-                                required
-                            />
-                            <select
-                                name="category"
-                                value={newProduct.category}
-                                onChange={handleNewProductChange}
-                                required
-                            >
-                                <option value="">Select Category</option>
-                                <option value="ELECTRONICS">Electronics</option>
-                                <option value="CLOTHING">Clothing</option>
-                                <option value="HOME_AND_KITCHEN">Home & Kitchen</option>
-                                <option value="BOOKS_AND_STATIONERY">Books & Stationery</option>
-                                <option value="SPORTS_AND_OUTDOORS">Sports & Outdoors</option>
-                                <option value="BEAUTY_AND_COSMETICS">Beauty & Cosmetics</option>
-                                <option value="TOYS_AND_GAMES">Toys & Games</option>
-                                <option value="AUTOMOTIVE">Automotive</option>
-                                <option value="HEALTH_AND_WELLNESS">Health & Wellness</option>
-                                <option value="GROCERY">Grocery</option>
-                            </select>
-                            <button type="submit" className="submit-button">Add Product</button>
-                        </form>
-                    )}
-                </div>
-            )}
         </div>
     );
 };

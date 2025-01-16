@@ -3,12 +3,20 @@ package com.serhat.security.controller;
 import com.serhat.security.dto.object.ProductDto;
 import com.serhat.security.dto.request.ProductRequest;
 import com.serhat.security.dto.response.ProductResponse;
+import com.serhat.security.entity.Product;
+import com.serhat.security.entity.enums.Category;
 import com.serhat.security.service.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,6 +28,28 @@ public class ProductController {
     @GetMapping("/info/{productCode}")
     public ResponseEntity<ProductDto> productInfo(@PathVariable String productCode){
         return ResponseEntity.ok(productService.productInfo(productCode));
+    }
+
+    @GetMapping("/categories")
+    public List<String> getCategories() {
+        return Arrays.stream(Category.values())
+                .map(Enum::name)
+                .toList();
+    }
+
+    @GetMapping("/byCategory")
+    public Page<Product> getProductsByCategory(
+            @RequestParam Category category,
+            @RequestParam int page,
+            @RequestParam int size) {
+        return productService.getProductsByCategory(category, page, size);
+    }
+    @GetMapping("/allProducts")
+    public ResponseEntity<Page<Product>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<Product> products = productService.getAllProducts(page, size);
+        return ResponseEntity.ok(products);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

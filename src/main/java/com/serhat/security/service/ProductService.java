@@ -12,7 +12,13 @@ import com.serhat.security.repository.ProductRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +26,15 @@ import org.springframework.stereotype.Service;
 public class ProductService {
     private final ProductRepository productRepository;
     private final JwtUtil jwtUtil;
+
+
+
+
+    public Page<Product> getAllProducts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productRepository.findAll(pageable);
+    }
+
 
 
     public ProductDto productInfo(String productCode) {
@@ -76,5 +91,10 @@ public class ProductService {
                 .productCode(savedProduct.getProductCode())
                 .message("Product added successfully")
                 .build();
+    }
+
+    public Page<Product> getProductsByCategory(Category category, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productRepository.findByCategory(category, pageable);
     }
 }
