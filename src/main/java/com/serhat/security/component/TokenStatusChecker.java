@@ -25,7 +25,7 @@ public class TokenStatusChecker implements CommandLineRunner {
     }
 
     private void checkTokenStatus(Token token) {
-        if (token.getExpiresAt().before(new Date())) {
+        if (token.getExpiresAt().before(new Date()) && token.getTokenStatus()==TokenStatus.ACTIVE) {
             token.setTokenStatus(TokenStatus.EXPIRED);
             tokenService.saveToken(token);
             System.out.println("Token expired and status updated for user: " + token.getUsername());

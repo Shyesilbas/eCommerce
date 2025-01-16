@@ -4,12 +4,20 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import "../style/UserInfo.css";
 
-const UserInfo = ({ user }) => {
+const UserInfo = ({ user, onLogout }) => {
     const navigate = useNavigate();
     const [userInfo, setUserInfo] = useState(user);
     const [address, setAddress] = useState([]);
     const [showAddress, setShowAddress] = useState(false);
 
+    // Kullanıcı oturum açmamışsa login sayfasına yönlendir
+    useEffect(() => {
+        if (!user) {
+            navigate("/login");
+        }
+    }, [user, navigate]);
+
+    // Kullanıcı bilgilerini ve adres bilgilerini çek
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
@@ -19,6 +27,8 @@ const UserInfo = ({ user }) => {
                 setUserInfo(response.data);
             } catch (err) {
                 console.error("Error fetching user info:", err);
+                // Eğer kullanıcı oturum açmamışsa, login sayfasına yönlendir
+                navigate("/login");
             }
         };
 
@@ -33,13 +43,13 @@ const UserInfo = ({ user }) => {
             }
         };
 
-        if (!userInfo) {
+        if (user) {
             fetchUserInfo();
+            fetchAddressInfo();
         }
+    }, [user, navigate]);
 
-        fetchAddressInfo();
-    }, [userInfo]);
-
+    // Logout işlemi
     const handleLogout = async () => {
         const confirmation = await Swal.fire({
             title: "Are you sure?",
@@ -60,6 +70,7 @@ const UserInfo = ({ user }) => {
                     try {
                         await axios.post("http://localhost:8080/auth/logout", {}, { withCredentials: true });
                         localStorage.removeItem("user");
+                        onLogout(); // App bileşenindeki user state'ini güncelle
                         Swal.fire("Logged Out", "You have successfully logged out.", "success");
                         navigate("/login");
                     } catch (err) {
@@ -71,14 +82,18 @@ const UserInfo = ({ user }) => {
         }
     };
 
+    // Adres bilgilerini göster/gizle
     const toggleAddress = () => {
         setShowAddress(!showAddress);
     };
 
+    // Kullanıcı bilgileri yüklenene kadar loading göster
     if (!userInfo) {
-        return <div className="user-info-container">
-            <p>Loading user information...</p>
-        </div>;
+        return (
+            <div className="user-info-container">
+                <p>Loading user information...</p>
+            </div>
+        );
     }
 
     return (
@@ -120,6 +135,7 @@ const UserInfo = ({ user }) => {
                 </div>
             )}
 
+            {/* Logout Butonu */}
             <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>
     );

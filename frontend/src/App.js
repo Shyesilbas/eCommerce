@@ -10,6 +10,11 @@ const App = () => {
     const [address, setAddress] = useState([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+    const handleLogout = () => {
+        setUser(null);
+        setAddress([]);
+    };
+
     return (
         <Router>
             <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} user={user} />
@@ -21,7 +26,7 @@ const App = () => {
                     />
                     <Route
                         path="/user-info"
-                        element={<UserInfo user={user} address={address} />}
+                        element={<UserInfo user={user} address={address} onLogout={handleLogout} />}
                     />
                     <Route
                         path="/register"

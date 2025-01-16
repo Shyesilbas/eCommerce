@@ -6,7 +6,7 @@ import "../style/LoginPage.css";
 const LoginPage = ({ setUser, setAddress }) => {
     const [formData, setFormData] = useState({ username: "", password: "" });
     const [message, setMessage] = useState({ type: "", text: "" });
-    const [showPassword, setShowPassword] = useState(false); // Şifre görünürlüğü için state
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -15,7 +15,7 @@ const LoginPage = ({ setUser, setAddress }) => {
     };
 
     const togglePasswordVisibility = () => {
-        setShowPassword(!showPassword); // Şifre görünürlüğünü tersine çevir
+        setShowPassword(!showPassword);
     };
 
     const handleSubmit = async (e) => {

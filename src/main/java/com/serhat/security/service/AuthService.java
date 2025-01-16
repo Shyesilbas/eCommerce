@@ -53,7 +53,7 @@ public class AuthService {
         cookie.setHttpOnly(true);
         cookie.setSecure(false);
         cookie.setPath("/");
-        cookie.setMaxAge(-1);
+        cookie.setMaxAge((int) expirationTime/1000);
         response.addCookie(cookie);
 
 
