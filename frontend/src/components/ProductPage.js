@@ -10,6 +10,8 @@ const ProductPage = ({ user }) => {
     const [product, setProduct] = useState(null);
     const [error, setError] = useState("");
     const [showAddProductForm, setShowAddProductForm] = useState(false);
+    const [totalProductCount, setTotalProductCount] = useState(0);
+    const [categoryProductCount, setCategoryProductCount] = useState(0);
     const [newProduct, setNewProduct] = useState({
         name: "",
         originOfCountry: "",
@@ -24,25 +26,38 @@ const ProductPage = ({ user }) => {
         category: "",
     });
     const [categories, setCategories] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedCategory, setSelectedCategory] = useState("All Products");
     const [products, setProducts] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
 
     useEffect(() => {
+        axios.get("http://localhost:8080/api/products/totalCount")
+            .then(response => {
+                setTotalProductCount(response.data);
+            })
+            .catch(error => {
+                console.error("Error fetching total product count:", error);
+            });
+    }, []);
+
+    useEffect(() => {
         axios.get("http://localhost:8080/api/products/categories")
-            .then(response => setCategories(response.data))
-            .catch(() => setCategories([]));
+            .then(response => {
+                setCategories(["All Products", ...response.data]);
+            })
+            .catch(() => setCategories(["All Products"]));
     }, []);
 
     useEffect(() => {
         const fetchProducts = () => {
-            const endpoint = selectedCategory
-                ? "http://localhost:8080/api/products/byCategory"
-                : "http://localhost:8080/api/products/allProducts";
-            const params = selectedCategory
-                ? { category: selectedCategory, page: currentPage, size: 10 }
-                : { page: currentPage, size: 10 };
+            const endpoint = selectedCategory === "All Products" || !selectedCategory
+                ? "http://localhost:8080/api/products/allProducts"
+                : "http://localhost:8080/api/products/byCategory";
+
+            const params = selectedCategory === "All Products" || !selectedCategory
+                ? { page: currentPage, size: 10 }
+                : { category: selectedCategory, page: currentPage, size: 10 };
 
             axios.get(endpoint, { params })
                 .then(response => {
@@ -55,6 +70,21 @@ const ProductPage = ({ user }) => {
         };
         fetchProducts();
     }, [currentPage, selectedCategory]);
+
+    useEffect(() => {
+        if (selectedCategory !== "All Products") {
+            axios.get(`http://localhost:8080/api/products/totalCountByCategory?category=${selectedCategory}`)
+                .then(response => {
+                    setCategoryProductCount(response.data);
+                })
+                .catch(error => {
+                    console.error("Error fetching category product count:", error);
+                    setCategoryProductCount(0);
+                });
+        } else {
+            setCategoryProductCount(totalProductCount);
+        }
+    }, [selectedCategory, totalProductCount]);
 
     const fetchProductInfo = () => {
         if (!productCode) {
@@ -131,6 +161,10 @@ const ProductPage = ({ user }) => {
             {/* Main Content */}
             <div className="main-content">
                 <h1>Product Management</h1>
+                <div className="total-product-count">
+                    <strong>{selectedCategory === "All Products" ? "Total Products:" : `Total Products in ${selectedCategory}:`}</strong> {categoryProductCount}
+                </div>
+
                 <div className="search-bar-container">
                     <input
                         type="text"
@@ -161,7 +195,7 @@ const ProductPage = ({ user }) => {
                 </div>
 
                 <div className="products-by-category">
-                    <h2>{selectedCategory ? `Products in ${selectedCategory}` : "All Products"}</h2>
+                    <h2>{selectedCategory === "All Products" ? "All Products" : `Products in ${selectedCategory}`}</h2>
                     <div className="product-list">
                         {products.map((prod) => (
                             <div key={prod.productId} className="product-card">

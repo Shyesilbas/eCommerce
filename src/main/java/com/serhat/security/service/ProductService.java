@@ -27,7 +27,9 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final JwtUtil jwtUtil;
 
-
+    public long totalProductCountByCategory(Category category) {
+        return productRepository.countByCategory(category);
+    }
 
 
     public Page<Product> getAllProducts(int page, int size) {
@@ -35,7 +37,9 @@ public class ProductService {
         return productRepository.findAll(pageable);
     }
 
-
+    public long totalProductCount(){
+        return productRepository.count();
+    }
 
     public ProductDto productInfo(String productCode) {
         Product product = productRepository.findByProductCode(productCode)

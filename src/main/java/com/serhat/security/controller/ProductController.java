@@ -24,6 +24,11 @@ import java.util.List;
 public class ProductController {
     private final ProductService productService;
 
+    @GetMapping("/totalCountByCategory")
+    public ResponseEntity<Long> getTotalProductCountByCategory(@RequestParam Category category) {
+        long totalCount = productService.totalProductCountByCategory(category);
+        return ResponseEntity.ok(totalCount);
+    }
 
     @GetMapping("/info/{productCode}")
     public ResponseEntity<ProductDto> productInfoByCode(@PathVariable String productCode){
@@ -41,6 +46,13 @@ public class ProductController {
                 .map(Enum::name)
                 .toList();
     }
+
+    @GetMapping("/totalCount")
+    public ResponseEntity<Long> getTotalProductCount() {
+        long totalCount = productService.totalProductCount();
+        return ResponseEntity.ok(totalCount);
+    }
+
 
     @GetMapping("/byCategory")
     public Page<Product> getProductsByCategory(

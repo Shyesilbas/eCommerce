@@ -48,6 +48,8 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/auth/login","/auth/register","/auth/logout","/api/products/info/id/{productCode}","/api/products/info/{productCode}","/api/products/allProducts","/api/products/categories").permitAll()
                         .requestMatchers("/api/products/byCategory").permitAll()
+                        .requestMatchers("/api/products/totalCount").permitAll()
+                        .requestMatchers("/api/products/totalCountByCategory").permitAll()
                         .requestMatchers("/auth/test/CUSTOMER").hasRole("CUSTOMER")
                         .anyRequest().authenticated()
                 )
