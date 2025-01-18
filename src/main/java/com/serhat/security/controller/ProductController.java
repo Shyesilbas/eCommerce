@@ -43,9 +43,10 @@ public class ProductController {
     @GetMapping("/categories")
     public List<String> getCategories() {
         return Arrays.stream(Category.values())
-                .map(Enum::name)
+                .map(Category::toDisplayName)
                 .toList();
     }
+
 
     @GetMapping("/totalCount")
     public ResponseEntity<Long> getTotalProductCount() {
