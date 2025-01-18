@@ -4,12 +4,13 @@ import Swal from "sweetalert2";
 import "../style/RegisterPage.css";
 import BasicInfoForm from "../components/user/RegisterUserForm.js";
 import AddressForm from "../components/user/RegisterAddressForm.js";
-import { registerRequest } from "../utils/api.js"; // API isteklerini import et
+import { registerRequest } from "../utils/api.js";
 
 const RegisterPage = () => {
     const [formData, setFormData] = useState({
         username: "",
         email: "",
+        phone: "",
         password: "",
         role: "CUSTOMER",
         address: [],
@@ -55,7 +56,6 @@ const RegisterPage = () => {
                 address: [addressForm],
             };
 
-            // API isteğini kullan
             await registerRequest(updatedFormData);
 
             Swal.fire({

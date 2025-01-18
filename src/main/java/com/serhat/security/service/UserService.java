@@ -46,9 +46,15 @@ public class UserService {
             throw new UsernameAlreadyExists("Username exists!");
         }
 
+        boolean isPhoneExists = userRepository.findByPhone(request.phone()).isPresent();
+        if (isPhoneExists) {
+            throw new UsernameAlreadyExists("Phone exists!");
+        }
+
         User user = User.builder()
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
+                .phone(request.phone())
                 .email(request.email())
                 .role(request.role())
                 .totalOrders(0)

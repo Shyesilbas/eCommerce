@@ -9,6 +9,7 @@ import com.serhat.security.service.AuthService;
 import com.serhat.security.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +37,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> register(@RequestBody RegisterRequest request){
+    public ResponseEntity<RegisterResponse> register(@RequestBody @Valid RegisterRequest request){
         log.debug("Received Register Request ");
         return ResponseEntity.ok(userService.register(request));
     }
