@@ -157,6 +157,7 @@ public class UserService {
                 .userId(user.getUserId())
                 .email(user.getEmail())
                 .username(user.getUsername())
+                .phone(user.getPhone())
                 .password(user.getPassword())
                 .totalOrders(user.getTotalOrders())
                 .role(user.getRole())

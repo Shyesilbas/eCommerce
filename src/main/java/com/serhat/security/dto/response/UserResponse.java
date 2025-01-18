@@ -9,6 +9,7 @@ public record UserResponse(
         Long userId,
         String email,
         String username,
+        String phone,
         String password,
         Role role,
         int totalOrders

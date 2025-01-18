@@ -1,53 +1,124 @@
+/* UserInfo.css */
 .user-info-container {
-    padding: 30px;
-    max-width: 900px;
+    padding: 20px;
+    max-width: 1200px;
     margin: 0 auto;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    font-family: 'Poppins', sans-serif;
 }
 
-.user-details {
+.user-header {
+    text-align: center;
     margin-bottom: 30px;
-    font-family: 'Arial', sans-serif;
-    color: #333;
+}
+
+.user-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.user-nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.nav-button {
+    padding: 10px 20px;
+    background-color: #f0f0f0; /* Soft gri */
+    color: #2c3e50; /* Koyu gri metin */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.nav-button:hover {
+    background-color: #e0e0e0; /* Biraz daha koyu gri */
+    transform: translateY(-2px);
+}
+
+.nav-button.active {
+    background-color: #2c3e50; /* Koyu gri */
+    color: white; /* Beyaz metin */
+    box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
+}
+
+.user-content {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.profile-section, .address-section, .notifications-section, .favorites-section, .orders-section, .reviews-section {
+    margin-bottom: 30px;
+}
+
+.address-section h2, .notifications-section h2, .favorites-section h2, .orders-section h2, .reviews-section h2 {
+    font-size: 22px;
+    font-weight: 500;
+    color: #34495e;
+    margin-bottom: 15px;
+}
+
+.address-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.action-button {
+    padding: 10px 20px;
+    background-color: #e0e0e0; /* Soft gri */
+    color: #2c3e50; /* Koyu gri metin */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.action-button:hover {
+    background-color: #d0d0d0; /* Biraz daha koyu gri */
+    transform: translateY(-2px);
 }
 
 .address-button, .logout-button {
     padding: 12px 24px;
-    margin: 10px 0;
-    cursor: pointer;
+    background-color: #2c3e50; /* Koyu gri */
+    color: white; /* Beyaz metin */
     border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white;
-    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .address-button:hover, .logout-button:hover {
-    background-color: #0056b3;
+    background-color: #34495e; /* Biraz daha açık gri */
     transform: translateY(-2px);
 }
 
-.address-info {
-    margin-top: 30px;
+.logout-button {
+    background-color: #dc3545; /* Kırmızı */
+    margin-top: 20px;
+    width: 100%;
+    max-width: 200px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.address-info ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.address-info li {
-    border: 1px solid #ddd;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    background-color: #fff;
-    transition: box-shadow 0.3s ease;
-}
-
-.address-info li:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+.logout-button:hover {
+    background-color: #c82333; /* Biraz daha koyu kırmızı */
 }
