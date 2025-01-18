@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "../style/RegisterPage.css";
+import BasicInfoForm from "../components/user/RegisterUserForm.js";
+import AddressForm from "../components/user/RegisterAddressForm.js";
+import { registerRequest } from "../utils/api.js"; // API isteklerini import et
 
 const RegisterPage = () => {
     const [formData, setFormData] = useState({
@@ -53,10 +55,8 @@ const RegisterPage = () => {
                 address: [addressForm],
             };
 
-            const registerResponse = await axios.post(
-                "http://localhost:8080/auth/register",
-                updatedFormData
-            );
+            // API isteğini kullan
+            await registerRequest(updatedFormData);
 
             Swal.fire({
                 icon: "success",
@@ -78,152 +78,26 @@ const RegisterPage = () => {
         }
     };
 
-    const renderBasicInfoForm = () => (
-        <form onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
-            <div className="form-group">
-                <label htmlFor="username">Username:</label>
-                <input
-                    type="text"
-                    id="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                    autoComplete={"off"}
-                />
-            </div>
-            <div className="form-group">
-                <label htmlFor="email">Email:</label>
-                <input
-                    type="email"
-                    id="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    autoComplete={"off"}
-                />
-            </div>
-            <div className="form-group">
-                <label htmlFor="password">Password:</label>
-                <input
-                    type="password"
-                    id="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                />
-            </div>
-            <div className="form-group">
-                <label htmlFor="role">Role:</label>
-                <select
-                    id="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                >
-                    <option value="CUSTOMER">Customer</option>
-                    <option value="ADMIN">Admin</option>
-                    <option value="SUPER_ADMIN">Super Admin</option>
-                    <option value="MANAGER">Manager</option>
-                    <option value="DEVELOPER">Developer</option>
-                    <option value="TESTER">Tester</option>
-                </select>
-            </div>
-            <button type="submit" className="submit-button">Continue</button>
-            <p>Already have an account? <a href="/login">Login</a></p>
-        </form>
-    );
-
-    const renderAddressForm = () => (
-        <form onSubmit={(e) => e.preventDefault()}>
-            <div className="form-group">
-                <label htmlFor="country">Country:</label>
-                <input
-                    type="text"
-                    id="country"
-                    value={addressForm.country}
-                    onChange={handleAddressChange}
-                    required
-                />
-            </div>
-            <div className="form-group">
-                <label htmlFor="city">City:</label>
-                <input
-                    type="text"
-                    id="city"
-                    value={addressForm.city}
-                    onChange={handleAddressChange}
-                    required
-                />
-            </div>
-            <div className="form-group">
-                <label htmlFor="street">Street:</label>
-                <input
-                    type="text"
-                    id="street"
-                    value={addressForm.street}
-                    onChange={handleAddressChange}
-                    required
-                />
-            </div>
-            <div className="form-group">
-                <label htmlFor="aptNo">Apartment No:</label>
-                <input
-                    type="text"
-                    id="aptNo"
-                    value={addressForm.aptNo}
-                    onChange={handleAddressChange}
-                    required
-                />
-            </div>
-            <div className="form-group">
-                <label htmlFor="flatNo">Flat No:</label>
-                <input
-                    type="text"
-                    id="flatNo"
-                    value={addressForm.flatNo}
-                    onChange={handleAddressChange}
-                    required
-                />
-            </div>
-            <div className="form-group">
-                <label htmlFor="description">Description:</label>
-                <input
-                    type="text"
-                    id="description"
-                    value={addressForm.description}
-                    onChange={handleAddressChange}
-                    required
-                />
-            </div>
-            <div className="form-group">
-                <label htmlFor="addressType">Address Type:</label>
-                <select
-                    id="addressType"
-                    value={addressForm.addressType}
-                    onChange={handleAddressChange}
-                >
-                    <option value="HOME">Home</option>
-                    <option value="WORK">Work</option>
-                    <option value="OTHER">Other</option>
-                </select>
-            </div>
-            <div className="button-container">
-                <button type="button" className="back-button" onClick={() => setStep(1)}>
-                    Back
-                </button>
-                <button type="submit" className="submit-button" onClick={handleSubmit}>
-                    Register
-                </button>
-            </div>
-        </form>
-    );
-
     return (
         <div className="register-container">
             <h2>Register</h2>
             {message.text && (
                 <p className={`message ${message.type}`}>{message.text}</p>
             )}
-            {step === 1 ? renderBasicInfoForm() : renderAddressForm()}
+            {step === 1 ? (
+                <BasicInfoForm
+                    formData={formData}
+                    handleChange={handleChange}
+                    setStep={setStep}
+                />
+            ) : (
+                <AddressForm
+                    addressForm={addressForm}
+                    handleAddressChange={handleAddressChange}
+                    setStep={setStep}
+                    handleSubmit={handleSubmit}
+                />
+            )}
         </div>
     );
 };

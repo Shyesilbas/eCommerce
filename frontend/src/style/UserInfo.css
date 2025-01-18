@@ -1,67 +1,37 @@
 .user-info-container {
-    max-width: 600px;
-    margin: 50px auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+    padding: 30px;
+    max-width: 900px;
+    margin: 0 auto;
     background-color: #f9f9f9;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.user-info-container h1 {
-    margin-bottom: 20px;
+.user-details {
+    margin-bottom: 30px;
+    font-family: 'Arial', sans-serif;
     color: #333;
 }
 
-.user-info-container p {
-    font-size: 18px;
-    color: #555;
-    margin: 10px 0;
-}
-
-.user-info-container button {
-    padding: 10px 20px;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 20px;
-}
-
-.user-info-container button:hover {
-    background-color: #c82333;
-}
-
-.address-button {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 10px 20px;
+.address-button, .logout-button {
+    padding: 12px 24px;
     margin: 10px 0;
     cursor: pointer;
+    border: none;
     border-radius: 5px;
+    background-color: #007bff;
+    color: white;
     font-size: 16px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.address-button:hover {
-    background-color: #45a049;
+.address-button:hover, .logout-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
 }
 
 .address-info {
-    margin-top: 20px;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-}
-
-.address-info h2 {
-    margin-bottom: 10px;
-    font-size: 20px;
-    color: #333;
+    margin-top: 30px;
 }
 
 .address-info ul {
@@ -69,12 +39,15 @@
     padding: 0;
 }
 
-.address-info ul li {
-    margin-bottom: 10px;
-    padding: 10px;
-    border-bottom: 1px solid #eee;
+.address-info li {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    background-color: #fff;
+    transition: box-shadow 0.3s ease;
 }
 
-.address-info ul li:last-child {
-    border-bottom: none;
+.address-info li:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }

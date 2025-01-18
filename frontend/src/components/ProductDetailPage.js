@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useParams } from "react-router-dom";
 import "../style/ProductPage.css";
+import { fetchProductById } from "../utils/api.js";
+import ProductDetails from "../components/product/ProductDetails";
+import CommentsSection from "../components/product/CommentsSection";
+
 
 const ProductDetailPage = () => {
     const { productId } = useParams();
@@ -10,40 +13,25 @@ const ProductDetailPage = () => {
     const [error, setError] = useState("");
 
     useEffect(() => {
-        axios.get(`http://localhost:8080/api/products/info/id/${productId}`)
-            .then(response => {
-                setProduct(response.data);
-                setLoading(false);
-            })
-            .catch(() => {
+        const loadProduct = async () => {
+            try {
+                const product = await fetchProductById(productId);
+                setProduct(product);
+            } catch (error) {
                 setError("Product not found or an error occurred.");
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        loadProduct();
     }, [productId]);
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>{error}</div>;
 
     return (
         <div className="product-detail-page">
-            <h1>{product.name}</h1>
-            <div className="product-details">
-                <p><strong>Product ID:</strong> {product.productId}</p>
-                <p><strong>Product Code:</strong> {product.productCode}</p>
-                <p><strong>Origin:</strong> {product.originOfCountry}</p>
-                <p><strong>Description:</strong> {product.description}</p>
-                <p><strong>Price:</strong> ${product.price}</p>
-                <p><strong>Brand:</strong> {product.brand}</p>
-                <p><strong>Rating:</strong> {product.averageRating}</p>
-                <p><strong>Stock Status:</strong> {product.stockStatus}</p>
-                <p><strong>Color:</strong> {product.color}</p>
-                <p><strong>Quantity:</strong> {product.quantity}</p>
-                <p><strong>Category:</strong> {product.category}</p>
-            </div>
-
-            <div className="comments-section">
-                <h2>Comments</h2>
-            </div>
+            <ProductDetails product={product} />
+            <CommentsSection />
         </div>
     );
 };

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import Swal from "sweetalert2";
 import "../style/UserInfo.css";
+import { getUserInfo, getUserAddress, logoutRequest } from "../utils/api.js";
+import UserDetails from "../components/user/UserDetails.js"
+import AddressInfo from "../components/user/AddressInfo.js";
 
 const UserInfo = ({ user, onLogout }) => {
     const navigate = useNavigate();
@@ -13,37 +15,23 @@ const UserInfo = ({ user, onLogout }) => {
     useEffect(() => {
         if (!user) {
             navigate("/login");
+            return;
         }
-    }, [user, navigate]);
 
-    useEffect(() => {
-        const fetchUserInfo = async () => {
+        const loadData = async () => {
             try {
-                const response = await axios.get("http://localhost:8080/user/myInfo", {
-                    withCredentials: true,
-                });
-                setUserInfo(response.data);
+                const userData = await getUserInfo();
+                setUserInfo(userData);
+
+                const addressData = await getUserAddress();
+                setAddress(addressData);
             } catch (err) {
-                console.error("Error fetching user info:", err);
+                console.error("Error loading data:", err);
                 navigate("/login");
             }
         };
 
-        const fetchAddressInfo = async () => {
-            try {
-                const response = await axios.get("http://localhost:8080/user/addressInfo", {
-                    withCredentials: true,
-                });
-                setAddress(response.data);
-            } catch (err) {
-                console.error("Error fetching address info:", err);
-            }
-        };
-
-        if (user) {
-            fetchUserInfo();
-            fetchAddressInfo();
-        }
+        loadData();
     }, [user, navigate]);
 
     const handleLogout = async () => {
@@ -58,23 +46,16 @@ const UserInfo = ({ user, onLogout }) => {
         });
 
         if (confirmation.isConfirmed) {
-            Swal.fire({
-                title: "Logging out...",
-                timer: 500,
-                timerProgressBar: false,
-                willClose: async () => {
-                    try {
-                        await axios.post("http://localhost:8080/auth/logout", {}, { withCredentials: true });
-                        localStorage.removeItem("user");
-                        onLogout();
-                        Swal.fire("Logged Out", "You have successfully logged out.", "success");
-                        navigate("/login");
-                    } catch (err) {
-                        console.error("Logout error:", err);
-                        Swal.fire("Error", "An error occurred while logging out.", "error");
-                    }
-                }
-            });
+            try {
+                await logoutRequest();
+                localStorage.removeItem("user");
+                onLogout();
+                await Swal.fire("Logged Out", "You have successfully logged out.", "success");
+                navigate("/login");
+            } catch (err) {
+                console.error("Logout error:", err);
+                Swal.fire("Error", "An error occurred while logging out.", "error");
+            }
         }
     };
 
@@ -93,40 +74,11 @@ const UserInfo = ({ user, onLogout }) => {
     return (
         <div className="user-info-container">
             <h1>Welcome, {userInfo.username || "N/A"}</h1>
-            <div className="user-details">
-                <p><strong>User ID:</strong> {userInfo?.userId || "N/A"}</p>
-                <p><strong>Username:</strong> {userInfo?.username || "N/A"}</p>
-                <p><strong>Email:</strong> {userInfo?.email || "N/A"}</p>
-                <p><strong>Total Orders:</strong> {userInfo?.totalOrders !== undefined ? userInfo.totalOrders : "N/A"}</p>
-            </div>
-
+            <UserDetails userInfo={userInfo} />
             <button onClick={toggleAddress} className="address-button">
                 {showAddress ? "Hide Address" : "Show Address"}
             </button>
-
-            {showAddress && (
-                <div className="address-info">
-                    <h2>Addresses</h2>
-                    {address.length > 0 ? (
-                        <ul>
-                            {address.map((addr, index) => (
-                                <li key={index}>
-                                    <p><strong>Country:</strong> {addr.country}</p>
-                                    <p><strong>City:</strong> {addr.city}</p>
-                                    <p><strong>Street:</strong> {addr.street}</p>
-                                    <p><strong>Apt No:</strong> {addr.aptNo}</p>
-                                    <p><strong>Flat No:</strong> {addr.flatNo}</p>
-                                    <p><strong>Description:</strong> {addr.description}</p>
-                                    <p><strong>Address Type:</strong> {addr.addressType}</p>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p>No addresses found.</p>
-                    )}
-                </div>
-            )}
-
+            {showAddress && <AddressInfo address={address} />}
             <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>
     );

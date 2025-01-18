@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { loginRequest, getUserInfo, getUserAddress } from "../utils/api.js";
+import usePasswordVisibility from "../hooks/usePasswordVisibility.js";
+import useFormData from "../hooks/useFormData.js";
+import useMessage from "../hooks/useMessage.js";
 import "../style/LoginPage.css";
 
 const LoginPage = ({ setUser, setAddress }) => {
-    const [formData, setFormData] = useState({ username: "", password: "" });
-    const [message, setMessage] = useState({ type: "", text: "" });
-    const [showPassword, setShowPassword] = useState(false);
+    const { formData, handleChange } = useFormData({ username: "", password: "" });
+    const { showPassword, togglePasswordVisibility } = usePasswordVisibility();
+    const { message, setErrorMessage, setSuccessMessage } = useMessage();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -20,15 +23,6 @@ const LoginPage = ({ setUser, setAddress }) => {
         }
     }, [navigate, setUser, setAddress]);
 
-    const handleChange = (e) => {
-        const { id, value } = e.target;
-        setFormData((prev) => ({ ...prev, [id]: value }));
-    };
-
-    const togglePasswordVisibility = () => {
-        setShowPassword(!showPassword);
-    };
-
     const handleLogin = (userData, addressData) => {
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("address", JSON.stringify(addressData));
@@ -41,34 +35,18 @@ const LoginPage = ({ setUser, setAddress }) => {
         e.preventDefault();
 
         try {
-            const loginResponse = await axios.post(
-                "http://localhost:8080/auth/login",
-                formData,
-                { withCredentials: true }
-            );
+            const loginData = await loginRequest(formData);
+            const userInfo = await getUserInfo();
+            const addressInfo = await getUserAddress();
 
-            const userInfoResponse = await axios.get("http://localhost:8080/user/myInfo", {
-                withCredentials: true,
-            });
-
-            const addressInfoResponse = await axios.get("http://localhost:8080/user/addressInfo", {
-                withCredentials: true,
-            });
-
-            const userData = userInfoResponse.data;
-            const addressData = addressInfoResponse.data;
-
-            // Save user data to localStorage
-            handleLogin(userData, addressData);
-
-            console.log("User Info:", userData);
-            console.log("Address Info:", addressData);
+            handleLogin(userInfo, addressInfo);
+            setSuccessMessage("Login successful!");
 
             navigate("/user-info");
         } catch (err) {
             console.error("Login error:", err);
             const errorMessage = err.response?.data?.message || "Invalid credentials. Please try again.";
-            setMessage({ type: "error", text: errorMessage });
+            setErrorMessage(errorMessage);
         }
     };
 

@@ -18,7 +18,7 @@ const Sidebar = ({ isOpen, setIsOpen, user, onLogout }) => {
                 icon: "warning",
                 title: "Login Required",
                 text: "Please login to access your profile.",
-                confirmButtonText: "Go to Login",
+                confirmButtonText: "Login",
             }).then((result) => {
                 if (result.isConfirmed) {
                     navigate("/login");
