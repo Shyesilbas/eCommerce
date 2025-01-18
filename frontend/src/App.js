@@ -21,7 +21,7 @@ const App = () => {
 
     return (
         <Router>
-            <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} user={user} />
+            <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} user={user} onLogout={handleLogout} />
             <div style={{ marginLeft: isSidebarOpen ? "250px" : "50px", transition: "margin-left 0.3s ease" }}>
                 <Routes>
                     <Route

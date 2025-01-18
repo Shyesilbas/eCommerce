@@ -37,9 +37,11 @@ const Sidebar = ({ isOpen, setIsOpen, user, onLogout }) => {
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         const username = user?.username || storedUser?.username || "User";
 
+        console.log("Logout initiated for user:", username);
+
         const confirmation = await Swal.fire({
             title: `Goodbye, ${username}`,
-            text:"Do you really want to log out?",
+            text: "Do you really want to log out?",
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
@@ -48,23 +50,26 @@ const Sidebar = ({ isOpen, setIsOpen, user, onLogout }) => {
         });
 
         if (confirmation.isConfirmed) {
-            Swal.fire({
-                title: "Logging out...",
-                timer: 500,
-                timerProgressBar: false,
-                willClose: async () => {
-                    try {
-                        await axios.post("http://localhost:8080/auth/logout", {}, { withCredentials: true });
-                        localStorage.removeItem("user");
-                        onLogout();
-                        Swal.fire("Logged Out", "You have successfully logged out.", "success");
-                        navigate("/login");
-                    } catch (err) {
-                        console.error("Logout error:", err);
-                        Swal.fire("Error", "An error occurred while logging out.", "error");
-                    }
-                }
-            });
+            try {
+                console.log("Attempting to log out...");
+                await axios.post("http://localhost:8080/auth/logout", {}, { withCredentials: true });
+                console.log("Logout successful on backend.");
+
+                localStorage.removeItem("user");
+                setIsAuthenticated(false);
+                onLogout();
+
+                console.log("Local storage cleared and state updated.");
+
+                await Swal.fire("Logged Out", "You have successfully logged out.", "success");
+                console.log("SweetAlert2 success message shown.");
+
+                navigate("/login");
+                console.log("Navigated to login page.");
+            } catch (err) {
+                console.error("Logout error:", err);
+                Swal.fire("Error", "An error occurred while logging out.", "error");
+            }
         }
     };
 
