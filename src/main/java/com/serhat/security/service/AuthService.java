@@ -97,12 +97,19 @@ public class AuthService {
         userToken.setExpired_at(LocalDateTime.now());
         tokenRepository.save(userToken);
 
-        Cookie logoutCookie = new Cookie("jwt", null);
-        logoutCookie.setHttpOnly(true);
-        logoutCookie.setSecure(true);
-        logoutCookie.setPath("/");
-        logoutCookie.setMaxAge(0);
-        response.addCookie(logoutCookie);
+        Cookie logoutCookieJwt = new Cookie("jwt", null);
+        logoutCookieJwt.setHttpOnly(true);
+        logoutCookieJwt.setSecure(true);
+        logoutCookieJwt.setPath("/");
+        logoutCookieJwt.setMaxAge(0);
+        response.addCookie(logoutCookieJwt);
+
+        Cookie logoutCookieSessionID = new Cookie("JSESSIONID", null);
+        logoutCookieSessionID.setHttpOnly(true);
+        logoutCookieSessionID.setSecure(true);
+        logoutCookieSessionID.setPath("/");
+        logoutCookieSessionID.setMaxAge(0);
+        response.addCookie(logoutCookieSessionID);
 
         log.info("Logout successful for user: {}", username);
 

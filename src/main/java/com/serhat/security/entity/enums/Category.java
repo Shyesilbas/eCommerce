@@ -1,24 +1,32 @@
 package com.serhat.security.entity.enums;
 
-public enum Category {
-    ELECTRONICS,
-    CLOTHING,
-    HOME_AND_KITCHEN,
-    BOOKS_AND_STATIONERY,
-    SPORTS_AND_OUTDOORS,
-    BEAUTY_AND_COSMETICS,
-    TOYS_AND_GAMES,
-    AUTOMOTIVE,
-    HEALTH_AND_WELLNESS,
-    GROCERY;
+import lombok.Getter;
 
-    public String toDisplayName() {
-        return this.name().replace("_", " ")
-                .toLowerCase()
-                .replace("ı","i")
-                .replaceFirst(
-                        this.name().substring(0, 1).toLowerCase(),
-                        this.name().substring(0, 1)
-                );
+@Getter
+public enum Category {
+    ELECTRONICS("Electronics"),
+    CLOTHING("Clothing"),
+    HOME_AND_KITCHEN("Home and Kitchen"),
+    BOOKS_AND_STATIONERY("Books and Stationery"),
+    SPORTS_AND_OUTDOORS("Sports and Outdoors"),
+    BEAUTY_AND_COSMETICS("Beauty and Cosmetics"),
+    TOYS_AND_GAMES("Toys and Games"),
+    AUTOMOTIVE("Automotive"),
+    HEALTH_AND_WELLNESS("Health and Wellness"),
+    GROCERY("Grocery");
+
+    private final String displayName;
+
+    Category(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public static Category fromDisplayName(String displayName) {
+        for (Category category : Category.values()) {
+            if (category.getDisplayName().equalsIgnoreCase(displayName)) {
+                return category;
+            }
+        }
+        throw new IllegalArgumentException("No enum constant with display name: " + displayName);
     }
 }

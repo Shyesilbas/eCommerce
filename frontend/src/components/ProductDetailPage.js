@@ -29,6 +29,7 @@ const ProductDetailPage = () => {
             <h1>{product.name}</h1>
             <div className="product-details">
                 <p><strong>Product ID:</strong> {product.productId}</p>
+                <p><strong>Product Code:</strong> {product.productCode}</p>
                 <p><strong>Origin:</strong> {product.originOfCountry}</p>
                 <p><strong>Description:</strong> {product.description}</p>
                 <p><strong>Price:</strong> ${product.price}</p>

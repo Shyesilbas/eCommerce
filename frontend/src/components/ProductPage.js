@@ -31,6 +31,28 @@ const ProductPage = ({ user }) => {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
 
+    const CATEGORY_DISPLAY_NAMES = {
+        ELECTRONICS: "Electronics",
+        CLOTHING: "Clothing",
+        HOME_AND_KITCHEN: "Home and Kitchen",
+        BOOKS_AND_STATIONERY: "Books and Stationery",
+        SPORTS_AND_OUTDOORS: "Sports and Outdoors",
+        BEAUTY_AND_COSMETICS: "Beauty and Cosmetics",
+        TOYS_AND_GAMES: "Toys and Games",
+        AUTOMOTIVE: "Automotive",
+        HEALTH_AND_WELLNESS: "Health and Wellness",
+        GROCERY: "Grocery"
+    };
+
+    const getDisplayNameFromEnum = (enumValue) => {
+        return CATEGORY_DISPLAY_NAMES[enumValue] || enumValue;
+    };
+
+    const getEnumKeyFromDisplayName = (displayName) => {
+        return Object.entries(CATEGORY_DISPLAY_NAMES)
+            .find(([key, value]) => value === displayName)?.[0] || displayName;
+    };
+
     useEffect(() => {
         axios.get("http://localhost:8080/api/products/totalCount")
             .then(response => {
@@ -44,7 +66,8 @@ const ProductPage = ({ user }) => {
     useEffect(() => {
         axios.get("http://localhost:8080/api/products/categories")
             .then(response => {
-                setCategories(["All Products", ...response.data]);
+                const enumCategories = response.data.map(category => CATEGORY_DISPLAY_NAMES[category] || category);
+                setCategories(["All Products", ...enumCategories]);
             })
             .catch(() => setCategories(["All Products"]));
     }, []);
@@ -57,12 +80,16 @@ const ProductPage = ({ user }) => {
 
             const params = selectedCategory === "All Products" || !selectedCategory
                 ? { page: currentPage, size: 10 }
-                : { category: selectedCategory, page: currentPage, size: 10 };
+                : { category: getEnumKeyFromDisplayName(selectedCategory), page: currentPage, size: 10 };
 
             axios.get(endpoint, { params })
                 .then(response => {
                     if (response.data && Array.isArray(response.data.content)) {
-                        setProducts(response.data.content);
+                        const productsWithDisplayNames = response.data.content.map(prod => ({
+                            ...prod,
+                            category: getDisplayNameFromEnum(prod.category)
+                        }));
+                        setProducts(productsWithDisplayNames);
                         setTotalPages(response.data.totalPages);
                     }
                 })
@@ -73,7 +100,8 @@ const ProductPage = ({ user }) => {
 
     useEffect(() => {
         if (selectedCategory !== "All Products") {
-            axios.get(`http://localhost:8080/api/products/totalCountByCategory?category=${selectedCategory}`)
+            const enumCategory = getEnumKeyFromDisplayName(selectedCategory);
+            axios.get(`http://localhost:8080/api/products/totalCountByCategory?category=${enumCategory}`)
                 .then(response => {
                     setCategoryProductCount(response.data);
                 })
@@ -93,7 +121,11 @@ const ProductPage = ({ user }) => {
         }
         axios.get(`http://localhost:8080/api/products/info/${productCode}`)
             .then(response => {
-                setProduct(response.data);
+                const productWithDisplayName = {
+                    ...response.data,
+                    category: getDisplayNameFromEnum(response.data.category)
+                };
+                setProduct(productWithDisplayName);
                 setError("");
             })
             .catch(() => {
@@ -108,7 +140,12 @@ const ProductPage = ({ user }) => {
 
     const handleAddProduct = (e) => {
         e.preventDefault();
-        axios.post("http://localhost:8080/api/products/addProduct", newProduct, { withCredentials: true })
+        const productData = {
+            ...newProduct,
+            category: getEnumKeyFromDisplayName(newProduct.category)
+        };
+
+        axios.post("http://localhost:8080/api/products/addProduct", productData, { withCredentials: true })
             .then(response => {
                 Swal.fire("Success", response.data.message, "success");
                 setShowAddProductForm(false);
@@ -158,7 +195,6 @@ const ProductPage = ({ user }) => {
                 </ul>
             </div>
 
-            {/* Main Content */}
             <div className="main-content">
                 <h1>Product Management</h1>
                 <div className="total-product-count">
@@ -175,25 +211,6 @@ const ProductPage = ({ user }) => {
                     <button onClick={fetchProductInfo}>Search</button>
                 </div>
 
-                <div className="product-info-section">
-                    {error && <p className="error-message">{error}</p>}
-                    {product && (
-                        <div className="product-details">
-                            <h3>{product.name}</h3>
-                            <p><strong>Product ID:</strong> {product.productId}</p>
-                            <p><strong>Origin:</strong> {product.originOfCountry}</p>
-                            <p><strong>Description:</strong> {product.description}</p>
-                            <p><strong>Price:</strong> ${product.price}</p>
-                            <p><strong>Brand:</strong> {product.brand}</p>
-                            <p><strong>Rating:</strong> {product.averageRating}</p>
-                            <p><strong>Stock Status:</strong> {product.stockStatus}</p>
-                            <p><strong>Color:</strong> {product.color}</p>
-                            <p><strong>Quantity:</strong> {product.quantity}</p>
-                            <p><strong>Category:</strong> {product.category}</p>
-                        </div>
-                    )}
-                </div>
-
                 <div className="products-by-category">
                     <h2>{selectedCategory === "All Products" ? "All Products" : `Products in ${selectedCategory}`}</h2>
                     <div className="product-list">
@@ -201,6 +218,7 @@ const ProductPage = ({ user }) => {
                             <div key={prod.productId} className="product-card">
                                 <h3>{prod.name}</h3>
                                 <p><strong>Price:</strong> ${prod.price}</p>
+                                <p><strong>Code:</strong> {prod.productCode}</p>
                                 <p><strong>Stock Status:</strong> {prod.stockStatus}</p>
                                 <p><strong>Category:</strong> {prod.category}</p>
                                 <button
@@ -236,103 +254,125 @@ const ProductPage = ({ user }) => {
                             {showAddProductForm ? "Hide Add Product Form" : "Add New Product"}
                         </button>
                         {showAddProductForm && (
-                            <form onSubmit={handleAddProduct} className="add-product-form">
-                                <input
-                                    type="text"
-                                    name="name"
-                                    placeholder="Name"
-                                    value={newProduct.name}
-                                    onChange={handleNewProductChange}
-                                    required
-                                />
-                                <input
-                                    type="text"
-                                    name="originOfCountry"
-                                    placeholder="Origin of Country"
-                                    value={newProduct.originOfCountry}
-                                    onChange={handleNewProductChange}
-                                    required
-                                />
-                                <input
-                                    type="text"
-                                    name="productCode"
-                                    placeholder="Product Code"
-                                    value={newProduct.productCode}
-                                    onChange={handleNewProductChange}
-                                    required
-                                />
-                                <textarea
-                                    name="description"
-                                    placeholder="Description"
-                                    value={newProduct.description}
-                                    onChange={handleNewProductChange}
-                                    required
-                                />
-                                <input
-                                    type="number"
-                                    name="price"
-                                    placeholder="Price"
-                                    value={newProduct.price}
-                                    onChange={handleNewProductChange}
-                                    required
-                                />
-                                <input
-                                    type="text"
-                                    name="brand"
-                                    placeholder="Brand"
-                                    value={newProduct.brand}
-                                    onChange={handleNewProductChange}
-                                    required
-                                />
-                                <input
-                                    type="number"
-                                    name="averageRating"
-                                    placeholder="Average Rating"
-                                    value={newProduct.averageRating}
-                                    onChange={handleNewProductChange}
-                                    required
-                                />
-                                <select
-                                    name="stockStatus"
-                                    value={newProduct.stockStatus}
-                                    onChange={handleNewProductChange}
-                                    required
-                                >
-                                    <option value="">Select Stock Status</option>
-                                    <option value="AVAILABLE">Available</option>
-                                    <option value="OUT_OF_STOCKS">Out of Stocks</option>
-                                </select>
-                                <input
-                                    type="text"
-                                    name="color"
-                                    placeholder="Color"
-                                    value={newProduct.color}
-                                    onChange={handleNewProductChange}
-                                    required
-                                />
-                                <input
-                                    type="number"
-                                    name="quantity"
-                                    placeholder="Quantity"
-                                    value={newProduct.quantity}
-                                    onChange={handleNewProductChange}
-                                    required
-                                />
-                                <select
-                                    name="category"
-                                    value={newProduct.category}
-                                    onChange={handleNewProductChange}
-                                    required
-                                >
-                                    <option value="">Select Category</option>
-                                    {categories.map((category, index) => (
-                                        <option key={index} value={category}>
-                                            {category}
-                                        </option>
-                                    ))}
-                                </select>
-                                <button type="submit" className="submit-button">Add Product</button>
-                            </form>
+                            <div className="modal-overlay">
+                                <div className="modal-content">
+                                    <div className="modal-header">
+                                        <h2>Add New Product</h2>
+                                        <button className="modal-close-button" onClick={toggleAddProductForm}>
+                                            &times;
+                                        </button>
+                                    </div>
+                                    <div className="modal-body">
+                                        <form onSubmit={handleAddProduct} className="add-product-form">
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                placeholder="Name"
+                                                value={newProduct.name}
+                                                onChange={handleNewProductChange}
+                                                required
+                                            />
+                                            <input
+                                                type="text"
+                                                name="originOfCountry"
+                                                placeholder="Origin of Country"
+                                                value={newProduct.originOfCountry}
+                                                onChange={handleNewProductChange}
+                                                required
+                                            />
+                                            <input
+                                                type="text"
+                                                name="productCode"
+                                                placeholder="Product Code"
+                                                value={newProduct.productCode}
+                                                onChange={handleNewProductChange}
+                                                required
+                                            />
+                                            <textarea
+                                                name="description"
+                                                placeholder="Description"
+                                                value={newProduct.description}
+                                                onChange={handleNewProductChange}
+                                                required
+                                            />
+                                            <input
+                                                type="number"
+                                                name="price"
+                                                placeholder="Price"
+                                                value={newProduct.price}
+                                                onChange={handleNewProductChange}
+                                                required
+                                            />
+                                            <input
+                                                type="text"
+                                                name="brand"
+                                                placeholder="Brand"
+                                                value={newProduct.brand}
+                                                onChange={handleNewProductChange}
+                                                required
+                                            />
+                                            <input
+                                                type="number"
+                                                name="averageRating"
+                                                placeholder="Average Rating"
+                                                value={newProduct.averageRating}
+                                                onChange={handleNewProductChange}
+                                                required
+                                            />
+                                            <select
+                                                name="stockStatus"
+                                                value={newProduct.stockStatus}
+                                                onChange={handleNewProductChange}
+                                                required
+                                            >
+                                                <option value="">Select Stock Status</option>
+                                                <option value="AVAILABLE">Available</option>
+                                                <option value="OUT_OF_STOCKS">Out of Stocks</option>
+                                            </select>
+                                            <input
+                                                type="text"
+                                                name="color"
+                                                placeholder="Color"
+                                                value={newProduct.color}
+                                                onChange={handleNewProductChange}
+                                                required
+                                            />
+                                            <input
+                                                type="number"
+                                                name="quantity"
+                                                placeholder="Quantity"
+                                                value={newProduct.quantity}
+                                                onChange={handleNewProductChange}
+                                                required
+                                            />
+                                            <select
+                                                name="category"
+                                                value={newProduct.category}
+                                                onChange={handleNewProductChange}
+                                                required
+                                            >
+                                                <option value="">Select Category</option>
+                                                {categories
+                                                    .filter(category => category !== "All Products")
+                                                    .map((category, index) => (
+                                                        <option key={index} value={category}>
+                                                            {category}
+                                                        </option>
+                                                    ))
+                                                }
+                                            </select>
+                                            <div className="modal-footer">
+                                                <button type="button" onClick={toggleAddProductForm}>
+                                                    Cancel
+                                                </button>
+                                                <button type="submit" className="submit-button">
+                                                    Add Product
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </div>
                 )}

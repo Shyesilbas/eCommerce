@@ -1,6 +1,8 @@
 package com.serhat.security.dto.request;
 
 
+import com.serhat.security.entity.enums.Category;
+
 import java.math.BigDecimal;
 
 public record ProductRequest(
@@ -15,4 +17,6 @@ public record ProductRequest(
         String color,
         int quantity,
         String category
-) {}
+) {
+
+}

@@ -43,7 +43,7 @@ public class ProductController {
     @GetMapping("/categories")
     public List<String> getCategories() {
         return Arrays.stream(Category.values())
-                .map(Category::toDisplayName)
+                .map(Category::getDisplayName)
                 .toList();
     }
 
@@ -72,6 +72,7 @@ public class ProductController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/addProduct")
+
     public ResponseEntity<ProductResponse> addProduct(@RequestBody ProductRequest request , HttpServletRequest servletRequest){
         return ResponseEntity.ok(productService.addProduct(request, servletRequest));
     }

@@ -51,10 +51,11 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/products/totalCount").permitAll()
                         .requestMatchers("/api/products/totalCountByCategory").permitAll()
                         .requestMatchers("/auth/test/CUSTOMER").hasRole("CUSTOMER")
+                        .requestMatchers("/api/products/addProduct").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
                 .authenticationProvider(authenticationProvider())
