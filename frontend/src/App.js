@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
 import UserInfo from "./components/UserInfo";
@@ -15,6 +15,8 @@ const App = () => {
     const handleLogout = () => {
         setUser(null);
         setAddress([]);
+        localStorage.removeItem("user");
+        localStorage.removeItem("address");
     };
 
     return (

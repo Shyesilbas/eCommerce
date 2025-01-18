@@ -98,6 +98,8 @@ const ProductPage = ({ user }) => {
         fetchProducts();
     }, [currentPage, selectedCategory]);
 
+
+
     useEffect(() => {
         if (selectedCategory !== "All Products") {
             const enumCategory = getEnumKeyFromDisplayName(selectedCategory);
@@ -178,6 +180,8 @@ const ProductPage = ({ user }) => {
         if (direction === "next" && currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
     };
 
+
+
     return (
         <div className="product-page-container">
             <div className="categories-section">
@@ -199,16 +203,6 @@ const ProductPage = ({ user }) => {
                 <h1>Product Management</h1>
                 <div className="total-product-count">
                     <strong>{selectedCategory === "All Products" ? "Total Products:" : `Total Products in ${selectedCategory}:`}</strong> {categoryProductCount}
-                </div>
-
-                <div className="search-bar-container">
-                    <input
-                        type="text"
-                        placeholder="Enter Product Code"
-                        value={productCode}
-                        onChange={(e) => setProductCode(e.target.value)}
-                    />
-                    <button onClick={fetchProductInfo}>Search</button>
                 </div>
 
                 <div className="products-by-category">

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../style/LoginPage.css";
@@ -9,6 +9,17 @@ const LoginPage = ({ setUser, setAddress }) => {
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const storedUser = localStorage.getItem("user");
+        const storedAddress = localStorage.getItem("address");
+
+        if (storedUser && storedAddress) {
+            setUser(JSON.parse(storedUser));
+            setAddress(JSON.parse(storedAddress));
+            navigate("/user-info");
+        }
+    }, [navigate, setUser, setAddress]);
+
     const handleChange = (e) => {
         const { id, value } = e.target;
         setFormData((prev) => ({ ...prev, [id]: value }));
@@ -16,6 +27,14 @@ const LoginPage = ({ setUser, setAddress }) => {
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
+    };
+
+    const handleLogin = (userData, addressData) => {
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("address", JSON.stringify(addressData));
+
+        setUser(userData);
+        setAddress(addressData);
     };
 
     const handleSubmit = async (e) => {
@@ -36,16 +55,18 @@ const LoginPage = ({ setUser, setAddress }) => {
                 withCredentials: true,
             });
 
-            setUser(userInfoResponse.data);
-            setAddress(addressInfoResponse.data);
+            const userData = userInfoResponse.data;
+            const addressData = addressInfoResponse.data;
 
-            console.log("User Info:", userInfoResponse.data);
-            console.log("Address Info:", addressInfoResponse.data);
+            // Save user data to localStorage
+            handleLogin(userData, addressData);
+
+            console.log("User Info:", userData);
+            console.log("Address Info:", addressData);
 
             navigate("/user-info");
         } catch (err) {
             console.error("Login error:", err);
-            console.error("Error response:", err.response);
             const errorMessage = err.response?.data?.message || "Invalid credentials. Please try again.";
             setMessage({ type: "error", text: errorMessage });
         }
@@ -66,29 +87,29 @@ const LoginPage = ({ setUser, setAddress }) => {
                         value={formData.username}
                         onChange={handleChange}
                         required
-                        autoComplete={"off"}
+                        autoComplete="off"
                     />
                 </div>
                 <div className="form-group">
                     <label htmlFor="password">Password:</label>
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            id="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                            style={{ paddingRight: "10px" }}
-                        />
-                        <span
-                            onClick={togglePasswordVisibility}
-                            className="password-toggle"
-                            style={{ marginTop: '11px', display: 'inline-block' }}
-                        >
-                            {showPassword ? "👀" : "🔒"}
-                        </span>
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        style={{ paddingRight: "10px" }}
+                    />
+                    <span
+                        onClick={togglePasswordVisibility}
+                        className="password-toggle"
+                        style={{ marginTop: '11px', display: 'inline-block' }}
+                    >
+                        {showPassword ? "👀" : "🔒"}
+                    </span>
                 </div>
                 <button type="submit" className="submit-button">Login</button>
-                <p>Don't have an account? <a href="/register">Create</a></p>
+                <p>Don't have an account? <a href="/register">Create one</a></p>
             </form>
         </div>
     );
