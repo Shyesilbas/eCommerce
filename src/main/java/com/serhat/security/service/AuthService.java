@@ -4,8 +4,10 @@ import com.serhat.security.dto.request.LoginRequest;
 import com.serhat.security.dto.response.AuthResponse;
 import com.serhat.security.entity.Token;
 import com.serhat.security.entity.User;
+import com.serhat.security.entity.enums.Role;
 import com.serhat.security.entity.enums.TokenStatus;
-import com.serhat.security.exception.InvalidTokenFormat;
+import com.serhat.security.exception.InvalidCredentialsException;
+import com.serhat.security.exception.TokenNotFoundException;
 import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.repository.TokenRepository;
 import com.serhat.security.repository.UserRepository;
@@ -20,12 +22,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
+
     private final JwtUtil jwtUtil;
     private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
@@ -35,92 +40,71 @@ public class AuthService {
     private long expirationTime;
 
     @Transactional
-    public AuthResponse login(LoginRequest request , HttpServletResponse response) {
+    public AuthResponse login(LoginRequest request, HttpServletResponse response) {
         log.info("Attempting login for user: {}", request.username());
 
-        User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
-
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            log.warn("Invalid password attempt for user: {}", request.username());
-            throw new RuntimeException("Invalid credentials");
-        }
+        User user = findUserByUsername(request.username());
+        validatePassword(request.password(), user.getPassword());
 
         String token = jwtUtil.generateToken(user, user.getRole());
         saveUserToken(user, token);
-
-        Cookie cookie = new Cookie("jwt", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false);
-        cookie.setPath("/");
-        cookie.setMaxAge((int) expirationTime/1000);
-        response.addCookie(cookie);
-
-
+        setJwtCookie(response, token);
 
         log.info("Login successful for user: {}", request.username());
-        return AuthResponse.builder()
-                .token(token)
-                .username(user.getUsername())
-                .role(user.getRole())
-                .message("Login successful")
-                .build();
+        return createAuthResponse(token, user.getUsername(), user.getRole(),"Login Successful!");
     }
 
     @Transactional
     public AuthResponse logout(HttpServletRequest request, HttpServletResponse response) {
         log.info("Processing logout request");
 
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
-            throw new RuntimeException("No cookies found");
-        }
-
-        String jwtToken = null;
-        for (Cookie cookie : cookies) {
-            if ("jwt".equals(cookie.getName())) {
-                jwtToken = cookie.getValue();
-                break;
-            }
-        }
-
-        if (jwtToken == null) {
-            throw new RuntimeException("JWT not found in cookies");
-        }
+        String jwtToken = extractJwtFromCookies(request);
+        invalidateToken(jwtToken);
+        clearCookie(response, "jwt");
+        clearCookie(response, "JSESSIONID");
+        request.getSession().invalidate();
 
         String username = jwtUtil.extractUsername(jwtToken);
-
-        Token userToken = tokenRepository.findByToken(jwtToken)
-                .orElseThrow(() -> new RuntimeException("Token not found"));
-
-        userToken.setTokenStatus(TokenStatus.LOGGED_OUT);
-        userToken.setExpired_at(LocalDateTime.now());
-        tokenRepository.save(userToken);
-
-        Cookie logoutCookieJwt = new Cookie("jwt", null);
-        logoutCookieJwt.setHttpOnly(true);
-        logoutCookieJwt.setSecure(true);
-        logoutCookieJwt.setPath("/");
-        logoutCookieJwt.setMaxAge(0);
-        response.addCookie(logoutCookieJwt);
-
-        Cookie logoutCookieSessionID = new Cookie("JSESSIONID", null);
-        logoutCookieSessionID.setHttpOnly(true);
-        logoutCookieSessionID.setSecure(true);
-        logoutCookieSessionID.setPath("/");
-        logoutCookieSessionID.setMaxAge(0);
-        response.addCookie(logoutCookieSessionID);
-
+        Role role = jwtUtil.extractRole(jwtToken);
         log.info("Logout successful for user: {}", username);
+        log.info("Session Invalidated After logout request from : "+username);
 
-        return AuthResponse.builder()
-                .token(jwtToken)
-                .message("Logout successful")
-                .username(username)
-                .role(jwtUtil.extractRole(jwtToken))
-                .build();
+
+        return createAuthResponse(jwtToken, username, role, "Logout successful");
     }
 
+    private User findUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
+    }
+
+    private void validatePassword(String rawPassword, String encodedPassword) {
+        if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
+            log.warn("Invalid password attempt");
+            throw new InvalidCredentialsException("Invalid credentials");
+        }
+    }
+
+    private String extractJwtFromCookies(HttpServletRequest request) {
+        Cookie[] cookies = Optional.ofNullable(request.getCookies())
+                .orElseThrow(() -> new RuntimeException("No cookies found"));
+
+        return Arrays.stream(cookies)
+                .filter(cookie -> "jwt".equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElseThrow(() -> new TokenNotFoundException("JWT not found in cookies"));
+    }
+
+    private void invalidateToken(String jwtToken) {
+        Token token = tokenRepository.findByToken(jwtToken)
+                .orElseThrow(() -> new TokenNotFoundException("Token not found"));
+
+        token.setTokenStatus(TokenStatus.LOGGED_OUT);
+        token.setExpired_at(LocalDateTime.now());
+        tokenRepository.save(token);
+        log.debug("Token invalidated: {}", jwtToken);
+    }
 
     private void saveUserToken(User user, String token) {
         Token newToken = Token.builder()
@@ -133,5 +117,34 @@ public class AuthService {
 
         tokenRepository.save(newToken);
         log.debug("Token saved for user: {}", user.getUsername());
+    }
+
+    private void setJwtCookie(HttpServletResponse response, String token) {
+        Cookie cookie = new Cookie("jwt", token);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge((int) expirationTime / 1000);
+        response.addCookie(cookie);
+        log.debug("JWT cookie set");
+    }
+
+    private void clearCookie(HttpServletResponse response, String name) {
+        Cookie cookie = new Cookie(name, null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+    }
+
+
+    private AuthResponse createAuthResponse(String token, String username, Role role, String message) {
+        return AuthResponse.builder()
+                .token(token)
+                .username(username)
+                .role(role)
+                .message(message)
+                .build();
     }
 }

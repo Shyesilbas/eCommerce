@@ -96,6 +96,13 @@ const BasicInfoForm = ({ formData, handleChange, setStep }) => {
                     required
                     minLength={6}
                 />
+                <span
+                    onClick={togglePasswordVisibility}
+                    className="password-toggle"
+                    style={{marginTop: '11px', display: 'inline-block'}}
+                >
+                        {showPassword ? "👀" : "🔒"}
+                    </span>
                 {passwordFocused && (
                     <div className="password-rules">
                         <ul>

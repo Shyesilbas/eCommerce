@@ -14,7 +14,7 @@ public record RegisterRequest(
         @NotBlank(message = "Password cannot be empty")
         @Size(min = 6, message = "Password must be at least 6 characters long")
         @Pattern(
-                regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*]).{6,}$",
+                regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*.]).{6,}$",
                 message = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character."
         )
         String password,

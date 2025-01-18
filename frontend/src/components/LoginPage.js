@@ -1,15 +1,17 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginRequest, getUserInfo, getUserAddress } from "../utils/api.js";
 import usePasswordVisibility from "../hooks/usePasswordVisibility.js";
 import useFormData from "../hooks/useFormData.js";
 import useMessage from "../hooks/useMessage.js";
+import ForgotPasswordModal from "./ForgotPasswordModal.js";
 import "../style/LoginPage.css";
 
 const LoginPage = ({ setUser, setAddress }) => {
     const { formData, handleChange } = useFormData({ username: "", password: "" });
     const { showPassword, togglePasswordVisibility } = usePasswordVisibility();
     const { message, setErrorMessage, setSuccessMessage } = useMessage();
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -76,19 +78,26 @@ const LoginPage = ({ setUser, setAddress }) => {
                         value={formData.password}
                         onChange={handleChange}
                         required
-                        style={{ paddingRight: "10px" }}
+                        style={{paddingRight: "10px"}}
                     />
                     <span
                         onClick={togglePasswordVisibility}
                         className="password-toggle"
-                        style={{ marginTop: '11px', display: 'inline-block' }}
+                        style={{marginTop: '11px', display: 'inline-block'}}
                     >
                         {showPassword ? "👀" : "🔒"}
                     </span>
                 </div>
                 <button type="submit" className="submit-button">Login</button>
                 <p>Don't have an account? <a href="/register">Create one</a></p>
+                <p><a href="#" onClick={(e) => {
+                    e.preventDefault();
+                    setShowForgotPassword(true);  // Open the modal
+                }}>Forgot Password?</a></p>
             </form>
+
+            {/* Conditionally render ForgotPasswordModal */}
+            {showForgotPassword && <ForgotPasswordModal onClose={() => setShowForgotPassword(false)} />}
         </div>
     );
 };

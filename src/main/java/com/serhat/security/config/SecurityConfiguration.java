@@ -49,6 +49,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/login","/auth/register","/auth/logout","/api/products/info/id/{productCode}","/api/products/info/{productCode}","/api/products/allProducts","/api/products/categories").permitAll()
                         .requestMatchers("/api/products/byCategory").permitAll()
                         .requestMatchers("/api/products/totalCount").permitAll()
+                        .requestMatchers("/user/forgot-password").permitAll()
                         .requestMatchers("/api/products/totalCountByCategory").permitAll()
                         .requestMatchers("/auth/test/CUSTOMER").hasRole("CUSTOMER")
                         .requestMatchers("/api/products/addProduct").hasRole("ADMIN")

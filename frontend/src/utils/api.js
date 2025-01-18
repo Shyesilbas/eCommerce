@@ -19,6 +19,16 @@ export const loginRequest = async (formData) => {
     }
 };
 
+export const forgotPasswordRequest = async (formData) => {
+    try {
+        const response = await axios.post(`${API_URL}/user/forgot-password`, formData, { withCredentials: true });
+        return response.data;
+    } catch (err) {
+        throw err;
+    }
+};
+
+
 export const getUserInfo = async () => {
     try {
         const response = await axios.get(`${API_URL}/user/myInfo`, { withCredentials: true });

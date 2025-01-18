@@ -69,4 +69,27 @@ public class GlobalExceptionHandler{
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(InvalidCredentialsException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Invalid Credentials!",
+                HttpStatus.BAD_REQUEST.value(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(TokenNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTokenNotFoundException(TokenNotFoundException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Token Not Found!",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+
 }
