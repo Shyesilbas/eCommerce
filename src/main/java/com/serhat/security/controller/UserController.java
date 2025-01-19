@@ -1,11 +1,9 @@
 package com.serhat.security.controller;
 
 import com.serhat.security.dto.request.ForgotPasswordRequest;
+import com.serhat.security.dto.request.UpdateEmailRequest;
 import com.serhat.security.dto.request.UpdatePasswordRequest;
-import com.serhat.security.dto.response.AddressResponse;
-import com.serhat.security.dto.response.ForgotPasswordResponse;
-import com.serhat.security.dto.response.UpdatePasswordResponse;
-import com.serhat.security.dto.response.UserResponse;
+import com.serhat.security.dto.response.*;
 import com.serhat.security.exception.InvalidPasswordException;
 import com.serhat.security.exception.UserNotFoundException;
 import com.serhat.security.service.AuthService;
@@ -71,4 +69,21 @@ public class UserController {
                     .body(new ForgotPasswordResponse(e.getMessage(), LocalDateTime.now()));
         }
     }
+
+    @PostMapping("/update-Email")
+    public ResponseEntity<UpdateEmailResponse> updatePassword(
+            HttpServletRequest servletRequest,
+            HttpServletResponse response,
+            @RequestBody UpdateEmailRequest request) {
+
+        try {
+            UpdateEmailResponse updateEmailResponse = userService.updateEmail(servletRequest, response, request);
+            return ResponseEntity.ok(updateEmailResponse);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new UpdateEmailResponse("Error: " + e.getMessage(),null ,LocalDateTime.now())
+            );
+        }
+    }
+
 }

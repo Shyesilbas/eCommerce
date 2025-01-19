@@ -2,6 +2,7 @@ package com.serhat.security.service;
 
 import com.serhat.security.dto.request.ForgotPasswordRequest;
 import com.serhat.security.dto.request.RegisterRequest;
+import com.serhat.security.dto.request.UpdateEmailRequest;
 import com.serhat.security.dto.request.UpdatePasswordRequest;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.Address;
@@ -101,6 +102,29 @@ public class UserService {
         }catch (IOException e){
             log.error("Error writing to file : "+e.getMessage());
         }
+    }
+
+    public UpdateEmailResponse updateEmail(HttpServletRequest request, HttpServletResponse response, UpdateEmailRequest updateEmailRequest) {
+        String token = extractTokenFromRequest(request);
+        if (token == null) {
+            throw new RuntimeException("Token not found in request");
+        }
+
+        String username = jwtUtil.extractUsername(token);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
+
+        Optional<User> existingUserWithNewEmail = userRepository.findByEmail(updateEmailRequest.newEmail());
+        if (existingUserWithNewEmail.isPresent()) {
+            throw new EmailAlreadyExistException("Email already exists!");
+        }
+
+        user.setEmail(updateEmailRequest.newEmail());
+        userRepository.save(user);
+
+        authService.logout(request, response);
+
+        return new UpdateEmailResponse("Email updated successfully.", user.getEmail() ,LocalDateTime.now());
     }
 
     public UpdatePasswordResponse updatePassword(HttpServletRequest servletRequest ,HttpServletResponse response ,UpdatePasswordRequest request){

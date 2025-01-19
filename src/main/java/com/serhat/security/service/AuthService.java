@@ -57,6 +57,7 @@ public class AuthService {
     @Transactional
     public AuthResponse logout(HttpServletRequest request, HttpServletResponse response) {
         log.info("Processing logout request");
+        request.getSession().invalidate();
 
         String jwtToken = extractJwtFromCookies(request);
         invalidateToken(jwtToken);
