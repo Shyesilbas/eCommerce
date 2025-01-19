@@ -51,25 +51,24 @@ public class AuthService {
         setJwtCookie(response, token);
 
         log.info("Login successful for user: {}", request.username());
-        return createAuthResponse(token, user.getUsername(), user.getRole(),"Login Successful!");
+        return createAuthResponse(token, user.getUsername(), user.getRole(), "Login Successful!");
     }
 
     @Transactional
     public AuthResponse logout(HttpServletRequest request, HttpServletResponse response) {
         log.info("Processing logout request");
-        request.getSession().invalidate();
+
+        clearAllCookies(request, response);
 
         String jwtToken = extractJwtFromCookies(request);
         invalidateToken(jwtToken);
-        clearCookie(response, "jwt");
-        clearCookie(response, "JSESSIONID");
+
         request.getSession().invalidate();
 
         String username = jwtUtil.extractUsername(jwtToken);
         Role role = jwtUtil.extractRole(jwtToken);
         log.info("Logout successful for user: {}", username);
-        log.info("Session Invalidated After logout request from : "+username);
-
+        log.info("Session Invalidated After logout request from : " + username);
 
         return createAuthResponse(jwtToken, username, role, "Logout successful");
     }
@@ -130,15 +129,20 @@ public class AuthService {
         log.debug("JWT cookie set");
     }
 
-    private void clearCookie(HttpServletResponse response, String name) {
-        Cookie cookie = new Cookie(name, null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+    private void clearAllCookies(HttpServletRequest request, HttpServletResponse response) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                Cookie clearCookie = new Cookie(cookie.getName(), null);
+                clearCookie.setHttpOnly(true);
+                clearCookie.setSecure(false);
+                clearCookie.setPath("/");
+                clearCookie.setMaxAge(0);
+                response.addCookie(clearCookie);
+                log.debug("Cleared cookie: {}", cookie.getName());
+            }
+        }
     }
-
 
     private AuthResponse createAuthResponse(String token, String username, Role role, String message) {
         return AuthResponse.builder()
