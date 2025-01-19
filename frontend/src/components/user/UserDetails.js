@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { updateEmailRequest, updatePasswordRequest, logoutRequest, updatePhoneRequest } from "../../utils/api.js";
+import { updateEmailRequest, updatePasswordRequest, updatePhoneRequest } from "../../utils/api.js";
+import PasswordUpdate, { passwordValidationRules, isPasswordValid } from "../../utils/PasswordUpdate";
+import usePasswordVisibility from "../../hooks/usePasswordVisibility";
 
 const UserDetails = ({ userInfo, onLogout }) => {
     const navigate = useNavigate();
@@ -12,6 +14,22 @@ const UserDetails = ({ userInfo, onLogout }) => {
     const [newPhone, setNewPhone] = useState("");
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [passwordFocused, setPasswordFocused] = useState(false);
+    const [passwordRules, setPasswordRules] = useState({
+        minLength: false,
+        hasUppercase: false,
+        hasLowercase: false,
+        hasNumber: false,
+        hasSpecialChar: false,
+    });
+    const { showPassword, togglePasswordVisibility } = usePasswordVisibility();
+
+    const handlePasswordChange = (e) => {
+        const { value } = e.target;
+        setNewPassword(value);
+        setPasswordRules(passwordValidationRules(value));
+    };
 
     const handleEmailUpdate = async () => {
         try {
@@ -58,6 +76,16 @@ const UserDetails = ({ userInfo, onLogout }) => {
     };
 
     const handlePasswordUpdate = async () => {
+        if (newPassword !== confirmPassword) {
+            Swal.fire("Error", "Passwords do not match!", "error");
+            return;
+        }
+
+        if (!isPasswordValid(newPassword)) {
+            Swal.fire("Error", "Password does not meet the required criteria!", "error");
+            return;
+        }
+
         try {
             const data = { oldPassword: currentPassword, newPassword };
             await updatePasswordRequest(data);
@@ -134,17 +162,16 @@ const UserDetails = ({ userInfo, onLogout }) => {
                     <div className="modal-overlay">
                         <div className="modal">
                             <h2>Update Password</h2>
-                            <input
-                                type="password"
-                                placeholder="Current Password"
-                                value={currentPassword}
-                                onChange={(e) => setCurrentPassword(e.target.value)}
-                            />
-                            <input
-                                type="password"
-                                placeholder="New Password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
+                            <PasswordUpdate
+                                newPassword={newPassword}
+                                confirmPassword={confirmPassword}
+                                passwordFocused={passwordFocused}
+                                passwordRules={passwordRules}
+                                showPassword={showPassword}
+                                handlePasswordChange={handlePasswordChange}
+                                setPasswordFocused={setPasswordFocused}
+                                togglePasswordVisibility={togglePasswordVisibility}
+                                setConfirmPassword={setConfirmPassword}
                             />
                             <div className="modal-actions">
                                 <button className="action-button" onClick={handlePasswordUpdate}>Update</button>

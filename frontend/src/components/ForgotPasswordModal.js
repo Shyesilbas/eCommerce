@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import usePasswordVisibility from "../hooks/usePasswordVisibility";
 import { forgotPasswordRequest } from "../utils/api.js";
-import { passwordValidationRules, isPasswordValid } from "../utils/PasswordValidationRules.js";
 import Swal from "sweetalert2";
-import "../style/ForgotPasswordModal.css";
+import PasswordUpdate, { passwordValidationRules, isPasswordValid } from "../utils/PasswordUpdate";
+import "../style/PasswordUpdate.css";
 
 const ForgotPasswordModal = ({ onClose }) => {
     const [email, setEmail] = useState("");
@@ -81,7 +81,6 @@ const ForgotPasswordModal = ({ onClose }) => {
             } else if (error.message) {
                 errorMessage = error.message;
             } else if (typeof error === 'string') {
-                // String hata
                 errorMessage = error;
             }
 
@@ -110,57 +109,17 @@ const ForgotPasswordModal = ({ onClose }) => {
                             autoComplete="off"
                         />
                     </div>
-                    <div className="form-group">
-                        <label htmlFor="newPassword">New Password:</label>
-                        <div className="password-input-container">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                id="newPassword"
-                                value={newPassword}
-                                onChange={handlePasswordChange}
-                                onFocus={() => setPasswordFocused(true)}
-                                onBlur={() => setPasswordFocused(false)}
-                                required
-                            />
-                            <span
-                                onClick={togglePasswordVisibility}
-                                className="password-toggle"
-                            >
-                                {showPassword ? "👀" : "🔒"}
-                            </span>
-                        </div>
-                        {passwordFocused && (
-                            <div className="password-rules">
-                                <ul>
-                                    <li className={passwordRules.minLength ? "valid" : ""}>
-                                        At least 6 characters
-                                    </li>
-                                    <li className={passwordRules.hasUppercase ? "valid" : ""}>
-                                        At least one uppercase letter (A-Z)
-                                    </li>
-                                    <li className={passwordRules.hasLowercase ? "valid" : ""}>
-                                        At least one lowercase letter (a-z)
-                                    </li>
-                                    <li className={passwordRules.hasNumber ? "valid" : ""}>
-                                        At least one number (0-9)
-                                    </li>
-                                    <li className={passwordRules.hasSpecialChar ? "valid" : ""}>
-                                        At least one special character (!@#$%^&*.)
-                                    </li>
-                                </ul>
-                            </div>
-                        )}
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="confirmPassword">Confirm New Password:</label>
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                        />
-                    </div>
+                    <PasswordUpdate
+                        newPassword={newPassword}
+                        confirmPassword={confirmPassword}
+                        passwordFocused={passwordFocused}
+                        passwordRules={passwordRules}
+                        showPassword={showPassword}
+                        handlePasswordChange={handlePasswordChange}
+                        setPasswordFocused={setPasswordFocused}
+                        togglePasswordVisibility={togglePasswordVisibility}
+                        setConfirmPassword={setConfirmPassword}
+                    />
                     <div className="button-container">
                         <button type="submit" className="submit-button">Reset Password</button>
                         <button type="button" className="cancel-button" onClick={onClose}>Cancel</button>
