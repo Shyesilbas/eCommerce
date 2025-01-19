@@ -11,7 +11,6 @@ const UserInfo = ({ user, address, onLogout }) => {
     const [showAddress, setShowAddress] = useState(false);
     const [activeSection, setActiveSection] = useState("profile");
 
-    // Kullanıcı yoksa login sayfasına yönlendir
     if (!user) {
         navigate("/login");
         return null;
@@ -20,7 +19,7 @@ const UserInfo = ({ user, address, onLogout }) => {
     const handleLogout = async () => {
         try {
             await logoutRequest();
-            localStorage.clear(); // Tüm localStorage'ı temizle
+            localStorage.clear();
             onLogout();
             await Swal.fire("Logged Out", "You have successfully logged out.", "success");
             navigate("/login");

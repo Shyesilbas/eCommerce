@@ -3,6 +3,7 @@ package com.serhat.security.controller;
 import com.serhat.security.dto.request.ForgotPasswordRequest;
 import com.serhat.security.dto.request.UpdateEmailRequest;
 import com.serhat.security.dto.request.UpdatePasswordRequest;
+import com.serhat.security.dto.request.UpdatePhoneRequest;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.exception.InvalidPasswordException;
 import com.serhat.security.exception.UserNotFoundException;
@@ -83,6 +84,13 @@ public class UserController {
                     new UpdateEmailResponse("Error: " + e.getMessage(),null ,LocalDateTime.now())
             );
         }
+    }
+
+    @PutMapping("/update-phone")
+    public ResponseEntity<UpdatePhoneResponse> updatePhone(@Valid @RequestBody UpdatePhoneRequest phoneRequest ,
+                                                           HttpServletRequest servletRequest ,
+                                                           HttpServletResponse servletResponse){
+        return ResponseEntity.ok(userService.updatePhone(servletRequest,servletResponse,phoneRequest));
     }
 
 }

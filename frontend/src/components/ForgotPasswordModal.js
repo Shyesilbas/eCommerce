@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import usePasswordVisibility from "../hooks/usePasswordVisibility";
 import { forgotPasswordRequest } from "../utils/api.js";
+import { passwordValidationRules, isPasswordValid } from "../utils/PasswordValidationRules.js";
 import Swal from "sweetalert2";
 import "../style/ForgotPasswordModal.css";
 
@@ -18,28 +19,15 @@ const ForgotPasswordModal = ({ onClose }) => {
     });
     const { showPassword, togglePasswordVisibility } = usePasswordVisibility();
 
-    const validatePassword = (password) => {
-        const rules = {
-            minLength: password.length >= 6,
-            hasUppercase: /[A-Z]/.test(password),
-            hasLowercase: /[a-z]/.test(password),
-            hasNumber: /\d/.test(password),
-            hasSpecialChar: /[!@#$%^&*.]/.test(password),
-        };
-        setPasswordRules(rules);
-        return Object.values(rules).every(rule => rule);
-    };
-
     const handlePasswordChange = (e) => {
         const { value } = e.target;
         setNewPassword(value);
-        validatePassword(value);
+        setPasswordRules(passwordValidationRules(value));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validate passwords
         if (newPassword !== confirmPassword) {
             Swal.fire({
                 title: "Error",
@@ -49,7 +37,8 @@ const ForgotPasswordModal = ({ onClose }) => {
             });
             return;
         }
-        if (!validatePassword(newPassword)) {
+
+        if (!isPasswordValid(newPassword)) {
             Swal.fire({
                 title: "Error",
                 text: "Password does not meet the required criteria!",
@@ -85,17 +74,14 @@ const ForgotPasswordModal = ({ onClose }) => {
         } catch (error) {
             console.error("Error resetting password:", error);
 
-            // Enhanced error message extraction
             let errorMessage = "An error occurred while resetting the password.";
 
             if (error.response?.data?.message) {
-                // API error with response data
                 errorMessage = error.response.data.message;
             } else if (error.message) {
-                // Standard Error object message
                 errorMessage = error.message;
             } else if (typeof error === 'string') {
-                // String error
+                // String hata
                 errorMessage = error;
             }
 
@@ -107,7 +93,6 @@ const ForgotPasswordModal = ({ onClose }) => {
             });
         }
     };
-
 
     return (
         <div className="modal-overlay">

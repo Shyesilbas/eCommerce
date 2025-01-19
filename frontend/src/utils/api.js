@@ -46,6 +46,15 @@ export const updateEmailRequest = async (data) => {
     }
 };
 
+export const updatePhoneRequest = async (data) => {
+    try {
+        const response = await axios.put(`${API_URL}/user/update-phone`, data, { withCredentials: true });
+        return response.data;
+    } catch (err) {
+        throw err;
+    }
+};
+
 export const updatePasswordRequest = async (data) => {
     try {
         const response = await axios.post(`${API_URL}/user/update-password`, data, { withCredentials: true });

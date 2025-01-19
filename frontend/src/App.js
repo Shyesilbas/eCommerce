@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
 import UserInfo from "./components/UserInfo";
@@ -11,6 +11,19 @@ const App = () => {
     const [user, setUser] = useState(null);
     const [address, setAddress] = useState([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem("user");
+        const storedAddress = localStorage.getItem("address");
+
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+
+        if (storedAddress) {
+            setAddress(JSON.parse(storedAddress));
+        }
+    }, []);
 
     const handleLogout = () => {
         setUser(null);

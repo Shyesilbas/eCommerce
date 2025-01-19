@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginRequest } from "../utils/api.js";
 import usePasswordVisibility from "../hooks/usePasswordVisibility.js";
@@ -14,28 +14,15 @@ const LoginPage = ({ setUser, setAddress }) => {
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const storedUser = localStorage.getItem("user");
-        const storedAddress = localStorage.getItem("address");
-
-        if (storedUser && storedAddress) {
-            setUser(JSON.parse(storedUser));
-            setAddress(JSON.parse(storedAddress));
-            navigate("/user-info");
-        }
-    }, [navigate, setUser, setAddress]);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
             const { userData, addressData } = await loginRequest(formData);
 
-            // LocalStorage'a kaydet
             localStorage.setItem("user", JSON.stringify(userData));
             localStorage.setItem("address", JSON.stringify(addressData));
 
-            // State'i güncelle
             setUser(userData);
             setAddress(addressData);
 
@@ -60,6 +47,7 @@ const LoginPage = ({ setUser, setAddress }) => {
                     <input
                         type="text"
                         id="username"
+                        name="username"
                         value={formData.username}
                         onChange={handleChange}
                         required
@@ -71,28 +59,36 @@ const LoginPage = ({ setUser, setAddress }) => {
                     <input
                         type={showPassword ? "text" : "password"}
                         id="password"
+                        name="password"
                         value={formData.password}
                         onChange={handleChange}
                         required
-                        style={{paddingRight: "10px"}}
                     />
                     <span
                         onClick={togglePasswordVisibility}
                         className="password-toggle"
-                        style={{marginTop: '11px', display: 'inline-block'}}
                     >
                         {showPassword ? "👀" : "🔒"}
                     </span>
                 </div>
                 <button type="submit" className="submit-button">Login</button>
                 <p>Don't have an account? <a href="/register">Create one</a></p>
-                <p><a href="#" onClick={(e) => {
-                    e.preventDefault();
-                    setShowForgotPassword(true);
-                }}>Forgot Password?</a></p>
+                <p>
+                    <a
+                        href="#"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setShowForgotPassword(true);
+                        }}
+                    >
+                        Forgot Password?
+                    </a>
+                </p>
             </form>
 
-            {showForgotPassword && <ForgotPasswordModal onClose={() => setShowForgotPassword(false)} />}
+            {showForgotPassword && (
+                <ForgotPasswordModal onClose={() => setShowForgotPassword(false)} />
+            )}
         </div>
     );
 };

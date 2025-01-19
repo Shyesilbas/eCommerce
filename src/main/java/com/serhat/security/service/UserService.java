@@ -1,9 +1,6 @@
 package com.serhat.security.service;
 
-import com.serhat.security.dto.request.ForgotPasswordRequest;
-import com.serhat.security.dto.request.RegisterRequest;
-import com.serhat.security.dto.request.UpdateEmailRequest;
-import com.serhat.security.dto.request.UpdatePasswordRequest;
+import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.Address;
 import com.serhat.security.entity.User;
@@ -102,6 +99,28 @@ public class UserService {
         }catch (IOException e){
             log.error("Error writing to file : "+e.getMessage());
         }
+    }
+
+    @Transactional
+    public UpdatePhoneResponse updatePhone(HttpServletRequest request, HttpServletResponse response, UpdatePhoneRequest updatePhoneRequest) {
+        String token = extractTokenFromRequest(request);
+        if (token == null) {
+            throw new RuntimeException("Token not found in request");
+        }
+
+        String username = jwtUtil.extractUsername(token);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
+
+        Optional<User> existingUserWithPhone = userRepository.findByPhone(updatePhoneRequest.phone());
+        if (existingUserWithPhone.isPresent()) {
+            throw new EmailAlreadyExistException("Phone already exists!");
+        }
+
+        user.setPhone(updatePhoneRequest.phone());
+        userRepository.save(user);
+
+        return new UpdatePhoneResponse("Email updated successfully.", user.getPhone() ,LocalDateTime.now());
     }
 
     @Transactional
