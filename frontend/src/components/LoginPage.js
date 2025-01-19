@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginRequest, getUserInfo, getUserAddress } from "../utils/api.js";
+import { loginRequest } from "../utils/api.js";
 import usePasswordVisibility from "../hooks/usePasswordVisibility.js";
 import useFormData from "../hooks/useFormData.js";
 import useMessage from "../hooks/useMessage.js";
@@ -25,25 +25,21 @@ const LoginPage = ({ setUser, setAddress }) => {
         }
     }, [navigate, setUser, setAddress]);
 
-    const handleLogin = (userData, addressData) => {
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("address", JSON.stringify(addressData));
-
-        setUser(userData);
-        setAddress(addressData);
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
-            const loginData = await loginRequest(formData);
-            const userInfo = await getUserInfo();
-            const addressInfo = await getUserAddress();
+            const { userData, addressData } = await loginRequest(formData);
 
-            handleLogin(userInfo, addressInfo);
+            // LocalStorage'a kaydet
+            localStorage.setItem("user", JSON.stringify(userData));
+            localStorage.setItem("address", JSON.stringify(addressData));
+
+            // State'i güncelle
+            setUser(userData);
+            setAddress(addressData);
+
             setSuccessMessage("Login successful!");
-
             navigate("/user-info");
         } catch (err) {
             console.error("Login error:", err);
@@ -92,11 +88,10 @@ const LoginPage = ({ setUser, setAddress }) => {
                 <p>Don't have an account? <a href="/register">Create one</a></p>
                 <p><a href="#" onClick={(e) => {
                     e.preventDefault();
-                    setShowForgotPassword(true);  // Open the modal
+                    setShowForgotPassword(true);
                 }}>Forgot Password?</a></p>
             </form>
 
-            {/* Conditionally render ForgotPasswordModal */}
             {showForgotPassword && <ForgotPasswordModal onClose={() => setShowForgotPassword(false)} />}
         </div>
     );

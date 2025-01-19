@@ -1,44 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "../style/UserInfo.css";
-import { getUserInfo, getUserAddress, logoutRequest } from "../utils/api.js";
+import { logoutRequest } from "../utils/api.js";
 import UserDetails from "../components/user/UserDetails.js";
 import AddressInfo from "../components/user/AddressInfo.js";
 
-const UserInfo = ({ user, onLogout }) => {
+const UserInfo = ({ user, address, onLogout }) => {
     const navigate = useNavigate();
-    const [userInfo, setUserInfo] = useState(user);
-    const [address, setAddress] = useState([]);
     const [showAddress, setShowAddress] = useState(false);
     const [activeSection, setActiveSection] = useState("profile");
 
-    useEffect(() => {
-        if (!user) {
-            navigate("/login");
-            return;
-        }
-
-        const loadData = async () => {
-            try {
-                const userData = await getUserInfo();
-                setUserInfo(userData);
-
-                const addressData = await getUserAddress();
-                setAddress(addressData);
-            } catch (err) {
-                console.error("Error loading data:", err);
-                navigate("/login");
-            }
-        };
-
-        loadData();
-    }, [user, navigate]);
+    // Kullanıcı yoksa login sayfasına yönlendir
+    if (!user) {
+        navigate("/login");
+        return null;
+    }
 
     const handleLogout = async () => {
         try {
             await logoutRequest();
-            localStorage.removeItem("user");
+            localStorage.clear(); // Tüm localStorage'ı temizle
             onLogout();
             await Swal.fire("Logged Out", "You have successfully logged out.", "success");
             navigate("/login");
@@ -64,22 +46,10 @@ const UserInfo = ({ user, onLogout }) => {
         Swal.fire("Info", "Address add feature will be added soon.", "info");
     };
 
-    const handleOrderNotification = () => {
-        Swal.fire("Info", "Order notifications will be added soon.", "info");
-    };
-
-    if (!userInfo) {
-        return (
-            <div className="user-info-container">
-                <p>Loading user information...</p>
-            </div>
-        );
-    }
-
     return (
         <div className="user-info-container">
             <header className="user-header">
-                <h1>Welcome, {userInfo.username || "N/A"}</h1>
+                <h1>Welcome, {user.username || "N/A"}</h1>
                 <nav className="user-nav">
                     <button
                         className={`nav-button ${activeSection === "profile" ? "active" : ""}`}
@@ -123,7 +93,7 @@ const UserInfo = ({ user, onLogout }) => {
             <div className="user-content">
                 {activeSection === "profile" && (
                     <div className="profile-section">
-                        <UserDetails userInfo={userInfo} onLogout={handleLogout} />
+                        <UserDetails userInfo={user} onLogout={handleLogout} />
                     </div>
                 )}
 

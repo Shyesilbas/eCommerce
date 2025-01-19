@@ -12,8 +12,17 @@ export const registerRequest = async (formData) => {
 };
 export const loginRequest = async (formData) => {
     try {
-        const response = await axios.post(`${API_URL}/auth/login`, formData, { withCredentials: true });
-        return response.data;
+        const loginResponse = await axios.post(`${API_URL}/auth/login`, formData, { withCredentials: true });
+
+        const [userResponse, addressResponse] = await Promise.all([
+            axios.get(`${API_URL}/user/myInfo`, { withCredentials: true }),
+            axios.get(`${API_URL}/user/addressInfo`, { withCredentials: true })
+        ]);
+
+        return {
+            userData: userResponse.data,
+            addressData: addressResponse.data
+        };
     } catch (err) {
         throw err;
     }
