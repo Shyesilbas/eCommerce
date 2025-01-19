@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -31,9 +32,14 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<AuthResponse> logout(HttpServletResponse response , HttpServletRequest request) {
-        log.debug("Received logout request");
-        return ResponseEntity.ok(authService.logout(request, response));
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            authService.logout(request, response);
+            return ResponseEntity.ok("Logged out successfully.");
+        } catch (Exception e) {
+            log.error("Logout error: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Logout failed: " + e.getMessage());
+        }
     }
 
     @PostMapping("/register")

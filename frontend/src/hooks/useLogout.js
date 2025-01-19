@@ -1,7 +1,3 @@
-import { useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
-import { logoutRequest } from "../utils/api.js";
-
 const useLogout = (onLogout) => {
     const navigate = useNavigate();
 
@@ -23,9 +19,9 @@ const useLogout = (onLogout) => {
                 timerProgressBar: false,
                 willClose: async () => {
                     try {
-                        await logoutRequest();
+                        await logoutRequest(); // Call the backend to log out
                         localStorage.removeItem("user");
-                        onLogout();
+                        onLogout(); // Call the logout handler
                         Swal.fire("Logged Out", "You have successfully logged out.", "success");
                         navigate("/login");
                     } catch (err) {
@@ -39,5 +35,3 @@ const useLogout = (onLogout) => {
 
     return handleLogout;
 };
-
-export default useLogout;

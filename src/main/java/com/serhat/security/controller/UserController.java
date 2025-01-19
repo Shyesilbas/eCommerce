@@ -28,7 +28,6 @@ import java.util.List;
 @Slf4j
 public class UserController {
     private final UserService userService;
-    private final AuthService authService;
 
     @GetMapping("/myInfo")
     public ResponseEntity<UserResponse> getUserInfo(HttpServletRequest request, HttpServletResponse response) {

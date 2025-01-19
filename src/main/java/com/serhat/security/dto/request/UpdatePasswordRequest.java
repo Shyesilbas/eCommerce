@@ -14,10 +14,6 @@ public record UpdatePasswordRequest(
                 message = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character."
         )
         String newPassword,
-        String oldPassword,
-
-        @NotBlank(message = "Email cannot be empty")
-        @Email(message = "Invalid email format")
-        String email
+        String oldPassword
 ) {
 }

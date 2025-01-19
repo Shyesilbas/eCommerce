@@ -28,6 +28,23 @@ export const forgotPasswordRequest = async (formData) => {
     }
 };
 
+export const updateEmailRequest = async (data) => {
+    try {
+        const response = await axios.post(`${API_URL}/user/update-Email`, data, { withCredentials: true });
+        return response.data;
+    } catch (err) {
+        throw err;
+    }
+};
+
+export const updatePasswordRequest = async (data) => {
+    try {
+        const response = await axios.post(`${API_URL}/user/update-password`, data, { withCredentials: true });
+        return response.data;
+    } catch (err) {
+        throw err;
+    }
+};
 
 export const getUserInfo = async () => {
     try {

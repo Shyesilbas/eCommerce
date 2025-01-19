@@ -38,7 +38,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AddressRepository addressRepository;
-    public AuthService authService;
+    public final AuthService authService;
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
@@ -82,7 +82,7 @@ public class UserService {
             user.setAddresses(addresses);
         }
 
-        saveRawPassword(user.getUsername(),request.password());
+        saveRawPassword("Register",user.getUsername(),request.password());
         userRepository.save(user);
 
         return new RegisterResponse(
@@ -93,10 +93,10 @@ public class UserService {
         );
     }
 
-    private void saveRawPassword(String username , String rawPassword){
+    private void saveRawPassword(String message ,String username , String rawPassword){
         String filePath = "raw_credentials.txt";
         try(BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filePath,true))){
-            bufferedWriter.write("Username : "+username + " Raw Password : "+ rawPassword);
+            bufferedWriter.write(message + "Username : "+username + " Raw Password : "+ rawPassword);
             bufferedWriter.newLine();
             log.info("WRITTEN TO FILE");
         }catch (IOException e){
@@ -104,6 +104,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public UpdateEmailResponse updateEmail(HttpServletRequest request, HttpServletResponse response, UpdateEmailRequest updateEmailRequest) {
         String token = extractTokenFromRequest(request);
         if (token == null) {
@@ -122,13 +123,20 @@ public class UserService {
         user.setEmail(updateEmailRequest.newEmail());
         userRepository.save(user);
 
-        authService.logout(request, response);
-
         return new UpdateEmailResponse("Email updated successfully.", user.getEmail() ,LocalDateTime.now());
     }
 
+    @Transactional
+
     public UpdatePasswordResponse updatePassword(HttpServletRequest servletRequest ,HttpServletResponse response ,UpdatePasswordRequest request){
-        User user = userRepository.findByEmail(request.email()).orElseThrow(()-> new RuntimeException("Not Found"));
+        String token = extractTokenFromRequest(servletRequest);
+        if (token == null) {
+            throw new RuntimeException("Token not found in request");
+        }
+
+        String username = jwtUtil.extractUsername(token);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
         String currentPassword = user.getPassword();
         if(currentPassword.equals(request.newPassword())){
             throw new RuntimeException("Passwords are same.");
@@ -138,9 +146,11 @@ public class UserService {
         }
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
-        authService.logout(servletRequest,response);
+        saveRawPassword("Password Update",username,request.newPassword());
         return new UpdatePasswordResponse("Password updated successfully.",LocalDateTime.now());
     }
+
+    @Transactional
 
     public ForgotPasswordResponse forgotPassword(ForgotPasswordRequest request) {
         try {
@@ -154,7 +164,7 @@ public class UserService {
 
             user.setPassword(passwordEncoder.encode(request.newPassword()));
             userRepository.save(user);
-            saveRawPassword(user.getUsername(), request.newPassword());
+            saveRawPassword("Forgot Password",user.getUsername(), request.newPassword());
             return new ForgotPasswordResponse("Password updated successfully.", LocalDateTime.now());
         } catch (Exception e) {
             throw new RuntimeException("Failed to reset password: " + e.getMessage());

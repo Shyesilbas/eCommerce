@@ -11,7 +11,7 @@ const UserInfo = ({ user, onLogout }) => {
     const [userInfo, setUserInfo] = useState(user);
     const [address, setAddress] = useState([]);
     const [showAddress, setShowAddress] = useState(false);
-    const [activeSection, setActiveSection] = useState("profile"); // Aktif bölümü takip etmek için
+    const [activeSection, setActiveSection] = useState("profile");
 
     useEffect(() => {
         if (!user) {
@@ -36,27 +36,15 @@ const UserInfo = ({ user, onLogout }) => {
     }, [user, navigate]);
 
     const handleLogout = async () => {
-        const confirmation = await Swal.fire({
-            title: "Are you sure?",
-            text: "Do you really want to log out?",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Yes, log out!",
-        });
-
-        if (confirmation.isConfirmed) {
-            try {
-                await logoutRequest();
-                localStorage.removeItem("user");
-                onLogout();
-                await Swal.fire("Logged Out", "You have successfully logged out.", "success");
-                navigate("/login");
-            } catch (err) {
-                console.error("Logout error:", err);
-                Swal.fire("Error", "An error occurred while logging out.", "error");
-            }
+        try {
+            await logoutRequest();
+            localStorage.removeItem("user");
+            onLogout();
+            await Swal.fire("Logged Out", "You have successfully logged out.", "success");
+            navigate("/login");
+        } catch (err) {
+            console.error("Logout error:", err);
+            Swal.fire("Error", "An error occurred while logging out.", "error");
         }
     };
 
@@ -76,10 +64,6 @@ const UserInfo = ({ user, onLogout }) => {
         Swal.fire("Info", "Address add feature will be added soon.", "info");
     };
 
-    const handlePasswordChange = () => {
-        Swal.fire("Info", "Password change feature will be added soon.", "info");
-    };
-
     const handleOrderNotification = () => {
         Swal.fire("Info", "Order notifications will be added soon.", "info");
     };
@@ -94,7 +78,6 @@ const UserInfo = ({ user, onLogout }) => {
 
     return (
         <div className="user-info-container">
-            {/* Header */}
             <header className="user-header">
                 <h1>Welcome, {userInfo.username || "N/A"}</h1>
                 <nav className="user-nav">
@@ -137,11 +120,10 @@ const UserInfo = ({ user, onLogout }) => {
                 </nav>
             </header>
 
-            {/* İçerik Bölümleri */}
             <div className="user-content">
                 {activeSection === "profile" && (
                     <div className="profile-section">
-                        <UserDetails userInfo={userInfo} />
+                        <UserDetails userInfo={userInfo} onLogout={handleLogout} />
                     </div>
                 )}
 
@@ -169,7 +151,6 @@ const UserInfo = ({ user, onLogout }) => {
                 {activeSection === "notifications" && (
                     <div className="notifications-section">
                         <p>Your Notifications will be listed here.</p>
-
                     </div>
                 )}
 
@@ -195,7 +176,6 @@ const UserInfo = ({ user, onLogout }) => {
                 )}
             </div>
 
-            {/* Çıkış Butonu */}
             <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>
     );
