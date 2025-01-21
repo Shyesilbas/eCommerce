@@ -11,10 +11,12 @@ const App = () => {
     const [user, setUser] = useState(null);
     const [address, setAddress] = useState([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [activeSection, setActiveSection] = useState("profile");
 
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
         const storedAddress = localStorage.getItem("address");
+        const savedSection = localStorage.getItem("activeSection");
 
         if (storedUser) {
             setUser(JSON.parse(storedUser));
@@ -23,6 +25,10 @@ const App = () => {
         if (storedAddress) {
             setAddress(JSON.parse(storedAddress));
         }
+
+        if (savedSection) {
+            setActiveSection(savedSection);
+        }
     }, []);
 
     const handleLogout = () => {
@@ -30,11 +36,22 @@ const App = () => {
         setAddress([]);
         localStorage.removeItem("user");
         localStorage.removeItem("address");
+        localStorage.removeItem("activeSection");
+    };
+
+    const handleSectionChange = (section) => {
+        setActiveSection(section);
+        localStorage.setItem("activeSection", section);
     };
 
     return (
         <Router>
-            <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} user={user} onLogout={handleLogout} />
+            <Sidebar
+                isOpen={isSidebarOpen}
+                setIsOpen={setIsSidebarOpen}
+                user={user}
+                onLogout={handleLogout}
+            />
             <div style={{ marginLeft: isSidebarOpen ? "250px" : "50px", transition: "margin-left 0.3s ease" }}>
                 <Routes>
                     <Route
@@ -43,7 +60,13 @@ const App = () => {
                     />
                     <Route
                         path="/user-info"
-                        element={<UserInfo user={user} address={address} onLogout={handleLogout} />}
+                        element={<UserInfo
+                            user={user}
+                            address={address}
+                            onLogout={handleLogout}
+                            activeSection={activeSection}
+                            onSectionChange={handleSectionChange}
+                        />}
                     />
                     <Route
                         path="/register"

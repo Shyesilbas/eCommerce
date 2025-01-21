@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "../style/UserInfo.css";
@@ -6,10 +6,9 @@ import { logoutRequest } from "../utils/api.js";
 import UserDetails from "../components/user/UserDetails.js";
 import AddressInfo from "../components/user/AddressInfo.js";
 
-const UserInfo = ({ user, address, onLogout }) => {
+const UserInfo = ({ user, address, onLogout, activeSection, onSectionChange }) => {
     const navigate = useNavigate();
     const [showAddress, setShowAddress] = useState(false);
-    const [activeSection, setActiveSection] = useState("profile");
 
     if (!user) {
         navigate("/login");
@@ -52,37 +51,37 @@ const UserInfo = ({ user, address, onLogout }) => {
                 <nav className="user-nav">
                     <button
                         className={`nav-button ${activeSection === "profile" ? "active" : ""}`}
-                        onClick={() => setActiveSection("profile")}
+                        onClick={() => onSectionChange("profile")}
                     >
                         Profile
                     </button>
                     <button
                         className={`nav-button ${activeSection === "address" ? "active" : ""}`}
-                        onClick={() => setActiveSection("address")}
+                        onClick={() => onSectionChange("address")}
                     >
                         Address
                     </button>
                     <button
                         className={`nav-button ${activeSection === "notifications" ? "active" : ""}`}
-                        onClick={() => setActiveSection("notifications")}
+                        onClick={() => onSectionChange("notifications")}
                     >
                         Notifications
                     </button>
                     <button
                         className={`nav-button ${activeSection === "favorites" ? "active" : ""}`}
-                        onClick={() => setActiveSection("favorites")}
+                        onClick={() => onSectionChange("favorites")}
                     >
                         Favorites
                     </button>
                     <button
                         className={`nav-button ${activeSection === "orders" ? "active" : ""}`}
-                        onClick={() => setActiveSection("orders")}
+                        onClick={() => onSectionChange("orders")}
                     >
                         Orders
                     </button>
                     <button
                         className={`nav-button ${activeSection === "reviews" ? "active" : ""}`}
-                        onClick={() => setActiveSection("reviews")}
+                        onClick={() => onSectionChange("reviews")}
                     >
                         Reviews
                     </button>

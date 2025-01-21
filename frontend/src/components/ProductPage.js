@@ -39,7 +39,11 @@ const ProductPage = ({ user }) => {
         category: "",
     });
     const [categories, setCategories] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState("All Products");
+    const [selectedCategory, setSelectedCategory] = useState(() => {
+        // Read selectedCategory from localStorage on initial render
+        const savedCategory = localStorage.getItem("selectedCategory");
+        return savedCategory || "All Products";
+    });
     const [products, setProducts] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -65,6 +69,11 @@ const ProductPage = ({ user }) => {
         return Object.entries(CATEGORY_DISPLAY_NAMES)
             .find(([key, value]) => value === displayName)?.[0] || displayName;
     };
+
+    // Save selectedCategory to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem("selectedCategory", selectedCategory);
+    }, [selectedCategory]);
 
     useEffect(() => {
         const loadTotalProductCount = async () => {
