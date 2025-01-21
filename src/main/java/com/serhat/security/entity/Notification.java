@@ -21,9 +21,13 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long notificationId;
 
-    private String username;
     private LocalDateTime at;
     @Enumerated(EnumType.STRING)
     private NotificationTopic notificationTopic;
+    private String message;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
 }

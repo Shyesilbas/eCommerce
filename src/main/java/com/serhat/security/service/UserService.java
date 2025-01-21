@@ -5,6 +5,7 @@ import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.Address;
 import com.serhat.security.entity.User;
+import com.serhat.security.entity.enums.NotificationTopic;
 import com.serhat.security.exception.EmailAlreadyExistException;
 import com.serhat.security.exception.UsernameAlreadyExists;
 import com.serhat.security.jwt.JwtUtil;
@@ -37,6 +38,7 @@ public class UserService {
     private final JwtUtil jwtUtil;
     private final AddressRepository addressRepository;
     public final AuthService authService;
+    private final NotificationService notificationService;
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
@@ -118,6 +120,7 @@ public class UserService {
             throw new EmailAlreadyExistException("Phone already exists!");
         }
 
+        notificationService.addNotification(request, NotificationTopic.PHONE_UPDATE);
         user.setPhone(updatePhoneRequest.phone());
         userRepository.save(user);
 
@@ -140,6 +143,7 @@ public class UserService {
             throw new EmailAlreadyExistException("Email already exists!");
         }
 
+        notificationService.addNotification(request,NotificationTopic.EMAIL_UPDATE);
         user.setEmail(updateEmailRequest.newEmail());
         userRepository.save(user);
 
@@ -164,6 +168,7 @@ public class UserService {
         if (!passwordEncoder.matches(request.oldPassword(), currentPassword)) {
             throw new RuntimeException("Old password is incorrect.");
         }
+        notificationService.addNotification(servletRequest,NotificationTopic.PASSWORD_UPDATE);
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
         saveRawPassword("Password Update",username,request.newPassword());
@@ -270,6 +275,7 @@ public class UserService {
                 .build();
 
         addressRepository.save(newAddress);
+        notificationService.addNotification(servletRequest,NotificationTopic.ADDRESS_ADDED);
 
         return new AddAddressResponse(
                 "Address added successfully",
@@ -297,6 +303,7 @@ public class UserService {
         }
 
         addressRepository.delete(address);
+        notificationService.addNotification(request,NotificationTopic.ADDRESS_DELETED);
 
         return new DeleteAddressResponse(
                 addressId,

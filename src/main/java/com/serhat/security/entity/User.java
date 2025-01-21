@@ -37,6 +37,9 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Address> addresses;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Notification> notifications;
+
     @Override
     public boolean isAccountNonExpired() {
         return true;
