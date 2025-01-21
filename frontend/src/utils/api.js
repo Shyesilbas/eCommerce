@@ -73,6 +73,29 @@ export const getUserInfo = async () => {
     }
 };
 
+export const addAddress = async (addressData) => {
+    try {
+        const response = await axios.post(`${API_URL}/user/add-address`, addressData, { withCredentials: true });
+        return response.data;
+    } catch (error) {
+        console.error("Error adding address:", error);
+        throw error;
+    }
+};
+
+export const deleteAddress = async (addressId) => {
+    try {
+        const response = await axios.delete(`${API_URL}/user/delete-address`, {
+            params: { addressId },
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting address:", error);
+        throw error;
+    }
+};
+
 export const getUserAddress = async () => {
     try {
         const response = await axios.get(`${API_URL}/user/addressInfo`, { withCredentials: true });

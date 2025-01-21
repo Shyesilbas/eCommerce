@@ -44,6 +44,11 @@ const App = () => {
         localStorage.setItem("activeSection", section);
     };
 
+    const updateAddress = (newAddress) => {
+        setAddress(newAddress);
+        localStorage.setItem("address", JSON.stringify(newAddress));
+    };
+
     return (
         <Router>
             <Sidebar
@@ -66,6 +71,7 @@ const App = () => {
                             onLogout={handleLogout}
                             activeSection={activeSection}
                             onSectionChange={handleSectionChange}
+                            updateAddress={updateAddress}
                         />}
                     />
                     <Route
