@@ -3,8 +3,16 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "../style/UserInfo.css";
 import { logoutRequest, addAddress, deleteAddress, getUserAddress } from "../utils/api.js";
-import UserDetails from "../components/user/UserDetails.js";
-import AddressInfo from "../components/user/AddressInfo.js";
+import UserNav from "../components/user/UserNav.js";
+import ProfileSection from "../components/user/ProfileSection.js";
+import AddressSection from "../components/user/AddressSection.js";
+import AddressModal from "../components/user/AddressModal.js";
+import AddAddressForm from "../components/user/AddAddressForm.js";
+import DeleteAddressModal from "../components/user/DeleteAddressModal.js";
+import NotificationsSection from "../components/user/NotificationsSection.js";
+import FavoritesSection from "../components/user/FavoritesSection.js";
+import OrdersSection from "../components/user/OrdersSection.js";
+import ReviewsSection from "../components/user/ReviewsSection.js";
 
 const UserInfo = ({ user, address, onLogout, activeSection, onSectionChange, updateAddress }) => {
     const navigate = useNavigate();
@@ -45,10 +53,6 @@ const UserInfo = ({ user, address, onLogout, activeSection, onSectionChange, upd
         }
     };
 
-    const toggleAddressModal = () => {
-        setShowAddressModal(!showAddressModal);
-    };
-
     const handleAddressUpdate = () => {
         Swal.fire("Info", "Address update feature will be added soon.", "info");
     };
@@ -77,22 +81,6 @@ const UserInfo = ({ user, address, onLogout, activeSection, onSectionChange, upd
         }
     };
 
-    const openDeleteModal = () => {
-        setIsDeleteModalOpen(true);
-    };
-
-    const closeDeleteModal = () => {
-        setIsDeleteModalOpen(false);
-    };
-
-    const openAddAddressForm = () => {
-        setIsAddAddressFormOpen(true);
-    };
-
-    const closeAddAddressForm = () => {
-        setIsAddAddressFormOpen(false);
-    };
-
     const handleNewAddressChange = (e) => {
         const { name, value } = e.target;
         setNewAddress({ ...newAddress, [name]: value });
@@ -106,7 +94,7 @@ const UserInfo = ({ user, address, onLogout, activeSection, onSectionChange, upd
             const updatedAddresses = await getUserAddress();
             setAddresses(updatedAddresses);
             updateAddress(updatedAddresses);
-            closeAddAddressForm();
+            setIsAddAddressFormOpen(false);
         } catch (error) {
             Swal.fire("Error", "Failed to add address.", "error");
         }
@@ -123,248 +111,61 @@ const UserInfo = ({ user, address, onLogout, activeSection, onSectionChange, upd
     };
 
     return (
-        <div className="user-info-container">
-            <header className="user-header">
+        <div className="user-info">
+            <header className="user-info__header">
                 <h1>Welcome, {user.username || "N/A"}</h1>
-                <nav className="user-nav">
-                    <button
-                        className={`nav-button ${activeSection === "profile" ? "active" : ""}`}
-                        onClick={() => onSectionChange("profile")}
-                    >
-                        Profile
-                    </button>
-                    <button
-                        className={`nav-button ${activeSection === "address" ? "active" : ""}`}
-                        onClick={() => onSectionChange("address")}
-                    >
-                        Address
-                    </button>
-                    <button
-                        className={`nav-button ${activeSection === "notifications" ? "active" : ""}`}
-                        onClick={() => onSectionChange("notifications")}
-                    >
-                        Notifications
-                    </button>
-                    <button
-                        className={`nav-button ${activeSection === "favorites" ? "active" : ""}`}
-                        onClick={() => onSectionChange("favorites")}
-                    >
-                        Favorites
-                    </button>
-                    <button
-                        className={`nav-button ${activeSection === "orders" ? "active" : ""}`}
-                        onClick={() => onSectionChange("orders")}
-                    >
-                        Orders
-                    </button>
-                    <button
-                        className={`nav-button ${activeSection === "reviews" ? "active" : ""}`}
-                        onClick={() => onSectionChange("reviews")}
-                    >
-                        Reviews
-                    </button>
-                </nav>
+                <UserNav activeSection={activeSection} onSectionChange={onSectionChange} />
             </header>
 
-            <div className="user-content">
+            <div className="user-info__content">
                 {activeSection === "profile" && (
-                    <div className="profile-section">
-                        <UserDetails userInfo={user} onLogout={handleLogout} />
-                    </div>
+                    <ProfileSection user={user} onLogout={handleLogout} />
                 )}
 
                 {activeSection === "address" && (
-                    <div className="address-section">
-                        <h2>Address Management</h2>
-                        <button onClick={toggleAddressModal} className="address-button">
-                            {showAddressModal ? "Hide Address" : "Show Address"}
-                        </button>
-                        <div className="address-actions">
-                            <button onClick={handleAddressUpdate} className="action-button">
-                                Update Address
-                            </button>
-                            <button onClick={openDeleteModal} className="action-button">
-                                Delete Address
-                            </button>
-                            <button onClick={openAddAddressForm} className="action-button">
-                                Add New Address
-                            </button>
-                        </div>
-                    </div>
+                    <AddressSection
+                        onShowAddress={() => setShowAddressModal(true)}
+                        onUpdateAddress={handleAddressUpdate}
+                        onDeleteAddress={() => setIsDeleteModalOpen(true)}
+                        onAddAddress={() => setIsAddAddressFormOpen(true)}
+                    />
                 )}
 
-                {activeSection === "notifications" && (
-                    <div className="notifications-section">
-                        <p>Your Notifications will be listed here.</p>
-                    </div>
-                )}
+                {activeSection === "notifications" && <NotificationsSection />}
 
-                {activeSection === "favorites" && (
-                    <div className="favorites-section">
-                        <h2>Favorites</h2>
-                        <p>Favorites feature will be added soon.</p>
-                    </div>
-                )}
+                {activeSection === "favorites" && <FavoritesSection />}
 
-                {activeSection === "orders" && (
-                    <div className="orders-section">
-                        <h2>Orders</h2>
-                        <p>Orders feature will be added soon.</p>
-                    </div>
-                )}
+                {activeSection === "orders" && <OrdersSection />}
 
-                {activeSection === "reviews" && (
-                    <div className="reviews-section">
-                        <h2>Reviews</h2>
-                        <p>Reviews feature will be added soon.</p>
-                    </div>
-                )}
+                {activeSection === "reviews" && <ReviewsSection />}
             </div>
 
-            {/* Address Modal */}
             {showAddressModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h2>Address Details</h2>
-                        <div className="address-cards-container">
-                            {addresses.length > 0 && (
-                                <div className="address-card">
-                                    <p><strong>Country:</strong> {addresses[currentAddressIndex].country}</p>
-                                    <p><strong>City:</strong> {addresses[currentAddressIndex].city}</p>
-                                    <p><strong>Street:</strong> {addresses[currentAddressIndex].street}</p>
-                                    <p><strong>Apartment No:</strong> {addresses[currentAddressIndex].aptNo}</p>
-                                    <p><strong>Flat No:</strong> {addresses[currentAddressIndex].flatNo}</p>
-                                    <p><strong>Description:</strong> {addresses[currentAddressIndex].description}</p>
-                                    <p><strong>Type:</strong> {addresses[currentAddressIndex].addressType}</p>
-                                </div>
-                            )}
-                        </div>
-                        <div className="modal-navigation">
-                            <button onClick={handlePreviousAddress} className="nav-button">
-                                &lt; Previous
-                            </button>
-                            <button onClick={handleNextAddress} className="nav-button">
-                                Next &gt;
-                            </button>
-                        </div>
-                        <button onClick={toggleAddressModal} className="close-modal-button">
-                            Close
-                        </button>
-                    </div>
-                </div>
+                <AddressModal
+                    addresses={addresses}
+                    currentAddressIndex={currentAddressIndex}
+                    onNext={handleNextAddress}
+                    onPrevious={handlePreviousAddress}
+                    onClose={() => setShowAddressModal(false)}
+                />
             )}
 
-            {/* Add Address Modal */}
             {isAddAddressFormOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h2>Add New Address</h2>
-                        <form onSubmit={handleAddAddressSubmit} className="add-address-form">
-                            <input
-                                type="text"
-                                name="country"
-                                placeholder="Country"
-                                value={newAddress.country}
-                                onChange={handleNewAddressChange}
-                                required
-                            />
-                            <input
-                                type="text"
-                                name="city"
-                                placeholder="City"
-                                value={newAddress.city}
-                                onChange={handleNewAddressChange}
-                                required
-                            />
-                            <input
-                                type="text"
-                                name="street"
-                                placeholder="Street"
-                                value={newAddress.street}
-                                onChange={handleNewAddressChange}
-                                required
-                            />
-                            <input
-                                type="text"
-                                name="aptNo"
-                                placeholder="Apartment No"
-                                value={newAddress.aptNo}
-                                onChange={handleNewAddressChange}
-                                required
-                            />
-                            <input
-                                type="text"
-                                name="flatNo"
-                                placeholder="Flat No"
-                                value={newAddress.flatNo}
-                                onChange={handleNewAddressChange}
-                                required
-                            />
-                            <input
-                                type="text"
-                                name="description"
-                                placeholder="Description"
-                                value={newAddress.description}
-                                onChange={handleNewAddressChange}
-                                required
-                            />
-                            <select
-                                name="addressType"
-                                value={newAddress.addressType}
-                                onChange={handleNewAddressChange}
-                                required
-                            >
-                                <option value="HOME">Home</option>
-                                <option value="WORK">Work</option>
-                                <option value="OTHER">Other</option>
-                            </select>
-                            <div className="form-actions">
-                                <button type="submit" className="add-button">
-                                    Add
-                                </button>
-                                <button type="button" onClick={closeAddAddressForm} className="cancel-button">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <AddAddressForm
+                    newAddress={newAddress}
+                    onChange={handleNewAddressChange}
+                    onSubmit={handleAddAddressSubmit}
+                    onClose={() => setIsAddAddressFormOpen(false)}
+                />
             )}
 
-            {/* Delete Address Modal */}
             {isDeleteModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h2>Delete Address</h2>
-                        <div className="address-cards-container">
-                            <div className="address-cards-scroll">
-                                {addresses.map((address) => (
-                                    <div key={address.addressId} className="address-card">
-                                        <p><strong>Country:</strong> {address.country}</p>
-                                        <p><strong>City:</strong> {address.city}</p>
-                                        <p><strong>Street:</strong> {address.street}</p>
-                                        <p><strong>Apartment No:</strong> {address.aptNo}</p>
-                                        <p><strong>Flat No:</strong> {address.flatNo}</p>
-                                        <p><strong>Description:</strong> {address.description}</p>
-                                        <p><strong>Type:</strong> {address.addressType}</p>
-                                        <button
-                                            onClick={() => handleAddressDelete(address.addressId)}
-                                            className="delete-button"
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <button onClick={closeDeleteModal} className="close-modal-button">
-                            Close
-                        </button>
-                    </div>
-                </div>
+                <DeleteAddressModal
+                    addresses={addresses}
+                    onDelete={handleAddressDelete}
+                    onClose={() => setIsDeleteModalOpen(false)}
+                />
             )}
-
-            <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>
     );
 };
