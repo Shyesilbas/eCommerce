@@ -1,9 +1,6 @@
 package com.serhat.security.controller;
 
-import com.serhat.security.dto.request.ForgotPasswordRequest;
-import com.serhat.security.dto.request.UpdateEmailRequest;
-import com.serhat.security.dto.request.UpdatePasswordRequest;
-import com.serhat.security.dto.request.UpdatePhoneRequest;
+import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.exception.InvalidPasswordException;
 import com.serhat.security.exception.UserNotFoundException;
@@ -91,6 +88,17 @@ public class UserController {
                                                            HttpServletRequest servletRequest ,
                                                            HttpServletResponse servletResponse){
         return ResponseEntity.ok(userService.updatePhone(servletRequest,servletResponse,phoneRequest));
+    }
+
+
+    @PostMapping("/add-address")
+    public ResponseEntity<AddAddressResponse> addAddress(@RequestBody AddAddressRequest request , HttpServletRequest servletRequest){
+        return ResponseEntity.ok(userService.addAddress(servletRequest, request));
+    }
+
+    @DeleteMapping("/delete-address")
+    public ResponseEntity<DeleteAddressResponse> deleteAddress(@RequestParam Long addressId , HttpServletRequest request){
+        return ResponseEntity.ok(userService.deleteAddress(addressId, request));
     }
 
 }

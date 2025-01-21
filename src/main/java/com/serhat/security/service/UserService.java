@@ -1,5 +1,6 @@
 package com.serhat.security.service;
 
+import com.serhat.security.dto.object.AddressDto;
 import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.Address;
@@ -246,6 +247,63 @@ public class UserService {
                 .toList();
     }
 
+    @Transactional
+    public AddAddressResponse addAddress(HttpServletRequest servletRequest, AddAddressRequest request) {
+        String token = extractTokenFromRequest(servletRequest);
+
+        if (token == null) {
+            throw new RuntimeException("Token not found in request");
+        }
+
+        String username = jwtUtil.extractUsername(token);
+
+        AddressDto addressDto = request.addressDto();
+        Address newAddress = Address.builder()
+                .country(addressDto.country())
+                .city(addressDto.city())
+                .street(addressDto.street())
+                .aptNo(addressDto.aptNo())
+                .flatNo(addressDto.flatNo())
+                .description(addressDto.description())
+                .addressType(addressDto.addressType())
+                .user(userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found")))
+                .build();
+
+        addressRepository.save(newAddress);
+
+        return new AddAddressResponse(
+                "Address added successfully",
+                newAddress.getAddressId(),
+                LocalDateTime.now(),
+                newAddress.getDescription()
+        );
+    }
+
+    @Transactional
+    public DeleteAddressResponse deleteAddress(Long addressId, HttpServletRequest request) {
+        String token = extractTokenFromRequest(request);
+
+        if (token == null) {
+            throw new RuntimeException("Token not found in request");
+        }
+
+        String username = jwtUtil.extractUsername(token);
+
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new RuntimeException("Address not found with ID: " + addressId));
+
+        if (!address.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Address does not belong to the user: " + username);
+        }
+
+        addressRepository.delete(address);
+
+        return new DeleteAddressResponse(
+                addressId,
+                "Address Deleted Successfully",
+                LocalDateTime.now()
+        );
+    }
 
     private String extractTokenFromRequest(HttpServletRequest request) {
         String token = null;
