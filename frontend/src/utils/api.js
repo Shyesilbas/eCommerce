@@ -167,6 +167,45 @@ export const fetchProductById = async (productId) => {
     }
 };
 
+export const getFavoritesByUser = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/favorites/get-favorites`, {
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching favorites:", error);
+        throw error;
+    }
+};
+
+export const addFavorite = async (productId) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/favorites/add-favorite`,
+            { productId },
+            { withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error adding favorite:", error);
+        throw error;
+    }
+};
+
+export const removeFavorite = async (productId) => {
+    try {
+        const response = await axios.delete(`${API_URL}/favorites/remove-favorite`, {
+            params: { productId },
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error removing favorite:", error);
+        throw error;
+    }
+};
+
 export const fetchProductInfo = async (productCode) => {
     try {
         const response = await axios.get(`${API_URL}/api/products/info/${productCode}`);

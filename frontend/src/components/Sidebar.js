@@ -33,6 +33,23 @@ const Sidebar = ({ isOpen, setIsOpen, user, onLogout }) => {
         navigate("/products");
     };
 
+    const handleFavoritesClick = () => {
+        if (!isAuthenticated) {
+            Swal.fire({
+                icon: "warning",
+                title: "Login Required",
+                text: "Please login to access your favorites.",
+                confirmButtonText: "Login",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    navigate("/login");
+                }
+            });
+        } else {
+            navigate("/favorites");
+        }
+    };
+
     const handleLogout = async () => {
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         const username = user?.username || storedUser?.username || "User";
@@ -87,9 +104,14 @@ const Sidebar = ({ isOpen, setIsOpen, user, onLogout }) => {
                         Products
                     </div>
                     {isAuthenticated && (
-                        <div style={styles.menuItem} onClick={handleLogout}>
-                            Logout
-                        </div>
+                        <>
+                            <div style={styles.menuItem} onClick={handleFavoritesClick}>
+                                Favorites
+                            </div>
+                            <div style={styles.menuItem} onClick={handleLogout}>
+                                Logout
+                            </div>
+                        </>
                     )}
                 </div>
             )}

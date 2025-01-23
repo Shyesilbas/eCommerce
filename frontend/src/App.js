@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
 import UserInfo from "./components/UserInfo";
 import RegisterPage from "./components/RegisterPage";
+import FavoritesPage from "./components/FavoritesPage";
 import ProductPage from "./components/ProductPage";
 import Sidebar from "./components/Sidebar";
 import ProductDetailPage from "./components/ProductDetailPage";
@@ -60,6 +61,7 @@ const App = () => {
                         path="/login"
                         element={<LoginPage setUser={setUser} setAddress={setAddress} />}
                     />
+                    <Route path="/favorites" element={<FavoritesPage />} />
                     <Route
                         path="/user-info"
                         element={

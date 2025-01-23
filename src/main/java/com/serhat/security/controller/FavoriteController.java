@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/favorites")
@@ -22,13 +23,15 @@ public class FavoriteController {
     }
 
     @PostMapping("/add-favorite")
-    public ResponseEntity<String> addFavorite(HttpServletRequest request, @RequestParam Long productId) {
+    public ResponseEntity<String> addFavorite(HttpServletRequest request, @RequestBody Map<String, Long> requestBody) {
+        Long productId = requestBody.get("productId");
         favoritesService.addFavorite(request, productId);
         return ResponseEntity.ok("Product added to favorites successfully");
     }
 
     @DeleteMapping("/remove-favorite")
-    public ResponseEntity<String> removeFavorite(HttpServletRequest request, @RequestParam Long productId) {
+    public ResponseEntity<String> removeFavorite(HttpServletRequest request, @RequestBody Map<String, Long> requestBody) {
+        Long productId = requestBody.get("productId");
         favoritesService.removeFavorite(request, productId);
         return ResponseEntity.ok("Product removed from favorites successfully");
     }

@@ -40,7 +40,6 @@ const ProductPage = ({ user }) => {
     });
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(() => {
-        // Read selectedCategory from localStorage on initial render
         const savedCategory = localStorage.getItem("selectedCategory");
         return savedCategory || "All Products";
     });
@@ -70,7 +69,6 @@ const ProductPage = ({ user }) => {
             .find(([key, value]) => value === displayName)?.[0] || displayName;
     };
 
-    // Save selectedCategory to localStorage whenever it changes
     useEffect(() => {
         localStorage.setItem("selectedCategory", selectedCategory);
     }, [selectedCategory]);
@@ -231,7 +229,7 @@ const ProductPage = ({ user }) => {
 
                 <div className="products-by-category">
                     <h2>{selectedCategory === "All Products" ? "All Products" : `Products in ${selectedCategory}`}</h2>
-                    <ProductList products={products} onProductClick={(id) => navigate(`/product/${id}`)} />
+                    <ProductList products={products} onProductClick={(id) => navigate(`/product/${id}`)} user={user} />
                 </div>
 
                 <Pagination
