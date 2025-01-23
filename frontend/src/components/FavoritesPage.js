@@ -4,6 +4,19 @@ import { getFavoritesByUser, removeFavorite } from "../utils/api";
 import Swal from "sweetalert2";
 import "../style/FavoritesPage.css";
 
+const CATEGORY_DISPLAY_NAMES = {
+    ELECTRONICS: "Electronics",
+    CLOTHING: "Clothing",
+    HOME_AND_KITCHEN: "Home and Kitchen",
+    BOOKS_AND_STATIONERY: "Books and Stationery",
+    SPORTS_AND_OUTDOORS: "Sports and Outdoors",
+    BEAUTY_AND_COSMETICS: "Beauty and Cosmetics",
+    TOYS_AND_GAMES: "Toys and Games",
+    AUTOMOTIVE: "Automotive",
+    HEALTH_AND_WELLNESS: "Health and Wellness",
+    GROCERY: "Grocery",
+};
+
 const FavoritesPage = ({ user }) => {
     const navigate = useNavigate();
     const [favorites, setFavorites] = useState([]);
@@ -70,11 +83,11 @@ const FavoritesPage = ({ user }) => {
                             <p className="favorite-card-detail">Price: ${favorite.price}</p>
                             <p className="favorite-card-detail">Brand: {favorite.brand}</p>
                             <p className="favorite-card-detail">Color: {favorite.color}</p>
-                            <p className="favorite-card-detail">Category: {favorite.category}</p>
+                            <p className="favorite-card-detail">Category: {CATEGORY_DISPLAY_NAMES[favorite.category] || favorite.category}</p>
                             <p className="favorite-card-detail">Added on: {new Date(favorite.favorite_since).toLocaleDateString()}</p>
                             <button
                                 className="favorite-card-remove-button"
-                                onClick={() => handleRemoveFavorite(favorite.productCode)}
+                                onClick={() => handleRemoveFavorite(favorite.productId)}
                             >
                                 Remove from Favorites
                             </button>

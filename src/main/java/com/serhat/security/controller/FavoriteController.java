@@ -4,6 +4,7 @@ import com.serhat.security.dto.object.FavoriteProductDto;
 import com.serhat.security.service.FavoritesService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +14,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/favorites")
 @RequiredArgsConstructor
+@Slf4j
 public class FavoriteController {
     private final FavoritesService favoritesService;
 
@@ -30,9 +32,13 @@ public class FavoriteController {
     }
 
     @DeleteMapping("/remove-favorite")
-    public ResponseEntity<String> removeFavorite(HttpServletRequest request, @RequestBody Map<String, Long> requestBody) {
-        Long productId = requestBody.get("productId");
-        favoritesService.removeFavorite(request, productId);
-        return ResponseEntity.ok("Product removed from favorites successfully");
+    public ResponseEntity<?> removeFavorite(HttpServletRequest request, @RequestParam Long productId) {
+        try {
+            favoritesService.removeFavorite(request, productId);
+            return ResponseEntity.ok("Product removed from favorites successfully");
+        } catch (Exception e) {
+            log.error("Error removing favorite", e);
+            return ResponseEntity.badRequest().body("Failed to remove favorite: " + e.getMessage());
+        }
     }
 }

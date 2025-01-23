@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 
 @Builder
 public record FavoriteProductDto(
+        Long productId,
         String productCode,
         String name,
         BigDecimal price,

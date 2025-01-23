@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -34,6 +35,7 @@ public class FavoritesService {
     private FavoriteProductDto convertToFavoriteProductDto(Favorites favorite) {
         Product product = favorite.getProduct();
         return FavoriteProductDto.builder()
+                .productId(product.getProductId())
                 .productCode(product.getProductCode())
                 .name(product.getName())
                 .price(product.getPrice())
@@ -46,6 +48,7 @@ public class FavoritesService {
                 .build();
     }
 
+    @Transactional
     public void addFavorite(HttpServletRequest servletRequest, Long productId) {
         User user = tokenInterface.getUserFromToken(servletRequest);
         Product product = productRepository.findById(productId)
@@ -62,6 +65,7 @@ public class FavoritesService {
         }
     }
 
+    @Transactional
     public void removeFavorite(HttpServletRequest servletRequest, Long productId) {
         User user = tokenInterface.getUserFromToken(servletRequest);
         Product product = productRepository.findById(productId)

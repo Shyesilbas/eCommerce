@@ -201,7 +201,7 @@ export const removeFavorite = async (productId) => {
         });
         return response.data;
     } catch (error) {
-        console.error("Error removing favorite:", error);
+        console.error("Full error details:", error.response);
         throw error;
     }
 };
