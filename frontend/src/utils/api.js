@@ -64,6 +64,21 @@ export const updatePasswordRequest = async (data) => {
     }
 };
 
+export const getNotifications = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/notification/get-notifications`, {
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching notifications:", error);
+        throw error;
+    }
+};
+
+
+
+
 export const getUserInfo = async () => {
     try {
         const response = await axios.get(`${API_URL}/user/myInfo`, { withCredentials: true });

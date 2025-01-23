@@ -1,7 +1,7 @@
 import React from "react";
 import "../../style/UserNav.css";
 
-const UserNav = ({ activeSection, onSectionChange }) => {
+const UserNav = ({ activeSection, onSectionChange, unreadCount }) => {
     const sections = [
         { id: "profile", label: "Profile" },
         { id: "address", label: "Address" },
@@ -20,6 +20,9 @@ const UserNav = ({ activeSection, onSectionChange }) => {
                     onClick={() => onSectionChange(section.id)}
                 >
                     {section.label}
+                    {section.id === "notifications" && unreadCount > 0 && (
+                        <span className="unread-count">{unreadCount}</span>
+                    )}
                 </button>
             ))}
         </nav>

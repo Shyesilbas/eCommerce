@@ -63,7 +63,18 @@ public class NotificationService {
                 notification.getNotificationTopic());
     }
 
-    public List<NotificationDTO> getNotificationsByUsername(String username) {
+
+    public List<NotificationDTO> getNotifications(HttpServletRequest request) {
+        String token = extractTokenFromRequest(request);
+        if (token == null) {
+            throw new RuntimeException("Token not found in request");
+        }
+
+        String username = jwtUtil.extractUsername(token);
+        if (username == null) {
+            throw new RuntimeException("Username not found in token");
+        }
+
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
 

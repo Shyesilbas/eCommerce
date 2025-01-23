@@ -6,29 +6,26 @@ import RegisterPage from "./components/RegisterPage";
 import ProductPage from "./components/ProductPage";
 import Sidebar from "./components/Sidebar";
 import ProductDetailPage from "./components/ProductDetailPage";
+import UserNav from "./components/user/UserNav.js";
+import NotificationsSection from "./components/user/NotificationsSection.js";
+import "./style/UserNav.css";
+import "./style/Notifications.css";
 
 const App = () => {
     const [user, setUser] = useState(null);
     const [address, setAddress] = useState([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [activeSection, setActiveSection] = useState("profile");
+    const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
         const storedAddress = localStorage.getItem("address");
         const savedSection = localStorage.getItem("activeSection");
 
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-
-        if (storedAddress) {
-            setAddress(JSON.parse(storedAddress));
-        }
-
-        if (savedSection) {
-            setActiveSection(savedSection);
-        }
+        if (storedUser) setUser(JSON.parse(storedUser));
+        if (storedAddress) setAddress(JSON.parse(storedAddress));
+        if (savedSection) setActiveSection(savedSection);
     }, []);
 
     const handleLogout = () => {
@@ -65,14 +62,16 @@ const App = () => {
                     />
                     <Route
                         path="/user-info"
-                        element={<UserInfo
-                            user={user}
-                            address={address}
-                            onLogout={handleLogout}
-                            activeSection={activeSection}
-                            onSectionChange={handleSectionChange}
-                            updateAddress={updateAddress}
-                        />}
+                        element={
+                            <UserInfo
+                                user={user}
+                                address={address}
+                                onLogout={handleLogout}
+                                activeSection={activeSection}
+                                onSectionChange={handleSectionChange}
+                                updateAddress={updateAddress}
+                            />
+                        }
                     />
                     <Route
                         path="/register"
