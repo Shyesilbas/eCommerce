@@ -43,20 +43,17 @@ public class NotificationMapper {
     }
 
     public String generateNotificationMessage(Notification notification) {
-        String formattedTime = notification.getAt().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
-        String topic = notification.getNotificationTopic().toString();
-
-        return String.format("[%s] %s - %s", formattedTime, topic, getNotificationDescription(notification.getNotificationTopic()));
+        return String.format("%s", getNotificationDescription(notification.getNotificationTopic()) + " successfully!");
     }
     private String getNotificationDescription(NotificationTopic topic) {
         return switch (topic) {
-            case ADDRESS_ADDED -> "New Address Added.";
-            case ADDRESS_DELETED -> "An Address Deleted.";
-            case ADDRESS_UPDATED -> "An Address Updated.";
-            case EMAIL_UPDATE -> "E-mail updated.";
-            case PASSWORD_UPDATE -> "Password Updated.";
-            case PHONE_UPDATE -> "Phone Number updated.";
-            case FAILED_LOGIN -> "Failed Login attempt!.";
+            case ADDRESS_ADDED -> "New Address Added";
+            case ADDRESS_DELETED -> "An Address Deleted";
+            case ADDRESS_UPDATED -> "An Address Updated";
+            case EMAIL_UPDATE -> "E-mail updated";
+            case PASSWORD_UPDATE -> "Password Updated";
+            case PHONE_UPDATE -> "Phone Number updated";
+            case FAILED_LOGIN -> "Failed Login attempt!";
             default -> "Notification Received.";
         };
     }

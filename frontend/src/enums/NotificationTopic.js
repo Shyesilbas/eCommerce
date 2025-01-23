@@ -1,9 +1,9 @@
 export const NotificationTopic = {
-    ADDRESS_ADDED: "ADDRESS_ADDED",
-    ADDRESS_DELETED: "ADDRESS_DELETED",
-    ADDRESS_UPDATED: "ADDRESS_UPDATED",
-    EMAIL_UPDATE: "EMAIL_UPDATE",
-    PASSWORD_UPDATE: "PASSWORD_UPDATE",
-    PHONE_UPDATE: "PHONE_UPDATE",
-    FAILED_LOGIN: "FAILED_LOGIN",
+    ADDRESS_ADDED: "New Address Added",
+    ADDRESS_DELETED: "Address Deleted",
+    ADDRESS_UPDATED: "Address Update",
+    EMAIL_UPDATE: "E-Mail updated",
+    PASSWORD_UPDATE: "Password Updated",
+    PHONE_UPDATE: "Phone number update",
+    FAILED_LOGIN: "Login attempt failed!",
 };

@@ -11,6 +11,15 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-bottom: 20px;
+}
+
+.unread-count {
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 5px 10px;
+    font-size: 0.8em;
 }
 
 .notifications-list {
@@ -19,16 +28,30 @@
 }
 
 .notification-item {
-    padding: 10px;
+    padding: 15px;
     border-bottom: 1px solid #ddd;
+    margin-bottom: 10px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .notification-item:last-child {
     border-bottom: none;
+    margin-bottom: 0;
 }
 
-.notification-message {
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.notification-topic {
     font-weight: bold;
+    color: #2c3e50;
+    font-size: 1.1em;
 }
 
 .notification-time {
@@ -36,7 +59,8 @@
     font-size: 0.9em;
 }
 
-.notification-topic {
-    color: #007bff;
-    font-size: 0.9em;
+.notification-message {
+    color: #333;
+    font-size: 0.95em;
+    line-height: 1.4;
 }

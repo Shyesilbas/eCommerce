@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getNotifications } from "../../utils/api";
+import { NotificationTopic } from "../../enums/NotificationTopic";
 import "../../style/Notifications.css";
 
 const NotificationsSection = () => {
@@ -56,11 +57,17 @@ const NotificationsSection = () => {
                             key={notification.notificationId}
                             className="notification-item"
                         >
-                            <div className="notification-message">{notification.message}</div>
-                            <div className="notification-time">
-                                {new Date(notification.at).toLocaleString()}
+                            <div className="notification-header">
+                                <div className="notification-topic">
+                                    {NotificationTopic[notification.notificationTopic]}
+                                </div>
+                                <div className="notification-time">
+                                    {new Date(notification.at).toLocaleString()}
+                                </div>
                             </div>
-                            <div className="notification-topic">{notification.notificationTopic}</div>
+                            <div className="notification-message">
+                                {notification.message}
+                            </div>
                         </li>
                     ))}
                 </ul>
