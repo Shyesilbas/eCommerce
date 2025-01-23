@@ -8,15 +8,12 @@ import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.NotificationTopic;
 import com.serhat.security.exception.EmailAlreadyExistException;
 import com.serhat.security.exception.UsernameAlreadyExists;
-import com.serhat.security.jwt.JwtUtil;
+import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.repository.AddressRepository;
 import com.serhat.security.repository.UserRepository;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,27 +30,39 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
     private final AddressRepository addressRepository;
-    public final AuthService authService;
     private final NotificationService notificationService;
+    private final TokenInterface tokenInterface;
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-        boolean isEmailExists = userRepository.findByEmail(request.email()).isPresent();
-        if (isEmailExists) {
+        validateUserRegistration(request);
+
+        User user = buildUserFromRequest(request);
+        saveRawPassword("Register", user.getUsername(), request.password());
+        userRepository.save(user);
+
+        return new RegisterResponse(
+                "Register Successful! Now you can login with your credentials.",
+                user.getUsername(),
+                user.getEmail(),
+                LocalDateTime.now()
+        );
+    }
+
+    private void validateUserRegistration(RegisterRequest request) {
+        if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new EmailAlreadyExistException("Email Exists!");
         }
-        boolean isUsernameExists = userRepository.findByUsername(request.username()).isPresent();
-        if (isUsernameExists) {
+        if (userRepository.findByUsername(request.username()).isPresent()) {
             throw new UsernameAlreadyExists("Username exists!");
         }
-
-        boolean isPhoneExists = userRepository.findByPhone(request.phone()).isPresent();
-        if (isPhoneExists) {
+        if (userRepository.findByPhone(request.phone()).isPresent()) {
             throw new UsernameAlreadyExists("Phone exists!");
         }
+    }
 
+    private User buildUserFromRequest(RegisterRequest request) {
         User user = User.builder()
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
@@ -82,41 +89,25 @@ public class UserService {
             user.setAddresses(addresses);
         }
 
-        saveRawPassword("Register",user.getUsername(),request.password());
-        userRepository.save(user);
-
-        return new RegisterResponse(
-                "Register Successful! Now you can login with your credentials.",
-                user.getUsername(),
-                user.getEmail(),
-                LocalDateTime.now()
-        );
+        return user;
     }
 
-    private void saveRawPassword(String message ,String username , String rawPassword){
+    private void saveRawPassword(String message, String username, String rawPassword) {
         String filePath = "raw_credentials.txt";
-        try(BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filePath,true))){
-            bufferedWriter.write(message + "Username : "+username + " Raw Password : "+ rawPassword);
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filePath, true))) {
+            bufferedWriter.write(message + " Username: " + username + " Raw Password: " + rawPassword);
             bufferedWriter.newLine();
             log.info("WRITTEN TO FILE");
-        }catch (IOException e){
-            log.error("Error writing to file : "+e.getMessage());
+        } catch (IOException e) {
+            log.error("Error writing to file: " + e.getMessage());
         }
     }
 
     @Transactional
-    public UpdatePhoneResponse updatePhone(HttpServletRequest request, HttpServletResponse response, UpdatePhoneRequest updatePhoneRequest) {
-        String token = extractTokenFromRequest(request);
-        if (token == null) {
-            throw new RuntimeException("Token not found in request");
-        }
+    public UpdatePhoneResponse updatePhone(HttpServletRequest request, UpdatePhoneRequest updatePhoneRequest) {
+        User user = tokenInterface.getUserFromToken(request);
 
-        String username = jwtUtil.extractUsername(token);
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
-
-        Optional<User> existingUserWithPhone = userRepository.findByPhone(updatePhoneRequest.phone());
-        if (existingUserWithPhone.isPresent()) {
+        if (userRepository.findByPhone(updatePhoneRequest.phone()).isPresent()) {
             throw new EmailAlreadyExistException("Phone already exists!");
         }
 
@@ -124,93 +115,64 @@ public class UserService {
         user.setPhone(updatePhoneRequest.phone());
         userRepository.save(user);
 
-        return new UpdatePhoneResponse("Email updated successfully.", user.getPhone() ,LocalDateTime.now());
+        return new UpdatePhoneResponse("Phone updated successfully.", user.getPhone(), LocalDateTime.now());
     }
 
     @Transactional
-    public UpdateEmailResponse updateEmail(HttpServletRequest request, HttpServletResponse response, UpdateEmailRequest updateEmailRequest) {
-        String token = extractTokenFromRequest(request);
-        if (token == null) {
-            throw new RuntimeException("Token not found in request");
-        }
+    public UpdateEmailResponse updateEmail(HttpServletRequest request, UpdateEmailRequest updateEmailRequest) {
+        User user = tokenInterface.getUserFromToken(request);
 
-        String username = jwtUtil.extractUsername(token);
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
-
-        Optional<User> existingUserWithNewEmail = userRepository.findByEmail(updateEmailRequest.newEmail());
-        if (existingUserWithNewEmail.isPresent()) {
+        if (userRepository.findByEmail(updateEmailRequest.newEmail()).isPresent()) {
             throw new EmailAlreadyExistException("Email already exists!");
         }
 
-        notificationService.addNotification(request,NotificationTopic.EMAIL_UPDATE);
+        notificationService.addNotification(request, NotificationTopic.EMAIL_UPDATE);
         user.setEmail(updateEmailRequest.newEmail());
         userRepository.save(user);
 
-        return new UpdateEmailResponse("Email updated successfully.", user.getEmail() ,LocalDateTime.now());
+        return new UpdateEmailResponse("Email updated successfully.", user.getEmail(), LocalDateTime.now());
     }
 
     @Transactional
+    public UpdatePasswordResponse updatePassword(HttpServletRequest request, UpdatePasswordRequest updatePasswordRequest) {
+        User user = tokenInterface.getUserFromToken(request);
 
-    public UpdatePasswordResponse updatePassword(HttpServletRequest servletRequest ,HttpServletResponse response ,UpdatePasswordRequest request){
-        String token = extractTokenFromRequest(servletRequest);
-        if (token == null) {
-            throw new RuntimeException("Token not found in request");
-        }
-
-        String username = jwtUtil.extractUsername(token);
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
-        String currentPassword = user.getPassword();
-        if(currentPassword.equals(request.newPassword())){
+        if (user.getPassword().equals(updatePasswordRequest.newPassword())) {
             throw new RuntimeException("Passwords are same.");
         }
-        if (!passwordEncoder.matches(request.oldPassword(), currentPassword)) {
+        if (!passwordEncoder.matches(updatePasswordRequest.oldPassword(), user.getPassword())) {
             throw new RuntimeException("Old password is incorrect.");
         }
-        notificationService.addNotification(servletRequest,NotificationTopic.PASSWORD_UPDATE);
-        user.setPassword(passwordEncoder.encode(request.newPassword()));
+
+        notificationService.addNotification(request, NotificationTopic.PASSWORD_UPDATE);
+        user.setPassword(passwordEncoder.encode(updatePasswordRequest.newPassword()));
         userRepository.save(user);
-        saveRawPassword("Password Update",username,request.newPassword());
-        return new UpdatePasswordResponse("Password updated successfully.",LocalDateTime.now());
+        saveRawPassword("Password Update", user.getUsername(), updatePasswordRequest.newPassword());
+
+        return new UpdatePasswordResponse("Password updated successfully.", LocalDateTime.now());
     }
 
     @Transactional
-
     public ForgotPasswordResponse forgotPassword(ForgotPasswordRequest request) {
-        try {
-            User user = userRepository.findByEmail(request.email())
-                    .orElseThrow(() -> new RuntimeException("User not found with email: " + request.email()));
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + request.email()));
 
-            String currentPassword = user.getPassword();
-            if (currentPassword.equals(request.newPassword())) {
-                throw new RuntimeException("New password must be different from the current password.");
-            }
-
-            user.setPassword(passwordEncoder.encode(request.newPassword()));
-            userRepository.save(user);
-            saveRawPassword("Forgot Password",user.getUsername(), request.newPassword());
-            return new ForgotPasswordResponse("Password updated successfully.", LocalDateTime.now());
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to reset password: " + e.getMessage());
+        if (user.getPassword().equals(request.newPassword())) {
+            throw new RuntimeException("New password must be different from the current password.");
         }
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+        saveRawPassword("Forgot Password", user.getUsername(), request.newPassword());
+
+        return new ForgotPasswordResponse("Password updated successfully.", LocalDateTime.now());
     }
 
-
-    public UserResponse userInfo(HttpServletRequest request, HttpServletResponse response) {
-        String token = extractTokenFromRequest(request);
-
-        if (token == null) {
-            throw new RuntimeException("Token not found in request");
-        }
-
-        String username = jwtUtil.extractUsername(token);
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
+    public UserResponse userInfo(HttpServletRequest request) {
+        User user = tokenInterface.getUserFromToken(request);
 
         log.info("User details: userId={}, email={}, username={}, role={}, password={}, total orders = {}",
-                user.getUserId(), user.getEmail(), user.getUsername(), user.getRole(), user.getPassword(),user.getTotalOrders());
+                user.getUserId(), user.getEmail(), user.getUsername(), user.getRole(), user.getPassword(), user.getTotalOrders());
 
         return UserResponse.builder()
                 .userId(user.getUserId())
@@ -224,18 +186,11 @@ public class UserService {
     }
 
     public List<AddressResponse> addressInfo(HttpServletRequest request) {
-        String token = extractTokenFromRequest(request);
-
-        if (token == null) {
-            throw new RuntimeException("Token not found in request");
-        }
-
-        String username = jwtUtil.extractUsername(token);
-
-        List<Address> addresses = addressRepository.findByUser_Username(username);
+        User user = tokenInterface.getUserFromToken(request);
+        List<Address> addresses = addressRepository.findByUser_Username(user.getUsername());
 
         if (addresses.isEmpty()) {
-            throw new RuntimeException("No addresses found for user: " + username);
+            throw new RuntimeException("No addresses found for user: " + user.getUsername());
         }
 
         return addresses.stream()
@@ -253,16 +208,10 @@ public class UserService {
     }
 
     @Transactional
-    public AddAddressResponse addAddress(HttpServletRequest servletRequest, AddAddressRequest request) {
-        String token = extractTokenFromRequest(servletRequest);
+    public AddAddressResponse addAddress(HttpServletRequest request, AddAddressRequest addAddressRequest) {
+        User user = tokenInterface.getUserFromToken(request);
 
-        if (token == null) {
-            throw new RuntimeException("Token not found in request");
-        }
-
-        String username = jwtUtil.extractUsername(token);
-
-        AddressDto addressDto = request.addressDto();
+        AddressDto addressDto = addAddressRequest.addressDto();
         Address newAddress = Address.builder()
                 .country(addressDto.country())
                 .city(addressDto.city())
@@ -271,11 +220,11 @@ public class UserService {
                 .flatNo(addressDto.flatNo())
                 .description(addressDto.description())
                 .addressType(addressDto.addressType())
-                .user(userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found")))
+                .user(user)
                 .build();
 
         addressRepository.save(newAddress);
-        notificationService.addNotification(servletRequest,NotificationTopic.ADDRESS_ADDED);
+        notificationService.addNotification(request, NotificationTopic.ADDRESS_ADDED);
 
         return new AddAddressResponse(
                 "Address added successfully",
@@ -287,23 +236,17 @@ public class UserService {
 
     @Transactional
     public DeleteAddressResponse deleteAddress(Long addressId, HttpServletRequest request) {
-        String token = extractTokenFromRequest(request);
-
-        if (token == null) {
-            throw new RuntimeException("Token not found in request");
-        }
-
-        String username = jwtUtil.extractUsername(token);
+        User user = tokenInterface.getUserFromToken(request);
 
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new RuntimeException("Address not found with ID: " + addressId));
 
-        if (!address.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("Address does not belong to the user: " + username);
+        if (!address.getUser().getUsername().equals(user.getUsername())) {
+            throw new RuntimeException("Address does not belong to the user: " + user.getUsername());
         }
 
         addressRepository.delete(address);
-        notificationService.addNotification(request,NotificationTopic.ADDRESS_DELETED);
+        notificationService.addNotification(request, NotificationTopic.ADDRESS_DELETED);
 
         return new DeleteAddressResponse(
                 addressId,
@@ -311,29 +254,4 @@ public class UserService {
                 LocalDateTime.now()
         );
     }
-
-    private String extractTokenFromRequest(HttpServletRequest request) {
-        String token = null;
-
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-        }
-
-        if (token == null) {
-            Cookie[] cookies = request.getCookies();
-            if (cookies != null) {
-                for (Cookie cookie : cookies) {
-                    if ("jwt".equals(cookie.getName())) {
-                        token = cookie.getValue();
-                        break;
-                    }
-                }
-            }
-        }
-
-        return token;
-    }
-
-
 }

@@ -28,8 +28,8 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/myInfo")
-    public ResponseEntity<UserResponse> getUserInfo(HttpServletRequest request, HttpServletResponse response) {
-        UserResponse userResponse = userService.userInfo(request, response);
+    public ResponseEntity<UserResponse> getUserInfo(HttpServletRequest request) {
+        UserResponse userResponse = userService.userInfo(request);
         return ResponseEntity.ok(userResponse);
     }
 
@@ -46,7 +46,7 @@ public class UserController {
             @RequestBody UpdatePasswordRequest request) {
 
         try {
-            UpdatePasswordResponse updatePasswordResponse = userService.updatePassword(servletRequest, response, request);
+            UpdatePasswordResponse updatePasswordResponse = userService.updatePassword(servletRequest,  request);
             return ResponseEntity.ok(updatePasswordResponse);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -74,7 +74,7 @@ public class UserController {
             @RequestBody UpdateEmailRequest request) {
 
         try {
-            UpdateEmailResponse updateEmailResponse = userService.updateEmail(servletRequest, response, request);
+            UpdateEmailResponse updateEmailResponse = userService.updateEmail(servletRequest,  request);
             return ResponseEntity.ok(updateEmailResponse);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -85,9 +85,8 @@ public class UserController {
 
     @PutMapping("/update-phone")
     public ResponseEntity<UpdatePhoneResponse> updatePhone(@Valid @RequestBody UpdatePhoneRequest phoneRequest ,
-                                                           HttpServletRequest servletRequest ,
-                                                           HttpServletResponse servletResponse){
-        return ResponseEntity.ok(userService.updatePhone(servletRequest,servletResponse,phoneRequest));
+                                                           HttpServletRequest servletRequest ){
+        return ResponseEntity.ok(userService.updatePhone(servletRequest,phoneRequest));
     }
 
 
