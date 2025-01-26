@@ -42,7 +42,6 @@ const ProductList = ({ products, onProductClick, user }) => {
         <div className="product-list">
             {products.map((prod) => (
                 <div key={prod.productId} className="product-card">
-                    {/* Favorite Icon */}
                     <div
                         className={`favorite-icon ${prod.isFavorite ? "favorited" : ""}`}
                         onClick={() => handleFavoriteClick(prod.productId, prod.isFavorite)}

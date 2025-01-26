@@ -45,6 +45,7 @@ public class FavoritesService {
                 .category(product.getCategory())
                 .averageRating(product.getAverageRating())
                 .favorite_since(favorite.getAddedAt())
+                .isFavorite(favorite.isFavorite())
                 .build();
     }
 
@@ -59,6 +60,7 @@ public class FavoritesService {
                     .user(user)
                     .product(product)
                     .addedAt(LocalDate.now())
+                    .isFavorite(true)
                     .build();
             favoritesRepository.save(favorite);
             log.info("Product {} added to favorites for user {}", productId, user.getUsername());
@@ -71,7 +73,11 @@ public class FavoritesService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        favoritesRepository.deleteByUserAndProduct(user, product);
+        Favorites favorite = favoritesRepository.findByUserAndProduct(user, product)
+                .orElseThrow(() -> new RuntimeException("Favorite not found"));
+
+        favorite.setFavorite(false);
+        favoritesRepository.delete(favorite);
         log.info("Product {} removed from favorites for user {}", productId, user.getUsername());
     }
 }

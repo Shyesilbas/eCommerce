@@ -18,6 +18,7 @@ public record FavoriteProductDto(
         String color,
         Category category,
         BigDecimal averageRating,
-        LocalDate favorite_since
+        LocalDate favorite_since,
+        boolean isFavorite
 ) {
 }

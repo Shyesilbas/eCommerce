@@ -31,4 +31,6 @@ public class Favorites {
 
     private LocalDate addedAt;
 
+    private boolean isFavorite;
+
 }
