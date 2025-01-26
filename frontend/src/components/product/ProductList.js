@@ -3,7 +3,7 @@ import { addFavorite, removeFavorite, addToCard } from "../../utils/api";
 import Swal from "sweetalert2";
 import "../../style/ProductList.css";
 
-const ProductList = ({ products, onProductClick, user }) => {
+const ProductList = ({ products, onProductClick, user, setProducts }) => {
     const handleFavoriteClick = async (productId, isFavorite) => {
         if (!user) {
             Swal.fire("Info", "Please login to add favorites.", "info");
@@ -13,11 +13,22 @@ const ProductList = ({ products, onProductClick, user }) => {
         try {
             if (isFavorite) {
                 await removeFavorite(productId);
-                Swal.fire("Success", "Product removed from favorites!", "success");
+                const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+                const updatedFavorites = favorites.filter(id => id !== productId);
+                localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
             } else {
                 await addFavorite(productId);
-                Swal.fire("Success", "Product added to favorites!", "success");
+                const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+                favorites.push(productId);
+                localStorage.setItem("favorites", JSON.stringify(favorites));
             }
+
+            setProducts(prevProducts =>
+                prevProducts.map(prod =>
+                    prod.productId === productId ? { ...prod, isFavorite: !isFavorite } : prod
+                )
+            );
+            Swal.fire("Success", isFavorite ? "Product removed from favorites!" : "Product added to favorites!", "success");
         } catch (error) {
             Swal.fire("Error", "Failed to update favorites.", "error");
         }
@@ -50,7 +61,7 @@ const ProductList = ({ products, onProductClick, user }) => {
                     </div>
 
                     <h3>{prod.name}</h3>
-                    <p><strong>Price:</strong> ${prod.price}</p>
+                    <p><strong>Price:</strong> ${prod.price.toFixed(2)}</p>
                     <p><strong>Code:</strong> {prod.productCode}</p>
                     <p><strong>Stock Status:</strong> {prod.stockStatus}</p>
                     <p><strong>Category:</strong> {prod.category}</p>

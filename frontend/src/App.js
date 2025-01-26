@@ -17,7 +17,6 @@ const App = () => {
     const [address, setAddress] = useState([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [activeSection, setActiveSection] = useState("profile");
-    const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
@@ -57,15 +56,9 @@ const App = () => {
             />
             <div style={{ marginLeft: isSidebarOpen ? "250px" : "50px", transition: "margin-left 0.3s ease" }}>
                 <Routes>
-                    <Route
-                        path="/login"
-                        element={<LoginPage setUser={setUser} setAddress={setAddress} />}
-                    />
-                    <Route path="/favorites" element={<FavoritesPage />} />
-                    <Route
-                        path="/shopping-card"
-                        element={<ShoppingCardPage user={user} />}
-                    />
+                    <Route path="/login" element={<LoginPage setUser={setUser} setAddress={setAddress} />} />
+                    <Route path="/favorites" element={<FavoritesPage user={user} />} />
+                    <Route path="/shopping-card" element={<ShoppingCardPage user={user} />} />
                     <Route
                         path="/user-info"
                         element={
@@ -79,22 +72,10 @@ const App = () => {
                             />
                         }
                     />
-                    <Route
-                        path="/register"
-                        element={<RegisterPage />}
-                    />
-                    <Route
-                        path="/products"
-                        element={<ProductPage user={user} />}
-                    />
-                    <Route
-                        path="/product/:productId"
-                        element={<ProductDetailPage />}
-                    />
-                    <Route
-                        path="/"
-                        element={<ProductPage user={user} />}
-                    />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/products" element={<ProductPage user={user} />} />
+                    <Route path="/product/:productId" element={<ProductDetailPage />} />
+                    <Route path="/" element={<ProductPage user={user} />} />
                 </Routes>
             </div>
         </Router>

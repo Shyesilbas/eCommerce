@@ -110,9 +110,11 @@ const ProductPage = ({ user }) => {
                 );
 
                 if (response && Array.isArray(response.content)) {
+                    const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
                     const productsWithDisplayNames = response.content.map(prod => ({
                         ...prod,
                         category: getDisplayNameFromEnum(prod.category),
+                        isFavorite: favorites.includes(prod.productId),
                     }));
                     setProducts(productsWithDisplayNames);
                     setTotalPages(response.totalPages);
@@ -229,7 +231,7 @@ const ProductPage = ({ user }) => {
 
                 <div className="products-by-category">
                     <h2>{selectedCategory === "All Products" ? "All Products" : `Products in ${selectedCategory}`}</h2>
-                    <ProductList products={products} onProductClick={(id) => navigate(`/product/${id}`)} user={user} />
+                    <ProductList products={products} onProductClick={(id) => navigate(`/product/${id}`)} user={user} setProducts={setProducts} />
                 </div>
 
                 <Pagination
