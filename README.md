@@ -1,1 +1,1 @@
-Secured Login , Register , Logout and other api's with Jwt , role Based Authentication.
+Secured Ecommerce project with Jwt , role Based Authentication. Java - Spring 
