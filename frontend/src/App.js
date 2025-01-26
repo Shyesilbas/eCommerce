@@ -7,8 +7,8 @@ import FavoritesPage from "./components/FavoritesPage";
 import ProductPage from "./components/ProductPage";
 import Sidebar from "./components/Sidebar";
 import ProductDetailPage from "./components/ProductDetailPage";
-import UserNav from "./components/user/UserNav.js";
-import NotificationsSection from "./components/user/NotificationsSection.js";
+import ShoppingCardPage from "./components/ShoppingCardPage";
+
 import "./style/UserNav.css";
 import "./style/Notifications.css";
 
@@ -62,6 +62,10 @@ const App = () => {
                         element={<LoginPage setUser={setUser} setAddress={setAddress} />}
                     />
                     <Route path="/favorites" element={<FavoritesPage />} />
+                    <Route
+                        path="/shopping-card"
+                        element={<ShoppingCardPage user={user} />}
+                    />
                     <Route
                         path="/user-info"
                         element={

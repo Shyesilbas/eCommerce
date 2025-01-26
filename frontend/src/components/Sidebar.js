@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
+import "../style/Sidebar.css";
 
 const Sidebar = ({ isOpen, setIsOpen, user, onLogout }) => {
     const navigate = useNavigate();
@@ -11,6 +12,7 @@ const Sidebar = ({ isOpen, setIsOpen, user, onLogout }) => {
         const storedUser = localStorage.getItem("user");
         setIsAuthenticated(!!user || !!storedUser);
     }, [user]);
+
 
     const handleProfileClick = () => {
         if (!isAuthenticated) {
@@ -50,11 +52,26 @@ const Sidebar = ({ isOpen, setIsOpen, user, onLogout }) => {
         }
     };
 
+    const handleShoppingCardClick = () => {
+        if (!isAuthenticated) {
+            Swal.fire({
+                icon: "warning",
+                title: "Login Required",
+                text: "Please login to access your shopping card.",
+                confirmButtonText: "Login",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    navigate("/login");
+                }
+            });
+        } else {
+            navigate("/shopping-card");
+        }
+    };
+
     const handleLogout = async () => {
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         const username = user?.username || storedUser?.username || "User";
-
-        console.log("Logout initiated for user:", username);
 
         const confirmation = await Swal.fire({
             title: `Goodbye, ${username}`,
@@ -68,21 +85,12 @@ const Sidebar = ({ isOpen, setIsOpen, user, onLogout }) => {
 
         if (confirmation.isConfirmed) {
             try {
-                console.log("Attempting to log out...");
                 await axios.post("http://localhost:8080/auth/logout", {}, { withCredentials: true });
-                console.log("Logout successful on backend.");
-
                 localStorage.removeItem("user");
                 setIsAuthenticated(false);
                 onLogout();
-
-                console.log("Local storage cleared and state updated.");
-
                 await Swal.fire("Logged Out", "You have successfully logged out.", "success");
-                console.log("SweetAlert2 success message shown.");
-
                 navigate("/login");
-                console.log("Navigated to login page.");
             } catch (err) {
                 console.error("Logout error:", err);
                 Swal.fire("Error", "An error occurred while logging out.", "error");
@@ -91,68 +99,36 @@ const Sidebar = ({ isOpen, setIsOpen, user, onLogout }) => {
     };
 
     return (
-        <div style={styles.sidebar(isOpen)}>
-            <button onClick={() => setIsOpen(!isOpen)} style={styles.toggleButton}>
+        <div className={`sidebar ${isOpen ? "" : "closed"}`}>
+            <button onClick={() => setIsOpen(!isOpen)} className="toggle-button">
                 {isOpen ? "✕" : "☰"}
             </button>
             {isOpen && (
-                <div style={styles.menuContent}>
-                    <div style={styles.menuItem} onClick={handleProfileClick}>
+                <div className="menu-content">
+                    <div className="menu-item" onClick={handleProfileClick}>
                         Profile
                     </div>
-                    <div style={styles.menuItem} onClick={handleProductsClick}>
+                    <div className="menu-item" onClick={handleProductsClick}>
                         Products
                     </div>
                     {isAuthenticated && (
                         <>
-                            <div style={styles.menuItem} onClick={handleFavoritesClick}>
+                            <div className="menu-item" onClick={handleFavoritesClick}>
                                 Favorites
                             </div>
-                            <div style={styles.menuItem} onClick={handleLogout}>
+                            <div className="menu-item" onClick={handleShoppingCardClick}>
+                                Shopping Card
+                            </div>
+                            <div className="menu-item" onClick={handleLogout}>
                                 Logout
                             </div>
+
                         </>
                     )}
                 </div>
             )}
         </div>
     );
-};
-
-const styles = {
-    sidebar: (isOpen) => ({
-        width: isOpen ? "250px" : "50px",
-        height: "100vh",
-        backgroundColor: "#2c3e50",
-        transition: "width 0.3s ease",
-        position: "fixed",
-        top: 0,
-        left: 0,
-        zIndex: 1000,
-    }),
-    toggleButton: {
-        backgroundColor: "transparent",
-        border: "none",
-        color: "white",
-        fontSize: "24px",
-        cursor: "pointer",
-        padding: "10px",
-    },
-    menuContent: {
-        padding: "20px",
-        color: "white",
-    },
-    menuItem: {
-        padding: "10px",
-        cursor: "pointer",
-        transition: "background-color 0.3s ease",
-        '&:hover': {
-            backgroundColor: "#34495e",
-        }
-    },
-    menuItemHover: {
-        backgroundColor: "#34495e",
-    },
 };
 
 export default Sidebar;

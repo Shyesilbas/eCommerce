@@ -158,6 +158,70 @@ export const fetchProducts = async (selectedCategory, currentPage, pageSize = 10
     }
 };
 
+
+
+export const getShoppingCardByUser = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/shopping-card/get-items`, {
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching shopping card items:", error);
+        throw error;
+    }
+};
+
+export const getTotalItemsOnCard = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/shopping-card/total-product`, {
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching shopping card items:", error);
+        throw error;
+    }
+};
+export const getTotalPriceOnCard = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/shopping-card/total-price`, {
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching shopping card items:", error);
+        throw error;
+    }
+};
+
+export const addToCard = async (productId) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/shopping-card/add-to-card`,
+            { productId },
+            { withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error adding product to card:", error);
+        throw error;
+    }
+};
+
+export const removeFromCard = async (productId) => {
+    try {
+        const response = await axios.delete(`${API_URL}/shopping-card/remove-from-card`, {
+            params: { productId },
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error removing product from card:", error);
+        throw error;
+    }
+};
+
 export const fetchProductById = async (productId) => {
     try {
         const response = await axios.get(`${API_URL}/api/products/info/id/${productId}`);

@@ -12,7 +12,9 @@ const FavoritesSection = () => {
     const fetchFavorites = async () => {
         try {
             const favoritesData = await getFavoritesByUser();
-            setFavorites(favoritesData);
+            console.log("Favorites Data:", favoritesData); // Log the data
+
+            setFavorites(Array.isArray(favoritesData) ? favoritesData : []);
         } catch (error) {
             Swal.fire("Error", "Failed to fetch favorites.", "error");
         } finally {

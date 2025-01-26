@@ -1,0 +1,126 @@
+.shopping-card-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    margin-top: 20px;
+}
+
+.shopping-card-page h1 {
+    font-size: 28px;
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.shopping-card-page p {
+    font-size: 16px;
+    color: #777;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.shopping-card-section {
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.card-item {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+    padding: 15px;
+    transition: transform 0.3s ease;
+}
+
+.card-item:hover {
+    transform: scale(1.02);
+}
+
+.card-item h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 10px;
+}
+
+.card-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card-item-details p {
+    margin: 0;
+    color: #666;
+}
+
+.card-item button {
+    background-color: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    align-self: flex-start;
+}
+
+.card-item button:hover {
+    background-color: #ff5252;
+}
+
+.shopping-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    margin-top: 20px;
+    border-radius: 0 0 8px 8px;
+}
+
+.total-items, .total-price {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.total-items span, .total-price span {
+    color: #666;
+    font-size: 16px;
+}
+
+.total-items strong, .total-price strong {
+    color: #333;
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .shopping-card-page {
+        padding: 10px;
+        margin-top: 10px;
+    }
+
+    .card-item {
+        padding: 10px;
+    }
+
+    .card-item h3 {
+        font-size: 18px;
+    }
+
+    .card-item-details p {
+        font-size: 14px;
+    }
+
+    .card-item button {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
