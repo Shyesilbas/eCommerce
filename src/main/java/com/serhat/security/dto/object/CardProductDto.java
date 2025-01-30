@@ -12,6 +12,7 @@ public record CardProductDto(
         BigDecimal price,
         String description,
         String brand,
-        Category category
+        Category category,
+        int quantity
 ) {
 }

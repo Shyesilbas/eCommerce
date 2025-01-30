@@ -2,6 +2,7 @@ package com.serhat.security.service;
 
 import com.serhat.security.dto.object.CardProductDto;
 import com.serhat.security.dto.object.FavoriteProductDto;
+import com.serhat.security.dto.response.TotalInfo;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,11 +35,28 @@ public class ShoppingCardController {
         return ResponseEntity.ok(service.totalProduct(request));
     }
 
+    @GetMapping("/totalInfos")
+    public TotalInfo getTotalInfo(HttpServletRequest request) {
+        return service.calculateTotalInfo(request);
+    }
+
     @PostMapping("/add-to-card")
     public ResponseEntity<String> addToFavorite(HttpServletRequest request, @RequestBody Map<String, Long> requestBody) {
         Long productId = requestBody.get("productId");
         service.addToCard(request, productId);
         return ResponseEntity.ok("Product added to card successfully");
+    }
+
+    @PostMapping("/increase-quantity")
+    public ResponseEntity<String> increaseQuantity(HttpServletRequest request, @RequestParam Long productId) {
+        service.increaseQuantity(request, productId);
+        return ResponseEntity.ok("Product quantity increased at shopping card.");
+    }
+
+    @PostMapping("/decrease-quantity")
+    public ResponseEntity<String> decreaseQuantity(HttpServletRequest request, @RequestParam Long productId) {
+        service.decreaseQuantity(request, productId);
+        return ResponseEntity.ok("Product quantity decreased at shopping card.");
     }
 
     @DeleteMapping("/remove-from-card")

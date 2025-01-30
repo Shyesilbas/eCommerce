@@ -35,6 +35,7 @@ public class AuthService {
     private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenBlacklistService blacklistService;
 
     @Value("${security.jwt.expiration-time}")
     private long expirationTime;
@@ -62,13 +63,14 @@ public class AuthService {
 
         String jwtToken = extractJwtFromCookies(request);
         invalidateToken(jwtToken);
+        blacklistService.blacklistToken(jwtToken);
 
         request.getSession().invalidate();
 
         String username = jwtUtil.extractUsername(jwtToken);
         Role role = jwtUtil.extractRole(jwtToken);
         log.info("Logout successful for user: {}", username);
-        log.info("Session Invalidated After logout request from : " + username);
+        log.info("Session Invalidated After logout request from: {}", username);
 
         return createAuthResponse(jwtToken, username, role, "Logout successful");
     }

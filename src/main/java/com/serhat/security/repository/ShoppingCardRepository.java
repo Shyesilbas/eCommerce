@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ShoppingCardRepository extends JpaRepository<ShoppingCard,Long> {
@@ -15,4 +16,6 @@ public interface ShoppingCardRepository extends JpaRepository<ShoppingCard,Long>
     boolean existsByUserAndProduct(User user, Product product);
 
     void deleteByUserAndProduct(User user, Product product);
+
+    Optional<ShoppingCard> findByUserAndProduct(User user, Product product);
 }

@@ -1,6 +1,7 @@
 package com.serhat.security.service;
 
 import com.serhat.security.dto.object.CardProductDto;
+import com.serhat.security.dto.response.TotalInfo;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.ShoppingCard;
@@ -43,6 +44,7 @@ public class ShoppingCardService {
                 .description(product.getDescription())
                 .brand(product.getBrand())
                 .category(product.getCategory())
+                .quantity(shoppingCard.getQuantity())
                 .build();
     }
 
@@ -57,9 +59,43 @@ public class ShoppingCardService {
                     .user(user)
                     .product(product)
                     .addedAt(LocalDate.now())
+                    .quantity(1)
                     .build();
             shoppingCardRepository.save(shoppingCard);
             log.info("Product {} added to shopping card for user {}", productId, user.getUsername());
+        }
+    }
+
+    @Transactional
+    public void increaseQuantity(HttpServletRequest servletRequest, Long productId) {
+        User user = tokenInterface.getUserFromToken(servletRequest);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        ShoppingCard shoppingCard = shoppingCardRepository.findByUserAndProduct(user, product)
+                .orElseThrow(() -> new RuntimeException("Product not found in shopping card"));
+
+        shoppingCard.setQuantity(shoppingCard.getQuantity() + 1);
+        shoppingCardRepository.save(shoppingCard);
+        log.info("Product {} quantity increased to {} for user {}", productId, shoppingCard.getQuantity(), user.getUsername());
+    }
+
+    @Transactional
+    public void decreaseQuantity(HttpServletRequest servletRequest, Long productId) {
+        User user = tokenInterface.getUserFromToken(servletRequest);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        ShoppingCard shoppingCard = shoppingCardRepository.findByUserAndProduct(user, product)
+                .orElseThrow(() -> new RuntimeException("Product not found in shopping card"));
+
+        if (shoppingCard.getQuantity() > 1) {
+            shoppingCard.setQuantity(shoppingCard.getQuantity() - 1);
+            shoppingCardRepository.save(shoppingCard);
+            log.info("Product {} quantity decreased to {} for user {}", productId, shoppingCard.getQuantity(), user.getUsername());
+        } else {
+            shoppingCardRepository.delete(shoppingCard);
+            log.info("Product {} removed from shopping card for user {}", productId, user.getUsername());
         }
     }
 
@@ -67,14 +103,16 @@ public class ShoppingCardService {
         User user = tokenInterface.getUserFromToken(request);
 
         boolean isCardEmpty = shoppingCardRepository.count() == 0;
-        if(isCardEmpty) {
+        if (isCardEmpty) {
             throw new RuntimeException("No product in the card!");
         }
+
         return shoppingCardRepository.findByUser(user)
                 .stream()
-                .map(shoppingCard -> shoppingCard.getProduct().getPrice())
+                .map(shoppingCard -> shoppingCard.getProduct().getPrice().multiply(new BigDecimal(shoppingCard.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
 
     public long totalProduct(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
@@ -85,6 +123,24 @@ public class ShoppingCardService {
         }
 
         return userCards.size();
+    }
+
+    public TotalInfo calculateTotalInfo(HttpServletRequest request) {
+        User user = tokenInterface.getUserFromToken(request);
+
+        List<ShoppingCard> shoppingCards = shoppingCardRepository.findByUser(user);
+
+        BigDecimal totalPrice = shoppingCards.stream()
+                .map(shoppingCard -> shoppingCard.getProduct().getPrice().multiply(new BigDecimal(shoppingCard.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        long totalItems = shoppingCards.stream()
+                .mapToLong(ShoppingCard::getQuantity)
+                .sum();
+
+        long totalQuantity = shoppingCards.size();
+
+        return new TotalInfo(totalPrice, totalItems, totalQuantity);
     }
 
     @Transactional

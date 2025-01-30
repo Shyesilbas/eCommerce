@@ -183,6 +183,58 @@ export const getTotalItemsOnCard = async () => {
         throw error;
     }
 };
+
+export const increaseQuantity = async (productId) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/shopping-card/increase-quantity`,
+            null,
+            {
+                params: { productId },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error increasing quantity:", error);
+        throw error;
+    }
+};
+
+
+export const decreaseQuantity = async (productId) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/shopping-card/decrease-quantity`,
+            null,
+            {
+                params: { productId },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error decreasing quantity:", error);
+        throw error;
+    }
+};
+
+
+export const getTotalInfo = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/shopping-card/totalInfos`, {
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching shopping card Info:", error);
+        throw error;
+    }
+};
+
+
+
+
 export const getTotalPriceOnCard = async () => {
     try {
         const response = await axios.get(`${API_URL}/shopping-card/total-price`, {

@@ -30,4 +30,6 @@ public class ShoppingCard {
     private Product product;
 
     private LocalDate addedAt;
+
+    private int quantity = 1;
 }

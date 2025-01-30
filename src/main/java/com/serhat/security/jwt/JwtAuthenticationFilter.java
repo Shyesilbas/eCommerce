@@ -1,6 +1,7 @@
 package com.serhat.security.jwt;
 
 import com.serhat.security.entity.enums.Role;
+import com.serhat.security.service.TokenBlacklistService;
 import com.serhat.security.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(
@@ -45,6 +47,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
             username = jwtUtil.extractUsername(jwt);
+        }
+
+        if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
+            log.warn("Token is blacklisted for user: {}", username);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is blacklisted");
+            return;
         }
 
         if (jwt == null) {
@@ -83,9 +91,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     log.info("Authentication set in SecurityContext for user: {}", username);
                 } else {
                     log.warn("Invalid token for user: {}", username);
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
+                    return;
                 }
             } catch (Exception e) {
                 log.error("Error processing JWT token", e);
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
+                return;
             }
         }
 
