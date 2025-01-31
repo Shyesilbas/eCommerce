@@ -6,10 +6,9 @@ import com.serhat.security.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,4 +20,15 @@ public class OrderController {
     public ResponseEntity<OrderResponse> placeOrder(@RequestBody OrderRequest orderRequest , HttpServletRequest request){
         return ResponseEntity.ok(service.createOrder(request, orderRequest));
     }
+
+    @GetMapping("/list-order")
+    public ResponseEntity<List<OrderResponse>> listOrders(HttpServletRequest request){
+        return ResponseEntity.ok(service.getOrdersByUser(request));
+    }
+
+    @GetMapping("/order-detail")
+    public ResponseEntity<OrderResponse> orderDetail(@RequestParam Long orderId,HttpServletRequest request){
+        return ResponseEntity.ok(service.getOrderDetails(orderId,request));
+    }
+
 }

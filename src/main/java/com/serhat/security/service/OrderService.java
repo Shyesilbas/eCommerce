@@ -1,5 +1,6 @@
 package com.serhat.security.service;
 
+import com.serhat.security.dto.object.AddressDto;
 import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.OrderItemDetails;
 import com.serhat.security.dto.response.OrderResponse;
@@ -7,6 +8,7 @@ import com.serhat.security.entity.Order;
 import com.serhat.security.entity.OrderItem;
 import com.serhat.security.entity.ShoppingCard;
 import com.serhat.security.entity.User;
+import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.repository.AddressRepository;
 import com.serhat.security.repository.OrderRepository;
@@ -53,11 +55,18 @@ public class OrderService {
                 .map(shoppingCard -> shoppingCard.getProduct().getPrice().multiply(new BigDecimal(shoppingCard.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        AddressDto shippingAddress = addressRepository.findById(orderRequest.shippingAddressId())
+                .map(address -> new AddressDto(
+                        address.getAddressId(), address.getCountry(), address.getCity(),
+                        address.getStreet(), address.getAptNo(), address.getFlatNo(),
+                        address.getDescription(), address.getAddressType()))
+                .orElseThrow(() -> new RuntimeException("Address not found"));
+
         Order order = Order.builder()
                 .user(user)
                 .orderDate(LocalDateTime.now())
                 .totalPrice(totalPrice)
-                .status("PENDING")
+                .status(OrderStatus.APPROVED)
                 .shippingAddressId(orderRequest.shippingAddressId())
                 .paymentMethod(orderRequest.paymentMethod())
                 .notes(orderRequest.notes())
@@ -85,7 +94,6 @@ public class OrderService {
                 .totalPrice(order.getTotalPrice())
                 .orderDate(order.getOrderDate())
                 .status(order.getStatus())
-                .shippingAddressId(order.getShippingAddressId())
                 .paymentMethod(order.getPaymentMethod())
                 .notes(order.getNotes())
                 .totalQuantity(orderItems.stream().mapToInt(OrderItem::getQuantity).sum())
@@ -98,6 +106,8 @@ public class OrderService {
                                 .subtotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                                 .build())
                         .collect(Collectors.toList()))
+                .shippingAddressId(order.getShippingAddressId())
+                .shippingAddress(shippingAddress)
                 .build();
     }
 
@@ -105,12 +115,41 @@ public class OrderService {
         User user = tokenInterface.getUserFromToken(request);
 
         return orderRepository.findByUser(user).stream()
-                .map(order -> OrderResponse.builder()
-                        .orderId(order.getOrderId())
-                        .totalPrice(order.getTotalPrice())
-                        .orderDate(order.getOrderDate())
-                        .status(order.getStatus())
-                        .build())
+                .map(order -> {
+                    AddressDto shippingAddress = addressRepository.findById(order.getShippingAddressId())
+                            .map(address -> new AddressDto(
+                                    address.getAddressId(), address.getCountry(), address.getCity(),
+                                    address.getStreet(), address.getAptNo(), address.getFlatNo(),
+                                    address.getDescription(), address.getAddressType()))
+                            .orElseThrow(() -> new RuntimeException("Address not found for order: " + order.getOrderId()));
+
+                    List<OrderItemDetails> orderItems = order.getOrderItems().stream()
+                            .map(item -> OrderItemDetails.builder()
+                                    .productCode(item.getProduct().getProductCode())
+                                    .productName(item.getProduct().getName())
+                                    .price(item.getPrice())
+                                    .quantity(item.getQuantity())
+                                    .subtotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                                    .build())
+                            .collect(Collectors.toList());
+
+                    int totalQuantity = order.getOrderItems().stream()
+                            .mapToInt(OrderItem::getQuantity)
+                            .sum();
+
+                    return OrderResponse.builder()
+                            .orderId(order.getOrderId())
+                            .totalPrice(order.getTotalPrice())
+                            .orderDate(order.getOrderDate())
+                            .status(order.getStatus())
+                            .orderItems(orderItems)
+                            .paymentMethod(order.getPaymentMethod())
+                            .notes(order.getNotes())
+                            .totalQuantity(totalQuantity)
+                            .shippingAddressId(order.getShippingAddressId())
+                            .shippingAddress(shippingAddress)
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 

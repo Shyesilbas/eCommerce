@@ -1,5 +1,7 @@
 package com.serhat.security.entity;
 
+import com.serhat.security.entity.enums.OrderStatus;
+import com.serhat.security.entity.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,9 +36,11 @@ public class Order {
 
     private BigDecimal totalPrice;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
 
-    private String paymentMethod;
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod;
 
     private String notes;
 
