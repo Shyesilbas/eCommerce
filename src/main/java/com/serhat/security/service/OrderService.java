@@ -9,6 +9,7 @@ import com.serhat.security.entity.OrderItem;
 import com.serhat.security.entity.ShoppingCard;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.OrderStatus;
+import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.repository.AddressRepository;
 import com.serhat.security.repository.OrderRepository;
@@ -43,12 +44,12 @@ public class OrderService {
         User user = tokenInterface.getUserFromToken(request);
 
         if (!isAddressBelongsToUser(orderRequest.shippingAddressId(), user.getUserId())) {
-            throw new RuntimeException("Shipping address does not belong to the user!");
+            throw new AddressNotBelongToUserException("Shipping address does not belong to the user!");
         }
 
         List<ShoppingCard> shoppingCards = shoppingCardRepository.findByUser(user);
         if (shoppingCards.isEmpty()) {
-            throw new RuntimeException("No products in the shopping card!");
+            throw new EmptyShoppingCardException("No products in the shopping card!");
         }
 
         BigDecimal totalPrice = shoppingCards.stream()
@@ -60,7 +61,7 @@ public class OrderService {
                         address.getAddressId(), address.getCountry(), address.getCity(),
                         address.getStreet(), address.getAptNo(), address.getFlatNo(),
                         address.getDescription(), address.getAddressType()))
-                .orElseThrow(() -> new RuntimeException("Address not found"));
+                .orElseThrow(() -> new AddressNotFoundException("Address not found"));
 
         Order order = Order.builder()
                 .user(user)
@@ -114,14 +115,20 @@ public class OrderService {
     public List<OrderResponse> getOrdersByUser(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
 
-        return orderRepository.findByUser(user).stream()
+        List<Order> orders = orderRepository.findByUser(user);
+
+        if (orders.isEmpty()) {
+           throw new NoOrderException("No orders found");
+        }
+
+        return orders.stream()
                 .map(order -> {
                     AddressDto shippingAddress = addressRepository.findById(order.getShippingAddressId())
                             .map(address -> new AddressDto(
                                     address.getAddressId(), address.getCountry(), address.getCity(),
                                     address.getStreet(), address.getAptNo(), address.getFlatNo(),
                                     address.getDescription(), address.getAddressType()))
-                            .orElseThrow(() -> new RuntimeException("Address not found for order: " + order.getOrderId()));
+                            .orElseThrow(() -> new AddressNotFoundException("Address not found for order: " + order.getOrderId()));
 
                     List<OrderItemDetails> orderItems = order.getOrderItems().stream()
                             .map(item -> OrderItemDetails.builder()
@@ -157,7 +164,7 @@ public class OrderService {
         User user = tokenInterface.getUserFromToken(request);
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         if (!order.getUser().equals(user)) {
             throw new RuntimeException("You are not authorized to view this order!");

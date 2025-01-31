@@ -5,6 +5,7 @@ import com.serhat.security.dto.response.NotificationAddedResponse;
 import com.serhat.security.entity.Notification;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.NotificationTopic;
+import com.serhat.security.exception.NoNotificationsFoundException;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.mapper.NotificationMapper;
 import com.serhat.security.repository.NotificationRepository;
@@ -51,7 +52,13 @@ public class NotificationService {
     public List<NotificationDTO> getNotifications(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
 
-        return notificationRepository.findByUser(user).stream()
+        List<Notification> notifications = notificationRepository.findByUser(user);
+
+        if(notifications.isEmpty()){
+            throw new NoNotificationsFoundException("No notification");
+        }
+
+        return notifications.stream()
                 .map(notificationMapper::toDTO)
                 .collect(Collectors.toList());
     }

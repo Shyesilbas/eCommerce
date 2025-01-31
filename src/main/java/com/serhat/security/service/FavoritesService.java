@@ -4,6 +4,9 @@ import com.serhat.security.dto.object.FavoriteProductDto;
 import com.serhat.security.entity.Favorites;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.User;
+import com.serhat.security.exception.EmptyFavoriteListException;
+import com.serhat.security.exception.FavoriteProductNotFoundException;
+import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.repository.FavoritesRepository;
 import com.serhat.security.repository.ProductRepository;
@@ -27,7 +30,14 @@ public class FavoritesService {
 
     public List<FavoriteProductDto> getFavoritesByUser(HttpServletRequest servletRequest) {
         User user = tokenInterface.getUserFromToken(servletRequest);
-        return favoritesRepository.findByUser(user).stream()
+
+        List<Favorites> favorites = favoritesRepository.findByUser(user);
+
+        if (favorites.isEmpty()) {
+           throw new EmptyFavoriteListException("Favorite list is empty");
+        }
+
+        return favorites.stream()
                 .map(this::convertToFavoriteProductDto)
                 .collect(Collectors.toList());
     }
@@ -53,7 +63,7 @@ public class FavoritesService {
     public void addFavorite(HttpServletRequest servletRequest, Long productId) {
         User user = tokenInterface.getUserFromToken(servletRequest);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
 
         if (!favoritesRepository.existsByUserAndProduct(user, product)) {
             Favorites favorite = Favorites.builder()
@@ -71,10 +81,10 @@ public class FavoritesService {
     public void removeFavorite(HttpServletRequest servletRequest, Long productId) {
         User user = tokenInterface.getUserFromToken(servletRequest);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
 
         Favorites favorite = favoritesRepository.findByUserAndProduct(user, product)
-                .orElseThrow(() -> new RuntimeException("Favorite not found"));
+                .orElseThrow(() -> new FavoriteProductNotFoundException("Favorite not found"));
 
         favorite.setFavorite(false);
         favoritesRepository.delete(favorite);

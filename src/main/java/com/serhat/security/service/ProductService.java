@@ -7,6 +7,7 @@ import com.serhat.security.entity.Product;
 import com.serhat.security.entity.enums.Category;
 import com.serhat.security.entity.enums.Role;
 import com.serhat.security.entity.enums.StockStatus;
+import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.repository.ProductRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,7 +44,7 @@ public class ProductService {
 
     public ProductDto productInfo(String productCode) {
         Product product = productRepository.findByProductCode(productCode)
-                .orElseThrow(() -> new RuntimeException("Product not found for: " + productCode));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found for: " + productCode));
 
         return new ProductDto(
                 product.getProductId(),
@@ -63,7 +64,7 @@ public class ProductService {
 
     public ProductDto productInfoById(Long productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found for: " + productId));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found for: " + productId));
 
         return new ProductDto(
                 product.getProductId(),

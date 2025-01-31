@@ -5,6 +5,9 @@ import com.serhat.security.dto.response.TotalInfo;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.ShoppingCard;
+import com.serhat.security.exception.EmptyShoppingCardException;
+import com.serhat.security.exception.ProductNotFoundException;
+import com.serhat.security.exception.ProductNotFoundInCardException;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.repository.ProductRepository;
 import com.serhat.security.repository.ShoppingCardRepository;
@@ -29,7 +32,14 @@ public class ShoppingCardService {
 
     public List<CardProductDto> getShoppingCardByUser(HttpServletRequest servletRequest) {
         User user = tokenInterface.getUserFromToken(servletRequest);
-        return shoppingCardRepository.findByUser(user).stream()
+
+        List<ShoppingCard> shoppingCards = shoppingCardRepository.findByUser(user);
+
+        if (shoppingCards.isEmpty()) {
+            throw new EmptyShoppingCardException("Shopping Card is empty!");
+        }
+
+        return shoppingCards.stream()
                 .map(this::convertToCardProductDto)
                 .collect(Collectors.toList());
     }
@@ -52,7 +62,7 @@ public class ShoppingCardService {
     public void addToCard(HttpServletRequest servletRequest, Long productId) {
         User user = tokenInterface.getUserFromToken(servletRequest);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
 
         if (!shoppingCardRepository.existsByUserAndProduct(user, product)) {
             ShoppingCard shoppingCard = ShoppingCard.builder()
@@ -70,10 +80,10 @@ public class ShoppingCardService {
     public void increaseQuantity(HttpServletRequest servletRequest, Long productId) {
         User user = tokenInterface.getUserFromToken(servletRequest);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
 
         ShoppingCard shoppingCard = shoppingCardRepository.findByUserAndProduct(user, product)
-                .orElseThrow(() -> new RuntimeException("Product not found in shopping card"));
+                .orElseThrow(() -> new ProductNotFoundInCardException("Product not found in shopping card"));
 
         shoppingCard.setQuantity(shoppingCard.getQuantity() + 1);
         shoppingCardRepository.save(shoppingCard);
@@ -84,10 +94,10 @@ public class ShoppingCardService {
     public void decreaseQuantity(HttpServletRequest servletRequest, Long productId) {
         User user = tokenInterface.getUserFromToken(servletRequest);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
 
         ShoppingCard shoppingCard = shoppingCardRepository.findByUserAndProduct(user, product)
-                .orElseThrow(() -> new RuntimeException("Product not found in shopping card"));
+                .orElseThrow(() -> new ProductNotFoundInCardException("Product not found in shopping card"));
 
         if (shoppingCard.getQuantity() > 1) {
             shoppingCard.setQuantity(shoppingCard.getQuantity() - 1);
@@ -104,7 +114,7 @@ public class ShoppingCardService {
 
         boolean isCardEmpty = shoppingCardRepository.count() == 0;
         if (isCardEmpty) {
-            throw new RuntimeException("No product in the card!");
+            throw new EmptyShoppingCardException("No product in the card!");
         }
 
         return shoppingCardRepository.findByUser(user)
@@ -119,7 +129,7 @@ public class ShoppingCardService {
 
         List<ShoppingCard> userCards = shoppingCardRepository.findByUser(user);
         if (userCards.isEmpty()) {
-            throw new RuntimeException("No products in the card!");
+            throw new EmptyShoppingCardException("No products in the card!");
         }
 
         return userCards.size();
@@ -147,7 +157,7 @@ public class ShoppingCardService {
     public void removeFromCard(HttpServletRequest servletRequest, Long productId) {
         User user = tokenInterface.getUserFromToken(servletRequest);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
 
         shoppingCardRepository.deleteByUserAndProduct(user, product);
         log.info("Product {} removed from shopping card for user {}", productId, user.getUsername());
