@@ -52,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
             log.warn("Token is blacklisted for user: {}", username);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is blacklisted");
-            return;
+            throw new RuntimeException("Token is expired or User logged out");
         }
 
         if (jwt == null) {

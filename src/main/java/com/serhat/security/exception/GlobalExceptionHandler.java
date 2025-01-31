@@ -101,12 +101,12 @@ public class GlobalExceptionHandler{
     public ResponseEntity<ErrorResponse> handleEmptyShoppingCardException(EmptyShoppingCardException e){
 
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NO_CONTENT.value(),
+                HttpStatus.NOT_FOUND.value(),
                 "NOT FOUND",
                 "Shopping Card is empty!",
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(errorResponse,HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(ProductNotFoundInCardException.class)
@@ -118,91 +118,128 @@ public class GlobalExceptionHandler{
                 "Product Not Found in Shopping Card!",
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(errorResponse,HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(AddressNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleAddressNotFoundException(AddressNotFoundException e){
 
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NO_CONTENT.value(),
+                HttpStatus.NOT_FOUND.value(),
                 "NOT FOUND",
                 "Address Not Found",
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(errorResponse,HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(OrderNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleOrderNotFoundException(OrderNotFoundException e){
 
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NO_CONTENT.value(),
+                HttpStatus.NOT_FOUND.value(),
                 "NOT FOUND",
                 "Order Not Found",
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(errorResponse,HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(ProductNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleProductNotFoundException(ProductNotFoundException e){
 
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NO_CONTENT.value(),
+                HttpStatus.NOT_FOUND.value(),
                 "NOT FOUND",
                 "Product Not Found",
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(errorResponse,HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(NoOrderException.class)
     public ResponseEntity<ErrorResponse> handleNoOrderException(NoOrderException e){
 
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NO_CONTENT.value(),
+                HttpStatus.NOT_FOUND.value(),
                 "NOT FOUND",
                 "No order found",
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(errorResponse,HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(CommentNotFoundForProductException.class)
+    public ResponseEntity<ErrorResponse> handleCommentNotFoundForProductException(CommentNotFoundForProductException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "NOT FOUND",
+                "No Comment found for the product",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
+    }
+
+
+    @ExceptionHandler(CommentNotFoundForUserException.class)
+    public ResponseEntity<ErrorResponse> handleCommentNotFoundForUserException(CommentNotFoundForUserException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "NOT FOUND",
+                "No Comment found made by user",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(CommentNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleCommentNotAllowedException(CommentNotAllowedException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "BAD REQUEST",
+                "You cannot post comment on product you have not ordered yet.",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(FavoriteProductNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleFavoriteProductNotFoundException(FavoriteProductNotFoundException e){
 
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NO_CONTENT.value(),
+                HttpStatus.NOT_FOUND.value(),
                 "NOT FOUND",
                 "Favorite Product Not Found",
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(errorResponse,HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(NoNotificationsFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoNotificationsFoundException(NoNotificationsFoundException e){
 
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NO_CONTENT.value(),
+                HttpStatus.NOT_FOUND.value(),
                 "NOT FOUND",
                 "No notification found",
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(errorResponse,HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(EmptyFavoriteListException.class)
     public ResponseEntity<ErrorResponse> handleNoNotificationsFoundException(EmptyFavoriteListException e){
 
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NO_CONTENT.value(),
+                HttpStatus.NOT_FOUND.value(),
                 "NO CONTENT",
                 "Favorite List is empty",
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(errorResponse,HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(TokenNotFoundException.class)
