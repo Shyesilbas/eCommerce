@@ -84,7 +84,7 @@ public class ProductService {
 
 
     public ProductResponse addProduct(ProductRequest productRequest, HttpServletRequest request) {
-        String jwtToken = jwtUtil.getTokenFromCookie(request);
+        String jwtToken = jwtUtil.getTokenFromAuthorizationHeader(request);
 
         Role role =  jwtUtil.extractRole(jwtToken);
 

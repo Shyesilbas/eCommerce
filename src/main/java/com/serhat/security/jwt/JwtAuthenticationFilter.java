@@ -1,6 +1,7 @@
 package com.serhat.security.jwt;
 
 import com.serhat.security.entity.enums.Role;
+import com.serhat.security.exception.InvalidTokenException;
 import com.serhat.security.service.TokenBlacklistService;
 import com.serhat.security.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
@@ -51,21 +52,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
             log.warn("Token is blacklisted for user: {}", username);
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is blacklisted");
-            throw new RuntimeException("Token is expired or User logged out");
-        }
-
-        if (jwt == null) {
-            Cookie[] cookies = request.getCookies();
-            if (cookies != null) {
-                for (Cookie cookie : cookies) {
-                    if ("jwt".equals(cookie.getName())) {
-                        jwt = cookie.getValue();
-                        username = jwtUtil.extractUsername(jwt);
-                        break;
-                    }
-                }
-            }
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Token is blacklisted");
+            return;
         }
 
         if (jwt != null && username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -91,16 +80,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     log.info("Authentication set in SecurityContext for user: {}", username);
                 } else {
                     log.warn("Invalid token for user: {}", username);
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
-                    return;
+                    throw new InvalidTokenException("Invalid or expired token");
                 }
             } catch (Exception e) {
                 log.error("Error processing JWT token", e);
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
-                return;
+                throw new InvalidTokenException("Authentication failed");
             }
         }
 
+
         filterChain.doFilter(request, response);
     }
+
 }

@@ -49,7 +49,6 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(user, user.getRole());
         saveUserToken(user, token);
-        setJwtCookie(response, token);
 
         log.info("Login successful for user: {}", request.username());
         return createAuthResponse(token, user.getUsername(), user.getRole(), "Login Successful!");
@@ -59,9 +58,7 @@ public class AuthService {
     public AuthResponse logout(HttpServletRequest request, HttpServletResponse response) {
         log.info("Processing logout request");
 
-        clearAllCookies(request, response);
-
-        String jwtToken = extractJwtFromCookies(request);
+        String jwtToken = extractJwtFromAuthorizationHeader(request);
         invalidateToken(jwtToken);
         blacklistService.blacklistToken(jwtToken);
 
@@ -74,6 +71,15 @@ public class AuthService {
 
         return createAuthResponse(jwtToken, username, role, "Logout successful");
     }
+
+    private String extractJwtFromAuthorizationHeader(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        throw new TokenNotFoundException("JWT not found in Authorization header");
+    }
+
 
     private User findUserByUsername(String username) {
         return userRepository.findByUsername(username)
@@ -119,31 +125,6 @@ public class AuthService {
 
         tokenRepository.save(newToken);
         log.debug("Token saved for user: {}", user.getUsername());
-    }
-
-    private void setJwtCookie(HttpServletResponse response, String token) {
-        Cookie cookie = new Cookie("jwt", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false);
-        cookie.setPath("/");
-        cookie.setMaxAge((int) expirationTime / 1000);
-        response.addCookie(cookie);
-        log.debug("JWT cookie set");
-    }
-
-    private void clearAllCookies(HttpServletRequest request, HttpServletResponse response) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                Cookie clearCookie = new Cookie(cookie.getName(), null);
-                clearCookie.setHttpOnly(true);
-                clearCookie.setSecure(false);
-                clearCookie.setPath("/");
-                clearCookie.setMaxAge(0);
-                response.addCookie(clearCookie);
-                log.debug("Cleared cookie: {}", cookie.getName());
-            }
-        }
     }
 
     private AuthResponse createAuthResponse(String token, String username, Role role, String message) {

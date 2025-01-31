@@ -3,6 +3,8 @@ package com.serhat.security.jwt;
 import com.serhat.security.entity.Token;
 import com.serhat.security.entity.enums.Role;
 import com.serhat.security.entity.enums.TokenStatus;
+import com.serhat.security.exception.InvalidTokenException;
+import com.serhat.security.exception.TokenNotFoundException;
 import com.serhat.security.repository.TokenRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -78,15 +80,24 @@ public class JwtUtil {
     }
 
 
-    public boolean isTokenExpired(String token) {
+    public boolean isTokenInvalid(String token) {
         try {
             final Date expiration = extractExpiration(token);
-            boolean isExpired = expiration.before(new Date());
-            log.info("Token expiration check - Is Expired: {}", isExpired);
-            return isExpired;
+            Token storedToken = tokenRepository.findByToken(token)
+                    .orElseThrow(() -> new InvalidTokenException("Token not found in database"));
+
+            boolean isExpiredByDate = expiration.before(new Date());
+            boolean isExpiredByStatus = storedToken.getTokenStatus() != TokenStatus.ACTIVE;
+
+            boolean isInvalid = isExpiredByDate || isExpiredByStatus;
+
+            log.info("Token invalidity check - Is Invalid: {}", isInvalid);
+            log.info("Invalidity details - By Date: {}, By Status: {}", isExpiredByDate, isExpiredByStatus);
+
+            return isInvalid;
         } catch (Exception e) {
-            log.error("Error checking token expiration", e);
-            return true;
+            log.error("Error checking token validity", e);
+            throw new InvalidTokenException("Error checking token validity");
         }
     }
 
@@ -95,26 +106,21 @@ public class JwtUtil {
         log.info("Validating token for user: {}", userDetails.getUsername());
         try {
             final String username = extractUsername(token);
-            boolean isValid = (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+            Token storedToken = tokenRepository.findByToken(token)
+                    .orElseThrow(() -> new InvalidTokenException("Token not found in database"));
+
+            boolean isValid = username.equals(userDetails.getUsername()) && !isTokenInvalid(token);
+
             log.info("Token validation result: {}", isValid);
+
             return isValid;
-        } catch (SignatureException e) {
-            log.error("Invalid JWT signature: {}", e.getMessage());
-            return false;
-        } catch (MalformedJwtException e) {
-            log.error("Invalid JWT token: {}", e.getMessage());
-            return false;
-        } catch (ExpiredJwtException e) {
-            log.error("JWT token is expired: {}", e.getMessage());
-            return false;
-        } catch (UnsupportedJwtException e) {
-            log.error("JWT token is unsupported: {}", e.getMessage());
-            return false;
-        } catch (IllegalArgumentException e) {
-            log.error("JWT claims string is empty: {}", e.getMessage());
-            return false;
+        } catch (Exception e) {
+            log.error("Error validating token", e);
+            throw new InvalidTokenException("Token validation failed");
         }
     }
+
+
 
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         log.debug("Extracting claim from token");
@@ -122,17 +128,14 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
-    public String getTokenFromCookie(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("jwt".equals(cookie.getName())) {
-                    return cookie.getValue();
-                }
-            }
+    public String getTokenFromAuthorizationHeader(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
         }
-        throw new RuntimeException("JWT token not found in cookies");
+        throw new RuntimeException("JWT token not found in Authorization header");
     }
+
 
     private Claims extractAllClaims(String token) {
         log.debug("Extracting all claims from token");
