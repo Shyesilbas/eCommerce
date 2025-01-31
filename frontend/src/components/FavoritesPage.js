@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getFavoritesByUser, removeFavorite } from "../utils/api";
+import { getFavoritesByUser, removeFavorite, addToCard } from "../utils/api";
 import Swal from "sweetalert2";
 import "../style/FavoritesPage.css";
 
@@ -55,6 +55,15 @@ const FavoritesPage = ({ user }) => {
         }
     };
 
+    const handleAddToCart = async (productId) => {
+        try {
+            await addToCard(productId);
+            Swal.fire("Success", "Product added to the cart!", "success");
+        } catch (error) {
+            Swal.fire("Error", "Failed to add product to the cart.", "error");
+        }
+    };
+
     useEffect(() => {
         fetchFavorites();
     }, []);
@@ -85,11 +94,18 @@ const FavoritesPage = ({ user }) => {
                             <p className="favorite-card-detail">Color: {favorite.color}</p>
                             <p className="favorite-card-detail">Category: {CATEGORY_DISPLAY_NAMES[favorite.category] || favorite.category}</p>
                             <p className="favorite-card-detail">Added on: {new Date(favorite.favorite_since).toLocaleDateString()}</p>
+
                             <button
                                 className="favorite-card-remove-button"
                                 onClick={() => handleRemoveFavorite(favorite.productId)}
                             >
                                 Remove from Favorites
+                            </button>
+                            <button
+                                className="favorite-card-add-button"
+                                onClick={() => handleAddToCart(favorite.productId)}
+                            >
+                                Add to Cart
                             </button>
                         </div>
                     ))}

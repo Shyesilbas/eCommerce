@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getFavoritesByUser, removeFavorite } from "../../utils/api";
+import { getFavoritesByUser, removeFavorite, addToCard } from "../../utils/api";
 import Swal from "sweetalert2";
 import "../../style/FavoritesSection.css";
 
@@ -44,6 +44,15 @@ const FavoritesSection = () => {
         }
     };
 
+    const handleAddToCard = async (productId) => {
+        try {
+            await addToCard(productId);
+            Swal.fire("Success", "Product added to card!", "success");
+        } catch (error) {
+            Swal.fire("Error", "Failed to add product to card.", "error");
+        }
+    };
+
     useEffect(() => {
         fetchFavorites();
     }, []);
@@ -71,12 +80,20 @@ const FavoritesSection = () => {
                             <p>{favorite.description}</p>
                             <p>Price: ${favorite.price}</p>
                             <p>Added on: {new Date(favorite.favorite_since).toLocaleDateString()}</p>
-                            <button
-                                className="favorite-card-remove-button"
-                                onClick={() => handleRemoveFavorite(favorite.productId)}
-                            >
-                                Remove from Favorites
-                            </button>
+                            <div className="favorite-item-buttons">
+                                <button
+                                    className="favorite-card-remove-button"
+                                    onClick={() => handleRemoveFavorite(favorite.productId)}
+                                >
+                                    Remove from Favorites
+                                </button>
+                                <button
+                                    className="favorite-card-add-to-card-button"
+                                    onClick={() => handleAddToCard(favorite.productId)}
+                                >
+                                    Add to Card
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>

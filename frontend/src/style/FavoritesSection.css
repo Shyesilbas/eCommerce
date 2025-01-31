@@ -50,3 +50,35 @@
     font-size: 14px;
     color: #777;
 }
+
+.favorite-item-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.favorite-card-remove-button {
+    padding: 8px 12px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.favorite-card-remove-button:hover {
+    background-color: #c82333;
+}
+
+.favorite-card-add-to-card-button {
+    padding: 8px 12px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.favorite-card-add-to-card-button:hover {
+    background-color: #218838;
+}

@@ -40,8 +40,8 @@ const ShoppingCardPage = ({ user }) => {
     const loadTotalInfo = async () => {
         try {
             const totalInfo = await getTotalInfo();
-            setTotalItems(totalInfo.totalItems);
-            setTotalQuantity(totalInfo.totalQuantity);
+            setTotalItems(totalInfo.totalQuantity);
+            setTotalQuantity(totalInfo.totalItems);
             setTotalPrice(totalInfo.totalPrice);
         } catch (error) {
             console.error("Error loading total info:", error);
@@ -83,33 +83,40 @@ const ShoppingCardPage = ({ user }) => {
     if (!isAuthenticated) {
         return (
             <div className="shopping-card-page">
-                <h1>Shopping Card</h1>
-                <p>Please log in to view your shopping card.</p>
+                <h1>Shopping Cart</h1>
+                <p>Please log in to view your shopping cart.</p>
             </div>
         );
     }
 
     return (
         <div className="shopping-card-page">
-            <h1>Shopping Card</h1>
+            <h1>Your Shopping Cart</h1>
             <div className="shopping-card-section">
                 {shoppingCardItems.length > 0 ? (
                     shoppingCardItems.map((item) => (
                         <div key={item.productId} className="card-item">
-                            <h3>{item.name}</h3>
-                            <div className="card-item-details">
-                                <p>Price: ${item.price}</p>
-                                <p>Quantity: {item.quantity}</p>
-                                <button onClick={() => handleIncreaseQuantity(item.productId)}>+</button>
-                                <button onClick={() => handleDecreaseQuantity(item.productId)}>-</button>
-                                <button onClick={() => handleRemoveFromCard(item.productId)}>Remove</button>
+                            <div className="card-item-header">
+                                <h3>{item.name}</h3>
+                            </div>
+                            <div className="card-item-body">
+                                <p><strong>Price:</strong> ${item.price}</p>
+                                <p><strong>Product Code:</strong> {item.productCode}</p>
+                                <p><strong>Category:</strong> {item.category}</p>
+                                <p><strong>Quantity:</strong> {item.quantity}</p>
+                                <div className="card-item-actions">
+                                    <button onClick={() => handleIncreaseQuantity(item.productId)}>+</button>
+                                    <button onClick={() => handleDecreaseQuantity(item.productId)}>-</button>
+                                    <button onClick={() => handleRemoveFromCard(item.productId)}>Remove</button>
+                                </div>
                             </div>
                         </div>
                     ))
                 ) : (
-                    <p>Your shopping card is empty.</p>
+                    <p>Your shopping cart is empty.</p>
                 )}
             </div>
+
             {shoppingCardItems.length > 0 && (
                 <div className="shopping-card-footer">
                     <div className="total-items">

@@ -172,17 +172,7 @@ export const getShoppingCardByUser = async () => {
     }
 };
 
-export const getTotalItemsOnCard = async () => {
-    try {
-        const response = await axios.get(`${API_URL}/shopping-card/total-product`, {
-            withCredentials: true,
-        });
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching shopping card items:", error);
-        throw error;
-    }
-};
+
 
 export const increaseQuantity = async (productId) => {
     try {
@@ -232,20 +222,6 @@ export const getTotalInfo = async () => {
     }
 };
 
-
-
-
-export const getTotalPriceOnCard = async () => {
-    try {
-        const response = await axios.get(`${API_URL}/shopping-card/total-price`, {
-            withCredentials: true,
-        });
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching shopping card items:", error);
-        throw error;
-    }
-};
 
 export const addToCard = async (productId) => {
     try {
