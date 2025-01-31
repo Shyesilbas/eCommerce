@@ -1,8 +1,9 @@
-package com.serhat.security.service;
+package com.serhat.security.controller;
 
 import com.serhat.security.dto.object.CardProductDto;
 import com.serhat.security.dto.object.FavoriteProductDto;
 import com.serhat.security.dto.response.TotalInfo;
+import com.serhat.security.service.ShoppingCardService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

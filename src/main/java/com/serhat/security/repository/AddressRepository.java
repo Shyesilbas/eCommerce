@@ -10,4 +10,5 @@ import java.util.List;
 public interface AddressRepository extends JpaRepository<Address,Long> {
     List<Address> findByUser_Username(String username);
 
+    boolean existsByAddressIdAndUserUserId(Long addressId, Long userId);
 }

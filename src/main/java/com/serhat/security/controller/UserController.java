@@ -39,7 +39,7 @@ public class UserController {
         return ResponseEntity.ok(addressResponse);
     }
 
-    @PutMapping("/address")
+    @PutMapping("/update-address")
     public ResponseEntity<UpdateAddressResponse> updateAddress(
             @RequestParam Long addressId,
             @RequestBody UpdateAddressRequest updateAddressRequest,
