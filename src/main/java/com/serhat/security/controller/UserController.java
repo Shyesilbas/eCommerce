@@ -39,6 +39,16 @@ public class UserController {
         return ResponseEntity.ok(addressResponse);
     }
 
+    @PutMapping("/address")
+    public ResponseEntity<UpdateAddressResponse> updateAddress(
+            @RequestParam Long addressId,
+            @RequestBody UpdateAddressRequest updateAddressRequest,
+            HttpServletRequest request
+    ) {
+        UpdateAddressResponse response = userService.updateAddress(addressId, request, updateAddressRequest);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/update-password")
     public ResponseEntity<UpdatePasswordResponse> updatePassword(
             HttpServletRequest servletRequest,

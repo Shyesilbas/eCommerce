@@ -207,6 +207,52 @@ public class UserService {
                 .toList();
     }
 
+
+    @Transactional
+    public UpdateAddressResponse updateAddress(Long addressId, HttpServletRequest request, UpdateAddressRequest updateAddressRequest) {
+        User user = tokenInterface.getUserFromToken(request);
+
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new RuntimeException("Address not found with ID: " + addressId));
+
+        if (!address.getUser().getUsername().equals(user.getUsername())) {
+            throw new RuntimeException("Address does not belong to the user: " + user.getUsername());
+        }
+
+        if (updateAddressRequest.country() != null) {
+            address.setCountry(updateAddressRequest.country());
+        }
+        if (updateAddressRequest.city() != null) {
+            address.setCity(updateAddressRequest.city());
+        }
+        if (updateAddressRequest.street() != null) {
+            address.setStreet(updateAddressRequest.street());
+        }
+        if (updateAddressRequest.aptNo() != null) {
+            address.setAptNo(updateAddressRequest.aptNo());
+        }
+        if (updateAddressRequest.flatNo() != null) {
+            address.setFlatNo(updateAddressRequest.flatNo());
+        }
+        if (updateAddressRequest.description() != null) {
+            address.setDescription(updateAddressRequest.description());
+        }
+        if (updateAddressRequest.addressType() != null) {
+            address.setAddressType(updateAddressRequest.addressType());
+        }
+
+        addressRepository.save(address);
+        notificationService.addNotification(request, NotificationTopic.ADDRESS_UPDATED);
+
+        return new UpdateAddressResponse(
+                "Address updated successfully",
+                address.getAddressId(),
+                LocalDateTime.now(),
+                address.getDescription()
+        );
+    }
+
+
     @Transactional
     public AddAddressResponse addAddress(HttpServletRequest request, AddAddressRequest addAddressRequest) {
         User user = tokenInterface.getUserFromToken(request);
