@@ -68,11 +68,13 @@ public class OrderService {
     private OrderResponse convertToOrderResponse(Order order) {
         AddressDto shippingAddress = convertToAddressDto(order.getShippingAddressId());
         List<OrderItemDetails> orderItems = convertToOrderItemDetails(order.getOrderItems());
+        BigDecimal bonusWon = order.getTotalPrice().multiply(BigDecimal.valueOf(0.02));
 
         return OrderResponse.builder()
                 .orderId(order.getOrderId())
                 .totalPrice(order.getTotalPrice())
                 .totalQuantity(order.getOrderItems().stream().mapToInt(OrderItem::getQuantity).sum())
+                .bonusWon(bonusWon)
                 .orderDate(order.getOrderDate())
                 .status(order.getStatus())
                 .paymentMethod(order.getPaymentMethod())
@@ -99,6 +101,11 @@ public class OrderService {
                 .map(sc -> sc.getProduct().getPrice().multiply(new BigDecimal(sc.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        BigDecimal bonusPoints = totalPrice.multiply(BigDecimal.valueOf(0.02));
+        log.info("By using E-WALLET as payment method , you have granted {} bonus points.",bonusPoints);
+
+        user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
+
         if (orderRequest.paymentMethod() == PaymentMethod.E_WALLET) {
             Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
                     .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
@@ -108,6 +115,7 @@ public class OrderService {
             }
 
             wallet.setBalance(wallet.getBalance().subtract(totalPrice));
+            wallet.setBonusPoints(wallet.getBonusPoints().add(bonusPoints));
 
             Transaction transaction = new Transaction();
             transaction.setWallet(wallet);
@@ -118,6 +126,17 @@ public class OrderService {
             transaction.setDescription("Payment for order");
 
             transactionRepository.save(transaction);
+
+            Transaction bonusTransaction = new Transaction();
+            bonusTransaction.setWallet(wallet);
+            bonusTransaction.setUser(user);
+            bonusTransaction.setAmount(bonusPoints);
+            bonusTransaction.setTransactionType(TransactionType.BONUS_GRANTED);
+            bonusTransaction.setTransactionDate(LocalDateTime.now());
+            bonusTransaction.setDescription("Bonus points granted for order");
+
+            transactionRepository.save(bonusTransaction);
+
             walletRepository.save(wallet);
 
             log.info("User {} made a payment of {} from their wallet for order", user.getUserId(), totalPrice);
@@ -159,6 +178,7 @@ public class OrderService {
         order.setOrderItems(orderItems);
 
         orderRepository.save(order);
+        user.setTotalOrders(user.getTotalOrders()+1);
         shoppingCardRepository.deleteAll(shoppingCards);
 
         productRepository.saveAll(orderItems.stream().map(OrderItem::getProduct).collect(Collectors.toList()));
@@ -201,11 +221,29 @@ public class OrderService {
                 long minutesSinceCancellation = java.time.Duration.between(order.getUpdatedAt(), LocalDateTime.now()).toMinutes();
                 if (minutesSinceCancellation >= 15) {
                     order.setStatus(OrderStatus.REFUNDED);
+
+                    if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
+                        Wallet wallet = walletRepository.findByUser_UserId(order.getUser().getUserId())
+                                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
+
+                        wallet.setBalance(wallet.getBalance().add(order.getTotalPrice()));
+                        walletRepository.save(wallet);
+
+                        Transaction transaction = new Transaction();
+                        transaction.setWallet(wallet);
+                        transaction.setUser(order.getUser());
+                        transaction.setAmount(order.getTotalPrice());
+                        transaction.setTransactionType(TransactionType.CANCEL_REFUND);
+                        transaction.setTransactionDate(LocalDateTime.now());
+                        transaction.setDescription("Refund for canceled order");
+
+                        transactionRepository.save(transaction);
+                        log.info("Order {} REFUNDED: {} added back to wallet", order.getOrderId(), order.getTotalPrice());                    }
                     log.info("Order {} status updated to REFUNDED", order.getOrderId());
                 }
             }
-            orderRepository.saveAll(orders);
         }
+        orderRepository.saveAll(orders);
     }
 
     public OrderCancellationResponse cancelOrder(Long orderId, HttpServletRequest request) {
@@ -221,9 +259,42 @@ public class OrderService {
             throw new OrderCancellationException("Order cannot be canceled as it is already shipped or delivered!");
         }
 
+        Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
+                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
+
+        BigDecimal bonusPointsToDeduct = order.getTotalPrice().multiply(BigDecimal.valueOf(0.02));
+
+        if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
+            if (user.getBonusPointsWon().compareTo(bonusPointsToDeduct) >= 0) {
+                user.setBonusPointsWon(user.getBonusPointsWon().subtract(bonusPointsToDeduct));
+            } else {
+                user.setBonusPointsWon(BigDecimal.ZERO);
+            }
+
+            if (wallet.getBonusPoints().compareTo(bonusPointsToDeduct) >= 0) {
+                wallet.setBonusPoints(wallet.getBonusPoints().subtract(bonusPointsToDeduct));
+            } else {
+                wallet.setBonusPoints(BigDecimal.ZERO);
+            }
+            walletRepository.save(wallet);
+
+            Transaction transaction = new Transaction();
+            transaction.setWallet(wallet);
+            transaction.setUser(user);
+            transaction.setAmount(bonusPointsToDeduct);
+            transaction.setTransactionType(TransactionType.BONUS_DEDUCT);
+            transaction.setTransactionDate(LocalDateTime.now());
+            transaction.setDescription("Bonus points deducted due to order cancellation");
+
+            transactionRepository.save(transaction);
+        }
+
+        user.setCancelledOrders(user.getCancelledOrders() + 1);
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
-        log.info("Order {} has been canceled by user {}", order.getOrderId(), user.getUsername());
+
+        log.info("Order {} has been canceled by user {}. {} bonus points deducted.",
+                order.getOrderId(), user.getUsername(), bonusPointsToDeduct);
 
         return new OrderCancellationResponse(
                 order.getTotalPrice(),

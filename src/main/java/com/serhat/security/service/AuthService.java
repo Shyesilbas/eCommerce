@@ -94,17 +94,6 @@ public class AuthService {
         }
     }
 
-    private String extractJwtFromCookies(HttpServletRequest request) {
-        Cookie[] cookies = Optional.ofNullable(request.getCookies())
-                .orElseThrow(() -> new RuntimeException("No cookies found"));
-
-        return Arrays.stream(cookies)
-                .filter(cookie -> "jwt".equals(cookie.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElseThrow(() -> new TokenNotFoundException("JWT not found in cookies"));
-    }
-
     private void invalidateToken(String jwtToken) {
         Token token = tokenRepository.findByToken(jwtToken)
                 .orElseThrow(() -> new TokenNotFoundException("Token not found"));

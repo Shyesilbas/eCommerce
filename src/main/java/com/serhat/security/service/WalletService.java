@@ -9,7 +9,6 @@ import com.serhat.security.entity.enums.TransactionType;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.repository.TransactionRepository;
-import com.serhat.security.repository.UserRepository;
 import com.serhat.security.repository.WalletRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +58,10 @@ public class WalletService {
                  wallet.getDescription()
          );
     }
+
+
+
+    // todo update wallet name , wallet limit , wallet pin , wallet description
 
     @Transactional
     public DepositSuccessfulResponse depositMoney(HttpServletRequest request, BigDecimal amount) {

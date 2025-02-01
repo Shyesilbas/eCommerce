@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -69,7 +70,9 @@ public class UserService {
                 .phone(request.phone())
                 .email(request.email())
                 .role(request.role())
+                .bonusPointsWon(new BigDecimal("0.0"))
                 .totalOrders(0)
+                .cancelledOrders(0)
                 .build();
 
         if (request.address() != null && !request.address().isEmpty()) {

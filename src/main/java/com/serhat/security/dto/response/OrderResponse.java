@@ -13,6 +13,7 @@ import java.util.List;
 public record OrderResponse(
         Long orderId,
         BigDecimal totalPrice,
+        BigDecimal bonusWon,
         LocalDateTime orderDate,
         OrderStatus status,
         AddressDto shippingAddress,
