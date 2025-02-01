@@ -59,9 +59,31 @@ public class WalletService {
          );
     }
 
+    @Transactional
+    public WalletLimitUpdateResponse limitUpdate(HttpServletRequest servletRequest , BigDecimal newLimit){
+        User user = tokenInterface.getUserFromToken(servletRequest);
+        Long userId = user.getUserId();
 
+        Wallet wallet = walletRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
 
-    // todo update wallet name , wallet limit , wallet pin , wallet description
+        if(newLimit.compareTo(BigDecimal.ZERO)<=0){
+            throw new InvalidAmountException("Invalid limit request!");
+        }
+
+        if (wallet.getBalance().compareTo(newLimit) > 0) {
+            throw new LimitExceededException("Your current balance exceeds the new limit. Please adjust your balance before updating the limit.");
+        }
+
+       wallet.setWalletLimit(newLimit);
+
+        return new WalletLimitUpdateResponse(
+                "Limit Updated Successfully",
+                newLimit,
+                LocalDateTime.now()
+        );
+
+    }
 
     @Transactional
     public DepositSuccessfulResponse depositMoney(HttpServletRequest request, BigDecimal amount) {

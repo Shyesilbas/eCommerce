@@ -32,6 +32,11 @@ public class WalletController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PutMapping("/update-limit")
+    public ResponseEntity<WalletLimitUpdateResponse> walletLimitUpdate(HttpServletRequest request , @RequestParam BigDecimal newLimit){
+        return ResponseEntity.ok(walletService.limitUpdate(request, newLimit));
+    }
+
     @GetMapping("/info")
     public ResponseEntity<WalletInfoResponse> getWalletInfo(HttpServletRequest request) {
         WalletInfoResponse walletInfo = walletService.walletInfo(request);
