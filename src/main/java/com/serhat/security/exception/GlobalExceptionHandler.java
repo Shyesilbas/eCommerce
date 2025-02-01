@@ -145,6 +145,30 @@ public class GlobalExceptionHandler{
         return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(WrongOrderIdException.class)
+    public ResponseEntity<ErrorResponse> handleWrongOrderIdException(WrongOrderIdException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                "Wrong OrderId",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(OrderCancellationException.class)
+    public ResponseEntity<ErrorResponse> handleOrderCancellationException(OrderCancellationException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Order cancellation error ",
+                "Orders cannot be canceled if the status is SHIPPED or DELIVERED",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(OrderNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleOrderNotFoundException(OrderNotFoundException e){
 

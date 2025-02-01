@@ -46,4 +46,10 @@ public class Order {
 
     private Long shippingAddressId;
 
+    private LocalDateTime updatedAt;
+    @PreUpdate
+    public void setUpdatedAt() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
 }

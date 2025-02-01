@@ -2,6 +2,7 @@ package com.serhat.security.service;
 
 import com.serhat.security.dto.object.AddressDto;
 import com.serhat.security.dto.request.OrderRequest;
+import com.serhat.security.dto.response.OrderCancellationResponse;
 import com.serhat.security.dto.response.OrderItemDetails;
 import com.serhat.security.dto.response.OrderResponse;
 import com.serhat.security.entity.Order;
@@ -17,6 +18,8 @@ import com.serhat.security.repository.ShoppingCardRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +31,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@EnableScheduling
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -103,6 +107,7 @@ public class OrderService {
                 .shippingAddressId(orderRequest.shippingAddressId())
                 .paymentMethod(orderRequest.paymentMethod())
                 .notes(orderRequest.notes())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
         List<OrderItem> orderItems = shoppingCards.stream()
@@ -133,6 +138,61 @@ public class OrderService {
 
         return orders.stream().map(this::convertToOrderResponse).collect(Collectors.toList());
     }
+
+    @Scheduled(fixedRate = 60000)
+    @Transactional
+    public void updateOrderStatuses() {
+        List<Order> orders = orderRepository.findAll();
+
+        for (Order order : orders) {
+            long minutesSinceOrder = java.time.Duration.between(order.getOrderDate(), LocalDateTime.now()).toMinutes();
+
+            if (order.getStatus() == OrderStatus.PENDING && minutesSinceOrder >= 15) {
+                order.setStatus(OrderStatus.APPROVED);
+                log.info("Order {} status updated to APPROVED", order.getOrderId());
+            } else if (order.getStatus() == OrderStatus.APPROVED && minutesSinceOrder >= 60) {
+                order.setStatus(OrderStatus.SHIPPED);
+                log.info("Order {} status updated to SHIPPED", order.getOrderId());
+            } else if (order.getStatus() == OrderStatus.SHIPPED && minutesSinceOrder >= 180) {
+                order.setStatus(OrderStatus.DELIVERED);
+                log.info("Order {} status updated to DELIVERED", order.getOrderId());
+            } else if (order.getStatus() == OrderStatus.CANCELLED) {
+                long minutesSinceCancellation = java.time.Duration.between(order.getUpdatedAt(), LocalDateTime.now()).toMinutes();
+                if (minutesSinceCancellation >= 15) {
+                    order.setStatus(OrderStatus.REFUNDED);
+                    log.info("Order {} status updated to REFUNDED", order.getOrderId());
+                }
+            }
+            orderRepository.saveAll(orders);
+        }
+    }
+
+    public OrderCancellationResponse cancelOrder(Long orderId, HttpServletRequest request) {
+        User user = tokenInterface.getUserFromToken(request);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
+
+        if (!order.getUser().equals(user)) {
+            throw new WrongOrderIdException("Wrong Order Id!");
+        }
+
+        if (order.getStatus() == OrderStatus.SHIPPED || order.getStatus() == OrderStatus.DELIVERED) {
+            throw new OrderCancellationException("Order cannot be canceled as it is already shipped or delivered!");
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+        log.info("Order {} has been canceled by user {}", order.getOrderId(), user.getUsername());
+
+        return new OrderCancellationResponse(
+                order.getTotalPrice(),
+                convertToOrderItemDetails(order.getOrderItems()),
+                order.getStatus(),
+                LocalDateTime.now(),
+                "Refund Fee will be deposited into your account as soon as possible."
+        );
+    }
+
 
     public OrderResponse getOrderDetails(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);

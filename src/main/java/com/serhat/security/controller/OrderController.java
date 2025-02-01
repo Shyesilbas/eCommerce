@@ -1,6 +1,7 @@
 package com.serhat.security.controller;
 
 import com.serhat.security.dto.request.OrderRequest;
+import com.serhat.security.dto.response.OrderCancellationResponse;
 import com.serhat.security.dto.response.OrderResponse;
 import com.serhat.security.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,6 +30,11 @@ public class OrderController {
     @GetMapping("/order-detail")
     public ResponseEntity<OrderResponse> orderDetail(@RequestParam Long orderId,HttpServletRequest request){
         return ResponseEntity.ok(service.getOrderDetails(orderId,request));
+    }
+
+    @PostMapping("/cancel-order")
+    public ResponseEntity<OrderCancellationResponse> cancelOrder(HttpServletRequest request , @RequestParam Long orderId){
+        return ResponseEntity.ok(service.cancelOrder(orderId, request));
     }
 
 }

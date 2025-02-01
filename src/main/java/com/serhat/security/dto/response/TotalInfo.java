@@ -4,7 +4,8 @@ import java.math.BigDecimal;
 
 public record TotalInfo(
         BigDecimal totalPrice,
-        long totalItems,
-        long totalQuantity
+        long totalQuantity,
+        long totalItems
+
 ) {
 }
