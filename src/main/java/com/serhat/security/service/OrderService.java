@@ -5,15 +5,14 @@ import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.OrderCancellationResponse;
 import com.serhat.security.dto.response.OrderItemDetails;
 import com.serhat.security.dto.response.OrderResponse;
-import com.serhat.security.entity.Order;
-import com.serhat.security.entity.OrderItem;
-import com.serhat.security.entity.ShoppingCard;
-import com.serhat.security.entity.User;
+import com.serhat.security.entity.*;
 import com.serhat.security.entity.enums.OrderStatus;
+import com.serhat.security.entity.enums.StockStatus;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.repository.AddressRepository;
 import com.serhat.security.repository.OrderRepository;
+import com.serhat.security.repository.ProductRepository;
 import com.serhat.security.repository.ShoppingCardRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +37,7 @@ public class OrderService {
     private final ShoppingCardRepository shoppingCardRepository;
     private final TokenInterface tokenInterface;
     private final AddressRepository addressRepository;
+    private final ProductRepository productRepository;
 
     private boolean isAddressBelongsToUser(Long addressId, Long userId) {
         return addressRepository.existsByAddressIdAndUserUserId(addressId, userId);
@@ -111,22 +111,39 @@ public class OrderService {
                 .build();
 
         List<OrderItem> orderItems = shoppingCards.stream()
-                .map(sc -> OrderItem.builder()
-                        .order(order)
-                        .product(sc.getProduct())
-                        .quantity(sc.getQuantity())
-                        .price(sc.getProduct().getPrice())
-                        .build())
-                .collect(Collectors.toList());
+                .map(sc -> {
+                    Product product = sc.getProduct();
+
+                    if (product.getQuantity() < sc.getQuantity()) {
+                        throw new InsufficientStockException("Insufficient stock for product: " + product.getName());
+                    }
+
+                    product.setQuantity(product.getQuantity() - sc.getQuantity());
+
+                    if(product.getQuantity() == 0){
+                        product.setStockStatus(StockStatus.OUT_OF_STOCKS);
+                    }
+
+                    return OrderItem.builder()
+                            .order(order)
+                            .product(product)
+                            .quantity(sc.getQuantity())
+                            .price(product.getPrice())
+                            .build();
+                }).collect(Collectors.toList());
 
         order.setOrderItems(orderItems);
+
         orderRepository.save(order);
         shoppingCardRepository.deleteAll(shoppingCards);
 
-        log.info("Order created for user: {}", user.getUsername());
+        productRepository.saveAll(orderItems.stream().map(OrderItem::getProduct).collect(Collectors.toList()));
+
+        log.info("Order created for user: {}, stock updated", user.getUsername());
 
         return convertToOrderResponse(order);
     }
+
 
     public List<OrderResponse> getOrdersByUser(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);

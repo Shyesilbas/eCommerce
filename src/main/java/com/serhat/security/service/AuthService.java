@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Date;
@@ -109,7 +110,7 @@ public class AuthService {
                 .orElseThrow(() -> new TokenNotFoundException("Token not found"));
 
         token.setTokenStatus(TokenStatus.LOGGED_OUT);
-        token.setExpired_at(LocalDateTime.now());
+        token.setExpired_at(Date.from(Instant.now()));
         tokenRepository.save(token);
         log.debug("Token invalidated: {}", jwtToken);
     }

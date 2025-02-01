@@ -32,8 +32,8 @@ public class Token {
     @Enumerated(EnumType.STRING)
     private TokenStatus tokenStatus;
 
-
-    private LocalDateTime expired_at;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date expired_at;
 
 
 }
