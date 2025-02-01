@@ -7,13 +7,12 @@ import com.serhat.security.dto.response.OrderItemDetails;
 import com.serhat.security.dto.response.OrderResponse;
 import com.serhat.security.entity.*;
 import com.serhat.security.entity.enums.OrderStatus;
+import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.entity.enums.StockStatus;
+import com.serhat.security.entity.enums.TransactionType;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
-import com.serhat.security.repository.AddressRepository;
-import com.serhat.security.repository.OrderRepository;
-import com.serhat.security.repository.ProductRepository;
-import com.serhat.security.repository.ShoppingCardRepository;
+import com.serhat.security.repository.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +37,8 @@ public class OrderService {
     private final TokenInterface tokenInterface;
     private final AddressRepository addressRepository;
     private final ProductRepository productRepository;
-
+    private final WalletRepository walletRepository;
+    private final TransactionRepository transactionRepository;
     private boolean isAddressBelongsToUser(Long addressId, Long userId) {
         return addressRepository.existsByAddressIdAndUserUserId(addressId, userId);
     }
@@ -98,6 +98,29 @@ public class OrderService {
         BigDecimal totalPrice = shoppingCards.stream()
                 .map(sc -> sc.getProduct().getPrice().multiply(new BigDecimal(sc.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (orderRequest.paymentMethod() == PaymentMethod.E_WALLET) {
+            Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
+                    .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
+
+            if (wallet.getBalance().compareTo(totalPrice) < 0) {
+                throw new InsufficientFundsException("Insufficient funds in wallet");
+            }
+
+            wallet.setBalance(wallet.getBalance().subtract(totalPrice));
+
+            Transaction transaction = new Transaction();
+            transaction.setWallet(wallet);
+            transaction.setAmount(totalPrice);
+            transaction.setTransactionType(TransactionType.PAYMENT);
+            transaction.setTransactionDate(LocalDateTime.now());
+            transaction.setDescription("Payment for order");
+
+            transactionRepository.save(transaction);
+            walletRepository.save(wallet);
+
+            log.info("User {} made a payment of {} from their wallet for order", user.getUserId(), totalPrice);
+        }
 
         Order order = Order.builder()
                 .user(user)
