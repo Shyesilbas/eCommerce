@@ -111,6 +111,7 @@ public class OrderService {
 
             Transaction transaction = new Transaction();
             transaction.setWallet(wallet);
+            transaction.setUser(user);
             transaction.setAmount(totalPrice);
             transaction.setTransactionType(TransactionType.PAYMENT);
             transaction.setTransactionDate(LocalDateTime.now());
