@@ -2,6 +2,8 @@ package com.serhat.security.controller;
 
 import com.serhat.security.dto.object.CardProductDto;
 import com.serhat.security.dto.object.FavoriteProductDto;
+import com.serhat.security.dto.response.AddedToCardResponse;
+import com.serhat.security.dto.response.QuantityUpdateResponse;
 import com.serhat.security.dto.response.TotalInfo;
 import com.serhat.security.service.ShoppingCardService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,23 +44,19 @@ public class ShoppingCardController {
     }
 
     @PostMapping("/add-to-card")
-    public ResponseEntity<String> addToFavorite(HttpServletRequest request, @RequestBody Map<String, Long> requestBody) {
+    public ResponseEntity<AddedToCardResponse> addToCard(HttpServletRequest request, @RequestBody Map<String, Long> requestBody) {
         Long productId = requestBody.get("productId");
-        service.addToCard(request, productId);
-        return ResponseEntity.ok("Product added to card successfully");
+        return ResponseEntity.ok(service.addToCard(request, productId));
     }
 
-    @PostMapping("/increase-quantity")
-    public ResponseEntity<String> increaseQuantity(HttpServletRequest request, @RequestParam Long productId) {
-        service.increaseQuantity(request, productId);
-        return ResponseEntity.ok("Product quantity increased at shopping card.");
+    @PostMapping("/update-quantity")
+    public ResponseEntity<QuantityUpdateResponse> updateQuantity(
+            HttpServletRequest request,
+            @RequestParam Long productId,
+            @RequestParam int quantity) {
+        return ResponseEntity.ok(service.handleQuantity(request, productId, quantity));
     }
 
-    @PostMapping("/decrease-quantity")
-    public ResponseEntity<String> decreaseQuantity(HttpServletRequest request, @RequestParam Long productId) {
-        service.decreaseQuantity(request, productId);
-        return ResponseEntity.ok("Product quantity decreased at shopping card.");
-    }
 
     @DeleteMapping("/remove-from-card")
     public ResponseEntity<?> removeFavorite(HttpServletRequest request, @RequestParam Long productId) {

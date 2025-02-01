@@ -1,11 +1,14 @@
 package com.serhat.security.service;
 
 import com.serhat.security.dto.object.CardProductDto;
+import com.serhat.security.dto.response.AddedToCardResponse;
+import com.serhat.security.dto.response.QuantityUpdateResponse;
 import com.serhat.security.dto.response.TotalInfo;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.ShoppingCard;
 import com.serhat.security.exception.EmptyShoppingCardException;
+import com.serhat.security.exception.InvalidQuantityException;
 import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.exception.ProductNotFoundInCardException;
 import com.serhat.security.interfaces.TokenInterface;
@@ -59,7 +62,7 @@ public class ShoppingCardService {
     }
 
     @Transactional
-    public void addToCard(HttpServletRequest servletRequest, Long productId) {
+    public AddedToCardResponse addToCard(HttpServletRequest servletRequest, Long productId) {
         User user = tokenInterface.getUserFromToken(servletRequest);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
@@ -74,10 +77,21 @@ public class ShoppingCardService {
             shoppingCardRepository.save(shoppingCard);
             log.info("Product {} added to shopping card for user {}", productId, user.getUsername());
         }
+
+        return new AddedToCardResponse(
+                product.getName(),
+                product.getBrand(),
+                product.getProductCode(),
+                product.getPrice()
+        );
     }
 
     @Transactional
-    public void increaseQuantity(HttpServletRequest servletRequest, Long productId) {
+    public QuantityUpdateResponse handleQuantity(HttpServletRequest servletRequest, Long productId, int quantity) {
+        if (quantity < 0) {
+            throw new InvalidQuantityException("Quantity cannot be negative!");
+        }
+
         User user = tokenInterface.getUserFromToken(servletRequest);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
@@ -85,29 +99,22 @@ public class ShoppingCardService {
         ShoppingCard shoppingCard = shoppingCardRepository.findByUserAndProduct(user, product)
                 .orElseThrow(() -> new ProductNotFoundInCardException("Product not found in shopping card"));
 
-        shoppingCard.setQuantity(shoppingCard.getQuantity() + 1);
-        shoppingCardRepository.save(shoppingCard);
-        log.info("Product {} quantity increased to {} for user {}", productId, shoppingCard.getQuantity(), user.getUsername());
-    }
-
-    @Transactional
-    public void decreaseQuantity(HttpServletRequest servletRequest, Long productId) {
-        User user = tokenInterface.getUserFromToken(servletRequest);
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
-
-        ShoppingCard shoppingCard = shoppingCardRepository.findByUserAndProduct(user, product)
-                .orElseThrow(() -> new ProductNotFoundInCardException("Product not found in shopping card"));
-
-        if (shoppingCard.getQuantity() > 1) {
-            shoppingCard.setQuantity(shoppingCard.getQuantity() - 1);
-            shoppingCardRepository.save(shoppingCard);
-            log.info("Product {} quantity decreased to {} for user {}", productId, shoppingCard.getQuantity(), user.getUsername());
-        } else {
+        if (quantity == 0) {
             shoppingCardRepository.delete(shoppingCard);
             log.info("Product {} removed from shopping card for user {}", productId, user.getUsername());
+        } else {
+            shoppingCard.setQuantity(quantity);
+            shoppingCardRepository.save(shoppingCard);
+            log.info("Product {} quantity updated to {} for user {}", productId, shoppingCard.getQuantity(), user.getUsername());
         }
+
+        return new QuantityUpdateResponse(
+                product.getName(),
+                product.getProductCode(),
+                quantity
+        );
     }
+
 
     public BigDecimal totalPrice(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);

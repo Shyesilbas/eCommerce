@@ -42,7 +42,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.FORBIDDEN.value(),
-                "Invalid Token Format",
+                e.getMessage(),
                 "Token expired or Black listed , try again",
                 LocalDateTime.now()
         );
@@ -53,7 +53,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "BAD REQUEST!",
+                e.getMessage(),
                 "Email exists",
                 LocalDateTime.now()
         );
@@ -66,7 +66,7 @@ public class GlobalExceptionHandler{
         ErrorResponse errorResponse = new ErrorResponse(
 
                 HttpStatus.BAD_REQUEST.value(),
-                "BAD REQUEST",
+                e.getMessage(),
                 "Username Exists!",
                 LocalDateTime.now()
         );
@@ -78,7 +78,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "BAD REQUEST",
+                e.getMessage(),
                 "Invalid Credentials!",
                 LocalDateTime.now()
         );
@@ -90,7 +90,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "BAD REQUEST",
+                e.getMessage(),
                 "Address Not belongs to you!",
                 LocalDateTime.now()
         );
@@ -102,7 +102,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                "NOT FOUND",
+                e.getMessage(),
                 "Shopping Card is empty!",
                 LocalDateTime.now()
         );
@@ -114,7 +114,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "BAD REQUEST",
+                e.getMessage(),
                 "Product Not Found in Shopping Card!",
                 LocalDateTime.now()
         );
@@ -126,7 +126,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
-                "UNAUTHORIZED ACCESS ATTEMPT!",
+                e.getMessage(),
                 "You have to login (Either token is invalidated or Expired) !",
                 LocalDateTime.now()
         );
@@ -138,7 +138,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                "NOT FOUND",
+                e.getMessage(),
                 "Address Not Found",
                 LocalDateTime.now()
         );
@@ -150,7 +150,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
+                e.getMessage(),
                 "Wrong OrderId",
                 LocalDateTime.now()
         );
@@ -162,8 +162,20 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
+                e.getMessage(),
                 "Insufficient Stock!",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidQuantityException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidQuantityException(InvalidQuantityException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                "Invalid input!",
                 LocalDateTime.now()
         );
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
@@ -174,7 +186,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "Order cancellation error ",
+                e.getMessage(),
                 "Orders cannot be canceled if the status is SHIPPED or DELIVERED",
                 LocalDateTime.now()
         );
@@ -186,7 +198,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                "NOT FOUND",
+                e.getMessage(),
                 "Order Not Found",
                 LocalDateTime.now()
         );
@@ -198,7 +210,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                "NOT FOUND",
+                e.getMessage(),
                 "Product Not Found",
                 LocalDateTime.now()
         );
@@ -210,7 +222,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                "NOT FOUND",
+                e.getMessage(),
                 "No order found",
                 LocalDateTime.now()
         );
@@ -222,7 +234,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                "NOT FOUND",
+                e.getMessage(),
                 "No Comment found for the product",
                 LocalDateTime.now()
         );
@@ -235,7 +247,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                "NOT FOUND",
+                e.getMessage(),
                 "No Comment found made by user",
                 LocalDateTime.now()
         );
@@ -247,7 +259,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "BAD REQUEST",
+                e.getMessage(),
                 "You cannot post comment on product you have not ordered yet.",
                 LocalDateTime.now()
         );
@@ -259,7 +271,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                "NOT FOUND",
+                e.getMessage(),
                 "Favorite Product Not Found",
                 LocalDateTime.now()
         );
@@ -271,7 +283,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                "NOT FOUND",
+                e.getMessage(),
                 "No notification found",
                 LocalDateTime.now()
         );
@@ -283,7 +295,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                "NO CONTENT",
+                e.getMessage(),
                 "Favorite List is empty",
                 LocalDateTime.now()
         );
@@ -295,7 +307,7 @@ public class GlobalExceptionHandler{
 
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "INTERNAL SERVER ERROR",
+                e.getMessage(),
                 "Token Not Found!",
                 LocalDateTime.now()
         );
