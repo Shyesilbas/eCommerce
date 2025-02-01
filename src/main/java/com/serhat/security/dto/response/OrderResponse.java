@@ -15,7 +15,6 @@ public record OrderResponse(
         BigDecimal totalPrice,
         LocalDateTime orderDate,
         OrderStatus status,
-        Long shippingAddressId,
         AddressDto shippingAddress,
         PaymentMethod paymentMethod,
         String notes,

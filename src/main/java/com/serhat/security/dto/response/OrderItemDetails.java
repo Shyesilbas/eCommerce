@@ -10,6 +10,7 @@ public record OrderItemDetails(
         String productName,
         BigDecimal price,
         Integer quantity,
+        String brand,
         BigDecimal subtotal
 
 ) {

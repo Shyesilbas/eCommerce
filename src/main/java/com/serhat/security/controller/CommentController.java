@@ -1,6 +1,7 @@
 package com.serhat.security.controller;
 
 import com.serhat.security.dto.request.CommentRequest;
+import com.serhat.security.dto.response.AverageRatingResponse;
 import com.serhat.security.dto.response.CommentResponse;
 import com.serhat.security.service.CommentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,6 +30,11 @@ public class CommentController {
     @GetMapping("/comments-by-user")
     public ResponseEntity<List<CommentResponse>> commentsMadeByUser(HttpServletRequest request){
         return ResponseEntity.ok(commentService.getCommentsByUser(request));
+    }
+
+    @GetMapping("/products/average-rating")
+    public ResponseEntity<AverageRatingResponse> getAverageProductRating(@RequestParam Long productId) {
+        return ResponseEntity.ok(commentService.getAverageProductRating(productId));
     }
 
     @DeleteMapping("/delete-comment")

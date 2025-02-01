@@ -35,10 +35,49 @@ public class OrderService {
     private final TokenInterface tokenInterface;
     private final AddressRepository addressRepository;
 
-
-    public boolean isAddressBelongsToUser(Long addressId, Long userId) {
+    private boolean isAddressBelongsToUser(Long addressId, Long userId) {
         return addressRepository.existsByAddressIdAndUserUserId(addressId, userId);
     }
+
+    private AddressDto convertToAddressDto(Long addressId) {
+        return addressRepository.findById(addressId)
+                .map(address -> new AddressDto(
+                        address.getAddressId(), address.getCountry(), address.getCity(),
+                        address.getStreet(), address.getAptNo(), address.getFlatNo(),
+                        address.getDescription(), address.getAddressType()))
+                .orElseThrow(() -> new AddressNotFoundException("Address not found for ID: " + addressId));
+    }
+
+    private List<OrderItemDetails> convertToOrderItemDetails(List<OrderItem> orderItems) {
+        return orderItems.stream()
+                .map(item -> OrderItemDetails.builder()
+                        .productCode(item.getProduct().getProductCode())
+                        .productName(item.getProduct().getName())
+                        .price(item.getPrice())
+                        .quantity(item.getQuantity())
+                        .brand(item.getProduct().getBrand())
+                        .subtotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private OrderResponse convertToOrderResponse(Order order) {
+        AddressDto shippingAddress = convertToAddressDto(order.getShippingAddressId());
+        List<OrderItemDetails> orderItems = convertToOrderItemDetails(order.getOrderItems());
+
+        return OrderResponse.builder()
+                .orderId(order.getOrderId())
+                .totalPrice(order.getTotalPrice())
+                .totalQuantity(order.getOrderItems().stream().mapToInt(OrderItem::getQuantity).sum())
+                .orderDate(order.getOrderDate())
+                .status(order.getStatus())
+                .paymentMethod(order.getPaymentMethod())
+                .notes(order.getNotes())
+                .orderItems(orderItems)
+                .shippingAddress(shippingAddress)
+                .build();
+    }
+
     @Transactional
     public OrderResponse createOrder(HttpServletRequest request, OrderRequest orderRequest) {
         User user = tokenInterface.getUserFromToken(request);
@@ -49,19 +88,12 @@ public class OrderService {
 
         List<ShoppingCard> shoppingCards = shoppingCardRepository.findByUser(user);
         if (shoppingCards.isEmpty()) {
-            throw new EmptyShoppingCardException("No products in the shopping card!");
+            throw new EmptyShoppingCardException("No products in the shopping cart!");
         }
 
         BigDecimal totalPrice = shoppingCards.stream()
-                .map(shoppingCard -> shoppingCard.getProduct().getPrice().multiply(new BigDecimal(shoppingCard.getQuantity())))
+                .map(sc -> sc.getProduct().getPrice().multiply(new BigDecimal(sc.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        AddressDto shippingAddress = addressRepository.findById(orderRequest.shippingAddressId())
-                .map(address -> new AddressDto(
-                        address.getAddressId(), address.getCountry(), address.getCity(),
-                        address.getStreet(), address.getAptNo(), address.getFlatNo(),
-                        address.getDescription(), address.getAddressType()))
-                .orElseThrow(() -> new AddressNotFoundException("Address not found"));
 
         Order order = Order.builder()
                 .user(user)
@@ -74,95 +106,36 @@ public class OrderService {
                 .build();
 
         List<OrderItem> orderItems = shoppingCards.stream()
-                .map(shoppingCard -> OrderItem.builder()
+                .map(sc -> OrderItem.builder()
                         .order(order)
-                        .product(shoppingCard.getProduct())
-                        .quantity(shoppingCard.getQuantity())
-                        .price(shoppingCard.getProduct().getPrice())
+                        .product(sc.getProduct())
+                        .quantity(sc.getQuantity())
+                        .price(sc.getProduct().getPrice())
                         .build())
                 .collect(Collectors.toList());
 
         order.setOrderItems(orderItems);
-
         orderRepository.save(order);
-
         shoppingCardRepository.deleteAll(shoppingCards);
 
         log.info("Order created for user: {}", user.getUsername());
 
-        return OrderResponse.builder()
-                .orderId(order.getOrderId())
-                .totalPrice(order.getTotalPrice())
-                .orderDate(order.getOrderDate())
-                .status(order.getStatus())
-                .paymentMethod(order.getPaymentMethod())
-                .notes(order.getNotes())
-                .totalQuantity(orderItems.stream().mapToInt(OrderItem::getQuantity).sum())
-                .orderItems(orderItems.stream()
-                        .map(item -> OrderItemDetails.builder()
-                                .productCode(item.getProduct().getProductCode())
-                                .productName(item.getProduct().getName())
-                                .price(item.getPrice())
-                                .quantity(item.getQuantity())
-                                .subtotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                                .build())
-                        .collect(Collectors.toList()))
-                .shippingAddressId(order.getShippingAddressId())
-                .shippingAddress(shippingAddress)
-                .build();
+        return convertToOrderResponse(order);
     }
 
     public List<OrderResponse> getOrdersByUser(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
-
         List<Order> orders = orderRepository.findByUser(user);
 
         if (orders.isEmpty()) {
-           throw new NoOrderException("No orders found");
+            throw new NoOrderException("No orders found");
         }
 
-        return orders.stream()
-                .map(order -> {
-                    AddressDto shippingAddress = addressRepository.findById(order.getShippingAddressId())
-                            .map(address -> new AddressDto(
-                                    address.getAddressId(), address.getCountry(), address.getCity(),
-                                    address.getStreet(), address.getAptNo(), address.getFlatNo(),
-                                    address.getDescription(), address.getAddressType()))
-                            .orElseThrow(() -> new AddressNotFoundException("Address not found for order: " + order.getOrderId()));
-
-                    List<OrderItemDetails> orderItems = order.getOrderItems().stream()
-                            .map(item -> OrderItemDetails.builder()
-                                    .productCode(item.getProduct().getProductCode())
-                                    .productName(item.getProduct().getName())
-                                    .price(item.getPrice())
-                                    .quantity(item.getQuantity())
-                                    .subtotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                                    .build())
-                            .collect(Collectors.toList());
-
-                    int totalQuantity = order.getOrderItems().stream()
-                            .mapToInt(OrderItem::getQuantity)
-                            .sum();
-
-                    return OrderResponse.builder()
-                            .orderId(order.getOrderId())
-                            .totalPrice(order.getTotalPrice())
-                            .orderDate(order.getOrderDate())
-                            .status(order.getStatus())
-                            .orderItems(orderItems)
-                            .paymentMethod(order.getPaymentMethod())
-                            .notes(order.getNotes())
-                            .totalQuantity(totalQuantity)
-                            .shippingAddressId(order.getShippingAddressId())
-                            .shippingAddress(shippingAddress)
-                            .build();
-                })
-                .collect(Collectors.toList());
+        return orders.stream().map(this::convertToOrderResponse).collect(Collectors.toList());
     }
 
     public OrderResponse getOrderDetails(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
-
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
@@ -170,24 +143,6 @@ public class OrderService {
             throw new RuntimeException("You are not authorized to view this order!");
         }
 
-        return OrderResponse.builder()
-                .orderId(order.getOrderId())
-                .totalPrice(order.getTotalPrice())
-                .orderDate(order.getOrderDate())
-                .status(order.getStatus())
-                .shippingAddressId(order.getShippingAddressId())
-                .paymentMethod(order.getPaymentMethod())
-                .notes(order.getNotes())
-                .totalQuantity(order.getOrderItems().stream().mapToInt(OrderItem::getQuantity).sum())
-                .orderItems(order.getOrderItems().stream()
-                        .map(item -> OrderItemDetails.builder()
-                                .productCode(item.getProduct().getProductCode())
-                                .productName(item.getProduct().getName())
-                                .price(item.getPrice())
-                                .quantity(item.getQuantity())
-                                .subtotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                                .build())
-                        .collect(Collectors.toList()))
-                .build();
+        return convertToOrderResponse(order);
     }
 }

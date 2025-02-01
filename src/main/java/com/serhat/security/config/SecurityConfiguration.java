@@ -52,6 +52,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/user/forgot-password").permitAll()
                         .requestMatchers("/api/products/totalCountByCategory").permitAll()
                         .requestMatchers("/comment/comments-by-product").permitAll()
+                        .requestMatchers("/comment/products/average-rating").permitAll()
                         .requestMatchers("/auth/test/CUSTOMER").hasRole("CUSTOMER")
                         .requestMatchers("/api/products/addProduct").hasRole("ADMIN")
                         .anyRequest().authenticated()
