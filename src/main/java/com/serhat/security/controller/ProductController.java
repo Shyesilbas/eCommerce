@@ -1,5 +1,6 @@
 package com.serhat.security.controller;
 
+import com.serhat.security.dto.object.BestSellerProductDTO;
 import com.serhat.security.dto.object.ProductDto;
 import com.serhat.security.dto.request.ProductRequest;
 import com.serhat.security.dto.response.ProductResponse;
@@ -109,6 +110,17 @@ public class ProductController {
         Page<Product> products = productService.getProductsByBrand(brand, page, size);
         return ResponseEntity.ok(products);
     }
+
+
+    @GetMapping("/most-sellers")
+    public ResponseEntity<List<BestSellerProductDTO>> mostSellers(@RequestParam  int size){
+        return ResponseEntity.ok(productService.bestSellers(size));
+    }
+    @GetMapping("/most-sellers/category")
+    public ResponseEntity<List<BestSellerProductDTO>> mostSellers(@RequestParam  Category category , @RequestParam int size){
+        return ResponseEntity.ok(productService.bestSellersByCategory(category,size));
+    }
+
 
 
     @PreAuthorize("hasRole('ADMIN')")

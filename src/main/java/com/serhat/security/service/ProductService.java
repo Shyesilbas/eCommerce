@@ -1,33 +1,38 @@
 package com.serhat.security.service;
 
+import com.serhat.security.dto.object.BestSellerProductDTO;
 import com.serhat.security.dto.object.ProductDto;
 import com.serhat.security.dto.request.ProductRequest;
 import com.serhat.security.dto.response.ProductResponse;
+import com.serhat.security.entity.Order;
+import com.serhat.security.entity.OrderItem;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.enums.Category;
+import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.entity.enums.Role;
 import com.serhat.security.entity.enums.StockStatus;
 import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.jwt.JwtUtil;
+import com.serhat.security.repository.OrderRepository;
 import com.serhat.security.repository.ProductRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ProductService {
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
     private final JwtUtil jwtUtil;
 
     public long totalProductCountByCategory(Category category) {
@@ -38,6 +43,73 @@ public class ProductService {
     public Page<Product> getAllProducts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("productId"));
         return productRepository.findAll(pageable);
+    }
+
+    public List<BestSellerProductDTO> bestSellersByCategory(Category category, int size) {
+        List<Order> deliveredOrders = orderRepository.findByStatus(OrderStatus.DELIVERED);
+
+        List<Long> productIds = deliveredOrders.stream()
+                .flatMap(order -> order.getOrderItems().stream())
+                .map(OrderItem::getProduct)
+                .filter(product -> product.getCategory() == category)
+                .map(Product::getProductId)
+                .toList();
+
+        Map<Long, Long> productSalesCount = productIds.stream()
+                .collect(Collectors.groupingBy(productId -> productId, Collectors.counting()));
+
+        List<Long> sortedProductIds = productSalesCount.entrySet().stream()
+                .sorted((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()))
+                .map(Map.Entry::getKey)
+                .limit(size)
+                .collect(Collectors.toList());
+
+        List<Product> bestSellingProducts = productRepository.findAllById(sortedProductIds);
+
+        return bestSellingProducts.stream()
+                .map(product -> new BestSellerProductDTO(
+                        product.getName(),
+                        product.getOriginOfCountry(),
+                        product.getProductCode(),
+                        product.getDescription(),
+                        product.getPrice(),
+                        product.getBrand(),
+                        product.getColor(),
+                        product.getCategory()))
+                .collect(Collectors.toList());
+    }
+
+
+    public List<BestSellerProductDTO> bestSellers(int size) {
+        List<Order> deliveredOrders = orderRepository.findByStatus(OrderStatus.DELIVERED);
+
+        List<Long> productIds = deliveredOrders.stream()
+                .flatMap(order -> order.getOrderItems().stream())
+                .map(orderItem -> orderItem.getProduct().getProductId())
+                .toList();
+
+        Map<Long, Long> productSalesCount = productIds.stream()
+                .collect(Collectors.groupingBy(productId -> productId, Collectors.counting()));
+
+        List<Long> sortedProductIds = productSalesCount.entrySet().stream()
+                .sorted((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()))
+                .map(Map.Entry::getKey)
+                .limit(size)
+                .collect(Collectors.toList());
+
+        List<Product> bestSellingProducts = productRepository.findAllById(sortedProductIds);
+
+        return bestSellingProducts.stream()
+                .map(product -> new BestSellerProductDTO(
+                        product.getName(),
+                        product.getOriginOfCountry(),
+                        product.getProductCode(),
+                        product.getDescription(),
+                        product.getPrice(),
+                        product.getBrand(),
+                        product.getColor(),
+                        product.getCategory()))
+                .collect(Collectors.toList());
     }
 
 

@@ -52,6 +52,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/user/forgot-password").permitAll()
                         .requestMatchers("/api/products/totalCountByCategory").permitAll()
                         .requestMatchers("/api/products/byBrand").permitAll()
+                        .requestMatchers("/api/products/most-sellers").permitAll()
+                        .requestMatchers("/api/products/most-sellers/category").permitAll()
                         .requestMatchers("/api/products/byPriceAndCategory").permitAll()
                         .requestMatchers("/api/products/byPriceRange").permitAll()
                         .requestMatchers("/api/products/allProductsWithoutPagination").permitAll()
