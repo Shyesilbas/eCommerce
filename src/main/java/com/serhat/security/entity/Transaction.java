@@ -30,6 +30,10 @@ public class Transaction {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne
+    @JoinColumn(name = "order_id", nullable = true)
+    private Order order;
+
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)

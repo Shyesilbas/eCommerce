@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -103,9 +104,25 @@ public class OrderService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal bonusPoints = totalPrice.multiply(BigDecimal.valueOf(0.02));
-        log.info("By using E-WALLET as payment method , you have granted {} bonus points.",bonusPoints);
+        log.info("By using E-WALLET as payment method, you have granted {} bonus points.", bonusPoints);
 
         user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
+
+        // 1. Create the order first
+        Order order = Order.builder()
+                .user(user)
+                .orderDate(LocalDateTime.now())
+                .totalPrice(totalPrice)
+                .status(OrderStatus.APPROVED)
+                .shippingAddressId(orderRequest.shippingAddressId())
+                .paymentMethod(orderRequest.paymentMethod())
+                .notes(orderRequest.notes())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        orderRepository.save(order);
+
+        List<Transaction> transactions = new ArrayList<>();
 
         if (orderRequest.paymentMethod() == PaymentMethod.E_WALLET) {
             Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
@@ -118,53 +135,44 @@ public class OrderService {
             wallet.setBalance(wallet.getBalance().subtract(totalPrice));
             wallet.setBonusPoints(wallet.getBonusPoints().add(bonusPoints));
 
-            Transaction transaction = new Transaction();
-            transaction.setWallet(wallet);
-            transaction.setUser(user);
-            transaction.setAmount(totalPrice);
-            transaction.setTransactionType(TransactionType.PAYMENT);
-            transaction.setTransactionDate(LocalDateTime.now());
-            transaction.setDescription("Payment for order");
+            Transaction paymentTransaction = new Transaction();
+            paymentTransaction.setWallet(wallet);
+            paymentTransaction.setUser(user);
+            paymentTransaction.setOrder(order);
+            paymentTransaction.setAmount(totalPrice);
+            paymentTransaction.setTransactionType(TransactionType.PAYMENT);
+            paymentTransaction.setTransactionDate(LocalDateTime.now());
+            paymentTransaction.setDescription("Payment for order");
 
-            transactionRepository.save(transaction);
+            transactions.add(paymentTransaction);
 
             Transaction bonusTransaction = new Transaction();
             bonusTransaction.setWallet(wallet);
             bonusTransaction.setUser(user);
+            bonusTransaction.setOrder(order);
             bonusTransaction.setAmount(bonusPoints);
             bonusTransaction.setTransactionType(TransactionType.BONUS_GRANTED);
             bonusTransaction.setTransactionDate(LocalDateTime.now());
             bonusTransaction.setDescription("Bonus points granted for order");
 
-            transactionRepository.save(bonusTransaction);
+            transactions.add(bonusTransaction);
 
+            transactionRepository.saveAll(transactions);
             walletRepository.save(wallet);
 
-            log.info("User {} made a payment of {} from their wallet for order", user.getUserId(), totalPrice);
+            log.info("User {} made a payment of {} from their wallet for order {}", user.getUserId(), totalPrice, order.getOrderId());
         }
-
-        Order order = Order.builder()
-                .user(user)
-                .orderDate(LocalDateTime.now())
-                .totalPrice(totalPrice)
-                .status(OrderStatus.APPROVED)
-                .shippingAddressId(orderRequest.shippingAddressId())
-                .paymentMethod(orderRequest.paymentMethod())
-                .notes(orderRequest.notes())
-                .updatedAt(LocalDateTime.now())
-                .build();
 
         List<OrderItem> orderItems = shoppingCards.stream()
                 .map(sc -> {
                     Product product = sc.getProduct();
-
                     if (product.getQuantity() < sc.getQuantity()) {
                         throw new InsufficientStockException("Insufficient stock for product: " + product.getName());
                     }
 
                     product.setQuantity(product.getQuantity() - sc.getQuantity());
 
-                    if(product.getQuantity() == 0){
+                    if (product.getQuantity() == 0) {
                         product.setStockStatus(StockStatus.OUT_OF_STOCKS);
                     }
 
@@ -177,17 +185,19 @@ public class OrderService {
                 }).collect(Collectors.toList());
 
         order.setOrderItems(orderItems);
+        order.setTransactions(transactions);
 
         orderRepository.save(order);
-        user.setTotalOrders(user.getTotalOrders()+1);
+        user.setTotalOrders(user.getTotalOrders() + 1);
         shoppingCardRepository.deleteAll(shoppingCards);
 
         productRepository.saveAll(orderItems.stream().map(OrderItem::getProduct).collect(Collectors.toList()));
 
-        log.info("Order created for user: {}, stock updated", user.getUsername());
+        log.info("Order {} created for user: {}, stock updated", order.getOrderId(), user.getUsername());
 
         return convertToOrderResponse(order);
     }
+
 
 
     public List<OrderResponse> getOrdersByUser(HttpServletRequest request) {
@@ -282,6 +292,7 @@ public class OrderService {
             Transaction transaction = new Transaction();
             transaction.setWallet(wallet);
             transaction.setUser(user);
+            transaction.setOrder(order);
             transaction.setAmount(bonusPointsToDeduct);
             transaction.setTransactionType(TransactionType.BONUS_DEDUCT);
             transaction.setTransactionDate(LocalDateTime.now());

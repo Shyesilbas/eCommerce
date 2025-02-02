@@ -106,6 +106,7 @@ public class WalletService {
         Transaction transaction = new Transaction();
         transaction.setWallet(wallet);
         transaction.setUser(user);
+        transaction.setOrder(null);
         transaction.setAmount(amount);
         transaction.setTransactionType(TransactionType.DEPOSIT);
         transaction.setTransactionDate(LocalDateTime.now());
