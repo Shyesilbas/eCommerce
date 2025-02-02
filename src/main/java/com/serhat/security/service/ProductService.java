@@ -124,10 +124,6 @@ public class ProductService {
     }
 
 
-
-
-
-
     public long totalProductCountByCategory(Category category) {
         return productRepository.countByCategory(category);
     }

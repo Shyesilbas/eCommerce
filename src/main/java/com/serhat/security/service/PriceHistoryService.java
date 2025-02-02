@@ -8,6 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -31,4 +34,37 @@ public class PriceHistoryService {
                 ))
                 .toList();
     }
+
+    public List<PriceHistoryResponse> getPriceHistoryInDateRange(Long productId, String startDate, String endDate) {
+        LocalDateTime start = parseStartDate(startDate);
+        LocalDateTime end = parseEndDate(endDate);
+
+        List<PriceHistory> priceHistories = priceHistoryRepository.findByProduct_ProductIdAndChangeDateBetween(
+                productId, start, end);
+
+        return priceHistories.stream()
+                .map(priceHistory -> new PriceHistoryResponse(
+                        priceHistory.getProduct().getName(),
+                        priceHistory.getProduct().getProductId(),
+                        priceHistory.getOldPrice(),
+                        priceHistory.getNewPrice(),
+                        priceHistory.getChangePercentage(),
+                        priceHistory.getTotalChangePercentage(),
+                        priceHistory.getChangeDate()
+                ))
+                .toList();
+    }
+
+    private LocalDateTime parseStartDate(String date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        return LocalDate.parse(date, formatter).atStartOfDay();
+    }
+
+    private LocalDateTime parseEndDate(String date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        return LocalDate.parse(date, formatter).atTime(23, 59, 59, 999999);
+    }
+
+
+
 }

@@ -108,7 +108,6 @@ public class OrderService {
 
         user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
 
-        // 1. Create the order first
         Order order = Order.builder()
                 .user(user)
                 .orderDate(LocalDateTime.now())

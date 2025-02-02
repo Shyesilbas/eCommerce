@@ -21,4 +21,13 @@ public class PriceHistoryController {
     public ResponseEntity<List<PriceHistoryResponse>> priceHistory(@RequestParam Long productId){
         return ResponseEntity.ok(priceHistoryService.getPriceHistory(productId));
     }
+
+
+    @GetMapping("/in-date-range")
+    public List<PriceHistoryResponse> getPriceHistoryInDateRange(
+            @RequestParam Long productId,
+            @RequestParam String startDate,
+            @RequestParam String endDate) {
+        return priceHistoryService.getPriceHistoryInDateRange(productId, startDate, endDate);
+    }
 }
