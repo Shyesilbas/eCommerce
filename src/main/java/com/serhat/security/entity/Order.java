@@ -50,6 +50,9 @@ public class Order {
     private Long shippingAddressId;
 
     private LocalDateTime updatedAt;
+
+    private BigDecimal shippingFee;
+    private BigDecimal bonusWon;
     @PreUpdate
     public void setUpdatedAt() {
         this.updatedAt = LocalDateTime.now();

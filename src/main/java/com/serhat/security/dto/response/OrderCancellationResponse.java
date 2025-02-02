@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record OrderCancellationResponse(
+        BigDecimal orderFee,
+        BigDecimal shippingFee,
         BigDecimal refundFee,
         List<OrderItemDetails> orderItems,
         OrderStatus status,

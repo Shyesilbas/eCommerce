@@ -66,22 +66,53 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    private BigDecimal calculateShippingFee(User user, BigDecimal totalPrice) {
+        switch (user.getMembershipPlan()) {
+            case VIP -> {
+                return BigDecimal.ZERO;
+            }
+            case PREMIUM -> {
+                return (totalPrice.compareTo(BigDecimal.valueOf(100)) >= 0) ? BigDecimal.ZERO : BigDecimal.valueOf(6.99);
+            }
+            case BASIC -> {
+                return (totalPrice.compareTo(BigDecimal.valueOf(200)) >= 0) ? BigDecimal.ZERO : BigDecimal.valueOf(10.99);
+            }
+            default -> {
+                return BigDecimal.ZERO;
+            }
+        }
+    }
+
+    private BigDecimal calculateBonusPoints(User user, BigDecimal totalPrice) {
+        BigDecimal bonusRate = switch (user.getMembershipPlan()) {
+            case VIP -> BigDecimal.valueOf(0.05);
+            case PREMIUM -> BigDecimal.valueOf(0.03);
+            case  BASIC -> BigDecimal.valueOf(0.01);
+        };
+        return totalPrice.multiply(bonusRate);
+    }
+
     private OrderResponse convertToOrderResponse(Order order) {
         AddressDto shippingAddress = convertToAddressDto(order.getShippingAddressId());
         List<OrderItemDetails> orderItems = convertToOrderItemDetails(order.getOrderItems());
-        BigDecimal bonusWon = order.getTotalPrice().multiply(BigDecimal.valueOf(0.02));
+        BigDecimal bonusWon = calculateBonusPoints(order.getUser(), order.getTotalPrice());
+        BigDecimal shippingFee = calculateShippingFee(order.getUser(), order.getTotalPrice());
+        BigDecimal totalPaid = order.getTotalPrice().add(shippingFee);
+
 
         return OrderResponse.builder()
                 .orderId(order.getOrderId())
                 .totalPrice(order.getTotalPrice())
                 .totalQuantity(order.getOrderItems().stream().mapToInt(OrderItem::getQuantity).sum())
                 .bonusWon(bonusWon)
+                .shippingFee(shippingFee)
                 .orderDate(order.getOrderDate())
                 .status(order.getStatus())
                 .paymentMethod(order.getPaymentMethod())
                 .notes(order.getNotes())
                 .orderItems(orderItems)
                 .shippingAddress(shippingAddress)
+                .totalPaid(totalPaid)
                 .build();
     }
 
@@ -103,8 +134,11 @@ public class OrderService {
                 .map(sc -> sc.getProduct().getPrice().multiply(new BigDecimal(sc.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal bonusPoints = totalPrice.multiply(BigDecimal.valueOf(0.02));
-        log.info("By using E-WALLET as payment method, you have granted {} bonus points.", bonusPoints);
+        BigDecimal shippingFee = calculateShippingFee(user, totalPrice);
+        BigDecimal finalPrice = totalPrice.add(shippingFee);
+
+        BigDecimal bonusPoints = calculateBonusPoints(user, totalPrice);
+        log.info("User {} with {} membership earned {} bonus points.", user.getUsername(), user.getMembershipPlan(), bonusPoints);
 
         user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
 
@@ -117,6 +151,8 @@ public class OrderService {
                 .paymentMethod(orderRequest.paymentMethod())
                 .notes(orderRequest.notes())
                 .updatedAt(LocalDateTime.now())
+                .shippingFee(shippingFee)
+                .bonusWon(bonusPoints)
                 .build();
 
         orderRepository.save(order);
@@ -127,21 +163,25 @@ public class OrderService {
             Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
                     .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
 
-            if (wallet.getBalance().compareTo(totalPrice) < 0) {
+            if (wallet.getBalance().compareTo(finalPrice) < 0) {
                 throw new InsufficientFundsException("Insufficient funds in wallet");
             }
 
-            wallet.setBalance(wallet.getBalance().subtract(totalPrice));
+            wallet.setBalance(wallet.getBalance().subtract(finalPrice));
             wallet.setBonusPoints(wallet.getBonusPoints().add(bonusPoints));
+
+            String paymentDescription = shippingFee.compareTo(BigDecimal.ZERO) > 0
+                    ? String.format("Payment for order (including shipping fee: %s)", shippingFee)
+                    : "Payment for order";
 
             Transaction paymentTransaction = new Transaction();
             paymentTransaction.setWallet(wallet);
             paymentTransaction.setUser(user);
             paymentTransaction.setOrder(order);
-            paymentTransaction.setAmount(totalPrice);
+            paymentTransaction.setAmount(finalPrice);
             paymentTransaction.setTransactionType(TransactionType.PAYMENT);
             paymentTransaction.setTransactionDate(LocalDateTime.now());
-            paymentTransaction.setDescription("Payment for order");
+            paymentTransaction.setDescription(paymentDescription);
 
             transactions.add(paymentTransaction);
 
@@ -159,7 +199,7 @@ public class OrderService {
             transactionRepository.saveAll(transactions);
             walletRepository.save(wallet);
 
-            log.info("User {} made a payment of {} from their wallet for order {}", user.getUserId(), totalPrice, order.getOrderId());
+            log.info("User {} made a payment of {} from their wallet for order {}", user.getUserId(), finalPrice, order.getOrderId());
         }
 
         List<OrderItem> orderItems = shoppingCards.stream()
@@ -196,8 +236,6 @@ public class OrderService {
 
         return convertToOrderResponse(order);
     }
-
-
 
     public List<OrderResponse> getOrdersByUser(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
@@ -248,7 +286,7 @@ public class OrderService {
                         transaction.setDescription("Refund for canceled order");
 
                         transactionRepository.save(transaction);
-                        log.info("Order {} REFUNDED: {} added back to wallet", order.getOrderId(), order.getTotalPrice());                    }
+                        log.info("Order {} REFUNDED: {} added back to wallet", order.getOrderId(), order.getTotalPrice());}
                     log.info("Order {} status updated to REFUNDED", order.getOrderId());
                 }
             }
@@ -272,7 +310,11 @@ public class OrderService {
         Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
                 .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
 
-        BigDecimal bonusPointsToDeduct = order.getTotalPrice().multiply(BigDecimal.valueOf(0.02));
+        BigDecimal bonusPointsToDeduct = calculateBonusPoints(user, order.getTotalPrice());
+
+        BigDecimal shippingFee = calculateShippingFee(user, order.getTotalPrice());
+
+        BigDecimal totalPaid = order.getTotalPrice().add(shippingFee);
 
         if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
             if (user.getBonusPointsWon().compareTo(bonusPointsToDeduct) >= 0) {
@@ -286,35 +328,55 @@ public class OrderService {
             } else {
                 wallet.setBonusPoints(BigDecimal.ZERO);
             }
+
+            wallet.setBalance(wallet.getBalance().add(totalPaid));
             walletRepository.save(wallet);
 
-            Transaction transaction = new Transaction();
-            transaction.setWallet(wallet);
-            transaction.setUser(user);
-            transaction.setOrder(order);
-            transaction.setAmount(bonusPointsToDeduct);
-            transaction.setTransactionType(TransactionType.BONUS_DEDUCT);
-            transaction.setTransactionDate(LocalDateTime.now());
-            transaction.setDescription("Bonus points deducted due to order cancellation");
+            Transaction refundTransaction = new Transaction();
+            refundTransaction.setWallet(wallet);
+            refundTransaction.setUser(user);
+            refundTransaction.setOrder(order);
+            refundTransaction.setAmount(totalPaid);
+            refundTransaction.setTransactionType(TransactionType.CANCEL_REFUND);
+            refundTransaction.setTransactionDate(LocalDateTime.now());
+            refundTransaction.setDescription(String.format("Refund for canceled order, including shipping fee: %s", shippingFee));
 
-            transactionRepository.save(transaction);
+            transactionRepository.save(refundTransaction);
+
+            log.info("Order {} refunded: {} returned to user wallet.", order.getOrderId(), totalPaid);
         }
 
+        order.getOrderItems().forEach(orderItem -> {
+            Product product = orderItem.getProduct();
+            product.setQuantity(product.getQuantity() + orderItem.getQuantity());
+
+            if (product.getQuantity() > 0 && product.getStockStatus() == StockStatus.OUT_OF_STOCKS) {
+                product.setStockStatus(StockStatus.AVAILABLE);
+            }
+
+            productRepository.save(product);
+            log.info("Product {} stock restored: {} items now available.", product.getName(), product.getQuantity());
+        });
+
         user.setCancelledOrders(user.getCancelledOrders() + 1);
+
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
 
-        log.info("Order {} has been canceled by user {}. {} bonus points deducted.",
-                order.getOrderId(), user.getUsername(), bonusPointsToDeduct);
+        log.info("Order {} has been canceled by user {}. {} bonus points deducted.", order.getOrderId(), user.getUsername(), bonusPointsToDeduct);
 
         return new OrderCancellationResponse(
                 order.getTotalPrice(),
+                order.getShippingFee(),
+                totalPaid,
                 convertToOrderItemDetails(order.getOrderItems()),
                 order.getStatus(),
                 LocalDateTime.now(),
-                "Refund Fee will be deposited into your account as soon as possible."
+                "Refund fee will be deposited into your account as soon as possible."
         );
     }
+
+
 
 
     public OrderResponse getOrderDetails(Long orderId, HttpServletRequest request) {

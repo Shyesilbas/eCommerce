@@ -239,6 +239,9 @@ public class UserService {
                 .phone(user.getPhone())
                 .password(user.getPassword())
                 .totalOrders(user.getTotalOrders())
+                .cancelledOrders(user.getCancelledOrders())
+                .bonusPoints(user.getBonusPointsWon())
+                .membershipPlan(user.getMembershipPlan())
                 .role(user.getRole())
                 .build();
     }

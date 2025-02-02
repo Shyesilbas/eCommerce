@@ -20,6 +20,8 @@ public record OrderResponse(
         PaymentMethod paymentMethod,
         String notes,
         int totalQuantity,
-        List<OrderItemDetails> orderItems
+        List<OrderItemDetails> orderItems,
+        BigDecimal shippingFee,
+        BigDecimal totalPaid
 ) {
 }
