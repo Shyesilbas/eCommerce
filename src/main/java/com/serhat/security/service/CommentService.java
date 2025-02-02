@@ -106,6 +106,27 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 
+    public List<CommentResponse> getMostHelpfulComments(Long productId) {
+        List<Comment> comments = commentRepository.findByProductProductIdAndRatingGreaterThanEqual(productId, 4);
+        if (comments.isEmpty()) {
+            throw new CommentNotFoundForProductException("No highly rated comments found for this product.");
+        }
+        return comments.stream()
+                .map(this::mapToCommentResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<CommentResponse> getLeastHelpfulComments(Long productId) {
+        List<Comment> comments = commentRepository.findByProductProductIdAndRatingLessThanEqual(productId, 2);
+        if (comments.isEmpty()) {
+            throw new CommentNotFoundForProductException("No low-rated comments found for this product.");
+        }
+        return comments.stream()
+                .map(this::mapToCommentResponse)
+                .collect(Collectors.toList());
+    }
+
+
     @Transactional
     public void deleteComment(Long commentId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);

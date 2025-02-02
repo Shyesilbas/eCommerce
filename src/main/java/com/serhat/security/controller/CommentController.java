@@ -37,6 +37,16 @@ public class CommentController {
         return ResponseEntity.ok(commentService.getAverageProductRating(productId));
     }
 
+    @GetMapping("/most-helpful-comments")
+    public ResponseEntity<List<CommentResponse>> mostHelpfulComments(@RequestParam Long productId){
+        return ResponseEntity.ok(commentService.getMostHelpfulComments(productId));
+    }
+
+    @GetMapping("/least-helpful-comments")
+    public ResponseEntity<List<CommentResponse>> leastHelpfulComments(@RequestParam Long productId){
+        return ResponseEntity.ok(commentService.getLeastHelpfulComments(productId));
+    }
+
     @DeleteMapping("/delete-comment")
     public void deleteComment(@RequestParam Long commentId , HttpServletRequest request){
         commentService.deleteComment(commentId, request);
