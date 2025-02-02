@@ -21,12 +21,4 @@ public enum Category {
         this.displayName = displayName;
     }
 
-    public static Category fromDisplayName(String displayName) {
-        for (Category category : Category.values()) {
-            if (category.getDisplayName().equalsIgnoreCase(displayName)) {
-                return category;
-            }
-        }
-        throw new IllegalArgumentException("No enum constant with display name: " + displayName);
-    }
 }

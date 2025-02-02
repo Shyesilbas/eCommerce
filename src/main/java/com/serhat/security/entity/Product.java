@@ -9,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -42,6 +44,9 @@ public class Product {
     private String color;
     @Column(name = "quantity",nullable = false)
     private int quantity;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PriceHistory> priceHistoryList = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private Category category;

@@ -8,6 +8,7 @@ import com.serhat.security.dto.response.ProductQuantityUpdate;
 import com.serhat.security.dto.response.ProductResponse;
 import com.serhat.security.entity.Order;
 import com.serhat.security.entity.OrderItem;
+import com.serhat.security.entity.PriceHistory;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.enums.Category;
 import com.serhat.security.entity.enums.OrderStatus;
@@ -17,6 +18,7 @@ import com.serhat.security.exception.InvalidAmountException;
 import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.repository.OrderRepository;
+import com.serhat.security.repository.PriceHistoryRepository;
 import com.serhat.security.repository.ProductRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,8 @@ import org.springframework.stereotype.Service;
 
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,6 +40,7 @@ import java.util.stream.Collectors;
 public class ProductService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final PriceHistoryRepository priceHistoryRepository;
     private final JwtUtil jwtUtil;
 
     private void validateAdminRole(HttpServletRequest request) {
@@ -72,11 +77,29 @@ public class ProductService {
         validateAdminRole(request);
         Product product = getProductById(productId);
 
-
-
-        if(price.compareTo(BigDecimal.ZERO)<0){
+        if (price.compareTo(BigDecimal.ZERO) < 0) {
             throw new InvalidAmountException("Price cannot be negative");
         }
+
+        BigDecimal oldPrice = product.getPrice();
+        double changePercentage = oldPrice.compareTo(BigDecimal.ZERO) == 0 ? 0.0 :
+                price.subtract(oldPrice).divide(oldPrice, 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue();
+
+        PriceHistory firstPriceHistory = priceHistoryRepository.findFirstByProduct_ProductIdOrderByChangeDateAsc(productId);
+        BigDecimal firstPrice = firstPriceHistory == null ? oldPrice : firstPriceHistory.getOldPrice();
+
+        double totalChangePercentage = calculateTotalChangePercentage(firstPrice, price);
+
+        PriceHistory priceHistory = PriceHistory.builder()
+                .product(product)
+                .oldPrice(oldPrice)
+                .newPrice(price)
+                .changePercentage(changePercentage)
+                .totalChangePercentage(totalChangePercentage)
+                .changeDate(LocalDateTime.now())
+                .build();
+
+        priceHistoryRepository.save(priceHistory);
 
         product.setPrice(price);
         productRepository.save(product);
@@ -88,6 +111,22 @@ public class ProductService {
                 price
         );
     }
+
+
+    private double calculateTotalChangePercentage(BigDecimal firstPrice, BigDecimal currentPrice) {
+        if (firstPrice.compareTo(BigDecimal.ZERO) == 0) {
+            return 0.0;
+        }
+        return currentPrice.subtract(firstPrice)
+                .divide(firstPrice, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .doubleValue();
+    }
+
+
+
+
+
 
     public long totalProductCountByCategory(Category category) {
         return productRepository.countByCategory(category);
