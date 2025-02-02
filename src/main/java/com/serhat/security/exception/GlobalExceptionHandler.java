@@ -290,6 +290,19 @@ public class GlobalExceptionHandler{
         return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(CommentNotFoundForBrandException.class)
+    public ResponseEntity<ErrorResponse> handleCommentNotFoundForBrandException(CommentNotFoundForBrandException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                e.getMessage(),
+                "No comment found for the brand",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
+    }
+
+
     @ExceptionHandler(EmptyFavoriteListException.class)
     public ResponseEntity<ErrorResponse> handleNoNotificationsFoundException(EmptyFavoriteListException e){
 

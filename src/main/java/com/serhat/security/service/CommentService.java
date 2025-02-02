@@ -1,6 +1,7 @@
 package com.serhat.security.service;
 
 import com.serhat.security.dto.request.CommentRequest;
+import com.serhat.security.dto.response.AverageBrandRatingResponse;
 import com.serhat.security.dto.response.AverageRatingResponse;
 import com.serhat.security.dto.response.CommentResponse;
 import com.serhat.security.entity.Comment;
@@ -125,6 +126,29 @@ public class CommentService {
                 .map(this::mapToCommentResponse)
                 .collect(Collectors.toList());
     }
+
+    public AverageBrandRatingResponse getAverageRatingForBrand(String brand) {
+        List<Comment> comments = commentRepository.findByProductBrand(brand);
+
+        if (comments.isEmpty()) {
+            log.warn("No comments found for products of brand: {}", brand);
+            throw new CommentNotFoundForBrandException("No comments found for this brand.");
+        }
+
+        double averageRating = comments.stream()
+                .mapToDouble(Comment::getRating)
+                .average()
+                .orElse(0.0);
+
+        Product product = comments.get(0).getProduct();
+
+        return new AverageBrandRatingResponse(
+                averageRating,
+                brand
+        );
+    }
+
+
 
 
     @Transactional
