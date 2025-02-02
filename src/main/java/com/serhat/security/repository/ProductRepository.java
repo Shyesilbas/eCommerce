@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,4 +20,10 @@ public interface ProductRepository extends JpaRepository<Product,Long> {
     int countByCategory(Category category);
 
     Page<Product> findAll(Pageable pageable);
+
+    Page<Product> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
+
+    Page<Product> findByPriceBetweenAndCategory(BigDecimal minPrice, BigDecimal maxPrice, Category category, Pageable pageable);
+
+    Page<Product> findByBrandIgnoreCase(String brand, Pageable pageable);
 }

@@ -16,9 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -34,9 +36,11 @@ public class ProductService {
 
 
     public Page<Product> getAllProducts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("productId"));
         return productRepository.findAll(pageable);
     }
+
+
 
     public long totalProductCount(){
         return productRepository.count();
@@ -121,5 +125,20 @@ public class ProductService {
     public Page<Product> getProductsByCategory(Category category, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return productRepository.findByCategory(category, pageable);
+    }
+
+    public Page<Product> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productRepository.findByPriceBetween(minPrice, maxPrice, pageable);
+    }
+
+    public Page<Product> getProductsByPriceAndCategory(BigDecimal minPrice, BigDecimal maxPrice, Category category, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productRepository.findByPriceBetweenAndCategory(minPrice, maxPrice, category, pageable);
+    }
+
+    public Page<Product> getProductsByBrand(String brand, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productRepository.findByBrandIgnoreCase(brand, pageable);
     }
 }
