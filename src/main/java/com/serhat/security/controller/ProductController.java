@@ -3,6 +3,8 @@ package com.serhat.security.controller;
 import com.serhat.security.dto.object.BestSellerProductDTO;
 import com.serhat.security.dto.object.ProductDto;
 import com.serhat.security.dto.request.ProductRequest;
+import com.serhat.security.dto.response.ProductPriceUpdate;
+import com.serhat.security.dto.response.ProductQuantityUpdate;
 import com.serhat.security.dto.response.ProductResponse;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.enums.Category;
@@ -112,6 +114,19 @@ public class ProductController {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/update-price")
+    public ResponseEntity<ProductPriceUpdate> updatePrice(@RequestParam Long productId , @RequestParam BigDecimal price , HttpServletRequest servletRequest){
+        return ResponseEntity.ok(productService.updateProductPrice(productId,price,servletRequest));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/update-quantity")
+    public ResponseEntity<ProductQuantityUpdate> updateQuantity(@RequestParam Long productId , @RequestParam int quantity , HttpServletRequest servletRequest){
+        return ResponseEntity.ok(productService.updateProductQuantity(productId,quantity,servletRequest));
+    }
+
+
     @GetMapping("/most-sellers")
     public ResponseEntity<List<BestSellerProductDTO>> mostSellers(@RequestParam  int size){
         return ResponseEntity.ok(productService.bestSellers(size));
@@ -120,8 +135,6 @@ public class ProductController {
     public ResponseEntity<List<BestSellerProductDTO>> mostSellers(@RequestParam  Category category , @RequestParam int size){
         return ResponseEntity.ok(productService.bestSellersByCategory(category,size));
     }
-
-
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/addProduct")

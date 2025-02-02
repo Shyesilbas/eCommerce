@@ -3,6 +3,8 @@ package com.serhat.security.service;
 import com.serhat.security.dto.object.BestSellerProductDTO;
 import com.serhat.security.dto.object.ProductDto;
 import com.serhat.security.dto.request.ProductRequest;
+import com.serhat.security.dto.response.ProductPriceUpdate;
+import com.serhat.security.dto.response.ProductQuantityUpdate;
 import com.serhat.security.dto.response.ProductResponse;
 import com.serhat.security.entity.Order;
 import com.serhat.security.entity.OrderItem;
@@ -11,6 +13,7 @@ import com.serhat.security.entity.enums.Category;
 import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.entity.enums.Role;
 import com.serhat.security.entity.enums.StockStatus;
+import com.serhat.security.exception.InvalidAmountException;
 import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.repository.OrderRepository;
@@ -34,6 +37,57 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final JwtUtil jwtUtil;
+
+    private void validateAdminRole(HttpServletRequest request) {
+        if (jwtUtil.extractRole(jwtUtil.getTokenFromAuthorizationHeader(request)) != Role.ADMIN) {
+            throw new RuntimeException("Only ADMIN users can perform this action.");
+        }
+    }
+
+    private Product getProductById(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found for: " + productId));
+    }
+
+    public ProductQuantityUpdate updateProductQuantity(Long productId, int quantity, HttpServletRequest request) {
+        validateAdminRole(request);
+        Product product = getProductById(productId);
+
+        if(quantity<0){
+            throw new InvalidAmountException("Product quantity cannot be negative");
+        }
+
+        product.setQuantity(quantity);
+        productRepository.save(product);
+        log.info("Product quantity updated: {} -> {}", productId, quantity);
+
+        return new ProductQuantityUpdate(
+                product.getName(),
+                product.getProductCode(),
+                quantity
+        );
+    }
+
+    public ProductPriceUpdate updateProductPrice(Long productId, BigDecimal price, HttpServletRequest request) {
+        validateAdminRole(request);
+        Product product = getProductById(productId);
+
+
+
+        if(price.compareTo(BigDecimal.ZERO)<0){
+            throw new InvalidAmountException("Price cannot be negative");
+        }
+
+        product.setPrice(price);
+        productRepository.save(product);
+        log.info("Product price updated: {} -> {}", productId, price);
+
+        return new ProductPriceUpdate(
+                product.getName(),
+                product.getProductCode(),
+                price
+        );
+    }
 
     public long totalProductCountByCategory(Category category) {
         return productRepository.countByCategory(category);
