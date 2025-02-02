@@ -302,6 +302,30 @@ public class GlobalExceptionHandler{
         return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(SamePlanRequestException.class)
+    public ResponseEntity<ErrorResponse> handleSamePlanRequestException(SamePlanRequestException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                "You requested the same plan you currently have.",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(NullRequestException.class)
+    public ResponseEntity<ErrorResponse> handleNullRequestException(NullRequestException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                "NULL REQUEST",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
 
     @ExceptionHandler(EmptyFavoriteListException.class)
     public ResponseEntity<ErrorResponse> handleNoNotificationsFoundException(EmptyFavoriteListException e){

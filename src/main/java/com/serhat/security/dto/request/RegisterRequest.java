@@ -1,6 +1,7 @@
 package com.serhat.security.dto.request;
 
 import com.serhat.security.entity.Address;
+import com.serhat.security.entity.enums.MembershipPlan;
 import com.serhat.security.entity.enums.Role;
 import jakarta.validation.constraints.*;
 
@@ -28,6 +29,7 @@ public record RegisterRequest(
 
         @Pattern(regexp = "^\\d{4} \\d{3} \\d{2} \\d{2}$", message = "Invalid phone number format. Expected format: xxxx xxx xx xx")
         String phone,
+
 
         List<Address> address
 ) {

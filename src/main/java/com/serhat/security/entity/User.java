@@ -1,5 +1,6 @@
 package com.serhat.security.entity;
 
+import com.serhat.security.entity.enums.MembershipPlan;
 import com.serhat.security.entity.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -55,6 +56,11 @@ public class User implements UserDetails {
     private Wallet wallet;
 
     private BigDecimal bonusPointsWon;
+
+    @Enumerated(EnumType.STRING)
+    private MembershipPlan membershipPlan;
+
+
     @Override
     public boolean isAccountNonExpired() {
         return true;

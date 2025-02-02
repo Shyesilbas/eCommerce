@@ -4,12 +4,17 @@ import com.serhat.security.dto.object.AddressDto;
 import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.Address;
+import com.serhat.security.entity.Transaction;
 import com.serhat.security.entity.User;
+import com.serhat.security.entity.Wallet;
+import com.serhat.security.entity.enums.MembershipPlan;
 import com.serhat.security.entity.enums.NotificationTopic;
-import com.serhat.security.exception.EmailAlreadyExistException;
-import com.serhat.security.exception.UsernameAlreadyExists;
+import com.serhat.security.entity.enums.PaymentMethod;
+import com.serhat.security.entity.enums.TransactionType;
+import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.repository.AddressRepository;
+import com.serhat.security.repository.TransactionRepository;
 import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +27,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,6 +40,7 @@ public class UserService {
     private final AddressRepository addressRepository;
     private final NotificationService notificationService;
     private final TokenInterface tokenInterface;
+    private final TransactionRepository transactionRepository;
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
@@ -47,6 +54,7 @@ public class UserService {
                 "Register Successful! Now you can login with your credentials.",
                 user.getUsername(),
                 user.getEmail(),
+                user.getMembershipPlan(),
                 LocalDateTime.now()
         );
     }
@@ -63,6 +71,52 @@ public class UserService {
         }
     }
 
+    @Transactional
+    public UpdateMembershipPlan updateMembershipPlan(HttpServletRequest servletRequest, UpdateMembershipRequest request) {
+        User user = tokenInterface.getUserFromToken(servletRequest);
+        MembershipPlan currentPlan = user.getMembershipPlan();
+
+        if (request.membershipPlan() == null) {
+            throw new NullRequestException("Membership plan cannot be null.");
+        }
+        if (currentPlan.equals(request.membershipPlan())) {
+            throw new SamePlanRequestException("You requested the same plan that you currently have.");
+        }
+
+        BigDecimal fee = request.membershipPlan().getFee();
+        Wallet wallet = user.getWallet();
+        String paymentMessage = "Membership plan updated successfully.";
+
+        if (request.paymentMethod().equals(PaymentMethod.E_WALLET)) {
+            if (wallet == null) {
+                throw new WalletNotFoundException(user.getUsername() + " does not have a Wallet!");
+            }
+            if (wallet.getBalance().compareTo(fee) < 0) {
+                throw new InsufficientFundsException("Insufficient funds in E-Wallet!");
+            }
+
+            wallet.setBalance(wallet.getBalance().subtract(fee));
+            Transaction transaction = new Transaction();
+            transaction.setWallet(wallet);
+            transaction.setUser(user);
+            transaction.setOrder(null);
+            transaction.setAmount(fee);
+            transaction.setTransactionType(TransactionType.PAYMENT);
+            transaction.setTransactionDate(LocalDateTime.now());
+            transaction.setDescription("Membership plan payment via E-Wallet");
+            transactionRepository.save(transaction);
+
+            paymentMessage = "Membership plan updated successfully. Payment made via E-Wallet.";
+        }
+
+        user.setMembershipPlan(request.membershipPlan());
+        log.info("Membership plan updated for {} with payment method: {}", user.getUsername(), request.paymentMethod());
+
+        return new UpdateMembershipPlan(request.membershipPlan(), fee, paymentMessage);
+    }
+
+
+
     private User buildUserFromRequest(RegisterRequest request) {
         User user = User.builder()
                 .username(request.username())
@@ -73,6 +127,7 @@ public class UserService {
                 .bonusPointsWon(new BigDecimal("0.0"))
                 .totalOrders(0)
                 .cancelledOrders(0)
+                .membershipPlan(MembershipPlan.BASIC)
                 .build();
 
         if (request.address() != null && !request.address().isEmpty()) {

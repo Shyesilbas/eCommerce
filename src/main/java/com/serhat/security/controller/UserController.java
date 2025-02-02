@@ -2,6 +2,8 @@ package com.serhat.security.controller;
 
 import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
+import com.serhat.security.entity.enums.MembershipPlan;
+import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.exception.InvalidPasswordException;
 import com.serhat.security.exception.UserNotFoundException;
 import com.serhat.security.service.AuthService;
@@ -97,6 +99,12 @@ public class UserController {
     public ResponseEntity<UpdatePhoneResponse> updatePhone(@Valid @RequestBody UpdatePhoneRequest phoneRequest ,
                                                            HttpServletRequest servletRequest ){
         return ResponseEntity.ok(userService.updatePhone(servletRequest,phoneRequest));
+    }
+
+    @PutMapping("/update-membership")
+    public ResponseEntity<UpdateMembershipPlan> updateMembership(@RequestBody UpdateMembershipRequest request,
+                                                           HttpServletRequest servletRequest ){
+        return ResponseEntity.ok(userService.updateMembershipPlan(servletRequest,request));
     }
 
 
