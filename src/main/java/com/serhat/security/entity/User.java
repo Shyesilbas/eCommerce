@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Data
@@ -59,6 +60,22 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private MembershipPlan membershipPlan;
+
+    private BigDecimal totalOrderFeePaid;
+    private BigDecimal totalShippingFeePaid;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(userId);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(userId, user.userId);
+    }
 
 
     @Override

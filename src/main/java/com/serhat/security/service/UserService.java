@@ -128,6 +128,8 @@ public class UserService {
                 .totalOrders(0)
                 .cancelledOrders(0)
                 .membershipPlan(MembershipPlan.BASIC)
+                .totalOrderFeePaid(BigDecimal.ZERO)
+                .totalShippingFeePaid(BigDecimal.ZERO)
                 .build();
 
         if (request.address() != null && !request.address().isEmpty()) {
@@ -243,6 +245,8 @@ public class UserService {
                 .bonusPoints(user.getBonusPointsWon())
                 .membershipPlan(user.getMembershipPlan())
                 .role(user.getRole())
+                .totalOrderFeePaid(user.getTotalOrderFeePaid())
+                .totalShippingFeePaid(user.getTotalShippingFeePaid())
                 .build();
     }
 

@@ -18,6 +18,8 @@ public record UserResponse(
         int totalOrders,
         int cancelledOrders,
         BigDecimal bonusPoints,
-        MembershipPlan membershipPlan
+        MembershipPlan membershipPlan,
+        BigDecimal totalOrderFeePaid,
+        BigDecimal totalShippingFeePaid
 ) {
 }

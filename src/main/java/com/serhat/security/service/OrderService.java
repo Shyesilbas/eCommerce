@@ -37,6 +37,7 @@ public class OrderService {
     private final ShoppingCardRepository shoppingCardRepository;
     private final TokenInterface tokenInterface;
     private final AddressRepository addressRepository;
+    private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
@@ -234,6 +235,8 @@ public class OrderService {
 
         log.info("Order {} created for user: {}, stock updated", order.getOrderId(), user.getUsername());
 
+        updateUserTotalFees(user);
+
         return convertToOrderResponse(order);
     }
 
@@ -293,6 +296,21 @@ public class OrderService {
         }
         orderRepository.saveAll(orders);
     }
+
+    private void updateUserTotalFees(User user) {
+        BigDecimal totalShippingFee = orderRepository.findByUser(user).stream()
+                .map(Order::getShippingFee)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalOrderFee = orderRepository.findByUser(user).stream()
+                .map(Order::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        user.setTotalShippingFeePaid(totalShippingFee);
+        user.setTotalOrderFeePaid(totalOrderFee);
+        userRepository.save(user);
+    }
+
 
     public OrderCancellationResponse cancelOrder(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
@@ -365,6 +383,8 @@ public class OrderService {
 
         log.info("Order {} has been canceled by user {}. {} bonus points deducted.", order.getOrderId(), user.getUsername(), bonusPointsToDeduct);
 
+        updateUserTotalFees(user);
+
         return new OrderCancellationResponse(
                 order.getTotalPrice(),
                 order.getShippingFee(),
@@ -375,8 +395,6 @@ public class OrderService {
                 "Refund fee will be deposited into your account as soon as possible."
         );
     }
-
-
 
 
     public OrderResponse getOrderDetails(Long orderId, HttpServletRequest request) {
