@@ -245,10 +245,6 @@ public class OrderService {
 
         Long discountId = orderRequest.discountId();
         if (discountId != null) {
-            if (!user.isActiveDiscountCode()) {
-                throw new InvalidDiscountCodeException("User is not eligible to use a discount code!");
-            }
-
 
             DiscountCode discountCode = discountCodeRepository.findById(discountId)
                     .orElseThrow(() -> new InvalidDiscountCodeException("Invalid discount code"));
@@ -276,11 +272,10 @@ public class OrderService {
             order.setTotalPaid(totalPrice.add(shippingFee));
             discountCode.setStatus(CouponStatus.USED);
 
-            user.setActiveDiscountCode(false);
+            user.setTotalSaved(user.getTotalSaved().add(discountAmount));
         }
 
         if (order.getTotalPrice().compareTo(new BigDecimal("800.00")) >= 0) {
-            user.setActiveDiscountCode(true);
             discountCodeService.generateDiscountCode(request);
         }
 

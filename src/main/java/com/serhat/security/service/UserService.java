@@ -130,7 +130,7 @@ public class UserService {
                 .membershipPlan(MembershipPlan.BASIC)
                 .totalOrderFeePaid(BigDecimal.ZERO)
                 .totalShippingFeePaid(BigDecimal.ZERO)
-                .activeDiscountCode(false)
+                .totalSaved(BigDecimal.ZERO)
                 .build();
 
         if (request.address() != null && !request.address().isEmpty()) {
@@ -248,6 +248,7 @@ public class UserService {
                 .role(user.getRole())
                 .totalOrderFeePaid(user.getTotalOrderFeePaid())
                 .totalShippingFeePaid(user.getTotalShippingFeePaid())
+                .totalSaved(user.getTotalSaved())
                 .build();
     }
 

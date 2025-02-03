@@ -37,7 +37,6 @@ public class User implements UserDetails {
     private Role role;
     private int totalOrders;
     private int cancelledOrders;
-    private boolean activeDiscountCode;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Address> addresses;
@@ -67,6 +66,7 @@ public class User implements UserDetails {
 
     private BigDecimal totalOrderFeePaid;
     private BigDecimal totalShippingFeePaid;
+    private BigDecimal totalSaved;
 
     @Override
     public int hashCode() {

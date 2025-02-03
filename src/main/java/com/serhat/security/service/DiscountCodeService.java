@@ -4,7 +4,6 @@ import com.serhat.security.dto.response.AvailableDiscountResponse;
 import com.serhat.security.dto.response.ExpiredDiscountResponse;
 import com.serhat.security.dto.response.UsedDiscountResponse;
 import com.serhat.security.entity.DiscountCode;
-import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.entity.enums.DiscountRate;
@@ -18,9 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -83,7 +79,7 @@ public class DiscountCodeService {
                         .map(order -> new UsedDiscountResponse(
                                 code.getId(),
                                 order.getOrderId(),
-                                order.getTotalPaid(),
+                                order.getTotalPrice(),
                                 code.getDiscountRate(),
                                 order.getTotalDiscount(),
                                 code.getCode()
@@ -92,7 +88,6 @@ public class DiscountCodeService {
                 )
                 .toList();
     }
-
 
 
     public List<ExpiredDiscountResponse> getExpiredDiscountCodes(HttpServletRequest request) {

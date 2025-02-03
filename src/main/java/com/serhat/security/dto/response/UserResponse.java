@@ -20,6 +20,7 @@ public record UserResponse(
         BigDecimal bonusPoints,
         MembershipPlan membershipPlan,
         BigDecimal totalOrderFeePaid,
-        BigDecimal totalShippingFeePaid
+        BigDecimal totalShippingFeePaid,
+        BigDecimal totalSaved
 ) {
 }
