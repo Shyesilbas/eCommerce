@@ -338,6 +338,42 @@ public class GlobalExceptionHandler{
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(DiscountCodeExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleDiscountCodeExpiredException(DiscountCodeExpiredException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                "Discount Code is expired!",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DiscountCodeNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleDiscountCodeNotFoundException(DiscountCodeNotFoundException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                "Discount Code not found for the criteria!",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(CouponAlreadyUsedException.class)
+    public ResponseEntity<ErrorResponse> handleCouponAlreadyUsedException(CouponAlreadyUsedException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                "Discount Coupon already used!",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(InvalidDiscountCodeException.class)
     public ResponseEntity<ErrorResponse> handleInvalidDiscountCodeException(InvalidDiscountCodeException e){
 

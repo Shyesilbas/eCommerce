@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -250,11 +249,20 @@ public class OrderService {
                 throw new InvalidDiscountCodeException("User is not eligible to use a discount code!");
             }
 
+
             DiscountCode discountCode = discountCodeRepository.findById(discountId)
                     .orElseThrow(() -> new InvalidDiscountCodeException("Invalid discount code"));
 
             if (discountCode.getUser() != null && !discountCode.getUser().getUserId().equals(user.getUserId())) {
                 throw new InvalidDiscountCodeException("This discount code is not valid for the current user!");
+            }
+
+            if(discountCode.getStatus().equals(CouponStatus.EXPIRED)){
+                throw new DiscountCodeExpiredException("This coupon has expired!");
+            }
+
+            if(discountCode.getStatus().equals(CouponStatus.USED)){
+                throw new CouponAlreadyUsedException("The coupon you entered is already used");
             }
 
             BigDecimal discountAmount = order.getTotalPrice()
@@ -266,7 +274,8 @@ public class OrderService {
             order.setDiscountCode(discountCode);
             order.setDiscountCodeUsed(true);
             order.setTotalPaid(totalPrice.add(shippingFee));
-            discountCode.setUsed(true);
+            discountCode.setStatus(CouponStatus.USED);
+
             user.setActiveDiscountCode(false);
         }
 

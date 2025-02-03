@@ -1,5 +1,6 @@
 package com.serhat.security.entity;
 
+import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.entity.enums.DiscountRate;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,15 +25,23 @@ public class DiscountCode {
     @Enumerated(EnumType.STRING)
     private DiscountRate discountRate;
 
-    private boolean isUsed;
 
     private LocalDateTime createdAt;
 
     private LocalDateTime expiresAt;
 
+    @Enumerated(EnumType.STRING)
+    private CouponStatus status = CouponStatus.NOT_USED;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    public void markAsExpired() {
+        this.status = CouponStatus.EXPIRED;
+    }
+
+
 
     @PrePersist
     public void prePersist() {
