@@ -326,6 +326,30 @@ public class GlobalExceptionHandler{
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(NoEligibleDiscountException.class)
+    public ResponseEntity<ErrorResponse> handleNoEligibleDiscountException(NoEligibleDiscountException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                "No Discount found!",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidDiscountCodeException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidDiscountCodeException(InvalidDiscountCodeException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                "Invalid Discount Code!",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
 
     @ExceptionHandler(EmptyFavoriteListException.class)
     public ResponseEntity<ErrorResponse> handleNoNotificationsFoundException(EmptyFavoriteListException e){

@@ -6,10 +6,7 @@ import com.serhat.security.dto.response.OrderCancellationResponse;
 import com.serhat.security.dto.response.OrderItemDetails;
 import com.serhat.security.dto.response.OrderResponse;
 import com.serhat.security.entity.*;
-import com.serhat.security.entity.enums.OrderStatus;
-import com.serhat.security.entity.enums.PaymentMethod;
-import com.serhat.security.entity.enums.StockStatus;
-import com.serhat.security.entity.enums.TransactionType;
+import com.serhat.security.entity.enums.*;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.repository.*;
@@ -22,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +39,8 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final DiscountCodeService discountCodeService;
+    private final DiscountCodeRepository discountCodeRepository;
     private boolean isAddressBelongsToUser(Long addressId, Long userId) {
         return addressRepository.existsByAddressIdAndUserUserId(addressId, userId);
     }
@@ -88,7 +88,7 @@ public class OrderService {
         BigDecimal bonusRate = switch (user.getMembershipPlan()) {
             case VIP -> BigDecimal.valueOf(0.05);
             case PREMIUM -> BigDecimal.valueOf(0.03);
-            case  BASIC -> BigDecimal.valueOf(0.01);
+            case BASIC -> BigDecimal.valueOf(0.01);
         };
         return totalPrice.multiply(bonusRate);
     }
@@ -100,6 +100,13 @@ public class OrderService {
         BigDecimal shippingFee = calculateShippingFee(order.getUser(), order.getTotalPrice());
         BigDecimal totalPaid = order.getTotalPrice().add(shippingFee);
 
+        if (order.getTotalDiscount() != null && order.getTotalDiscount().compareTo(BigDecimal.ZERO) > 0) {
+            totalPaid = totalPaid.subtract(order.getTotalDiscount());
+        }
+
+        Long discountId = order.getDiscountCode() != null ? order.getDiscountCode().getId() : null;
+        BigDecimal discountRate = order.getDiscountCode() != null ? BigDecimal.valueOf(order.getDiscountCode().getDiscountRate().getPercentage()) : BigDecimal.ZERO;
+        BigDecimal discountAmount = order.getTotalDiscount() != null ? order.getTotalDiscount() : BigDecimal.ZERO;
 
         return OrderResponse.builder()
                 .orderId(order.getOrderId())
@@ -114,6 +121,9 @@ public class OrderService {
                 .orderItems(orderItems)
                 .shippingAddress(shippingAddress)
                 .totalPaid(totalPaid)
+                .discountId(discountId)
+                .discountRate(discountRate)
+                .discountAmount(discountAmount)
                 .build();
     }
 
@@ -139,8 +149,6 @@ public class OrderService {
         BigDecimal finalPrice = totalPrice.add(shippingFee);
 
         BigDecimal bonusPoints = calculateBonusPoints(user, totalPrice);
-        log.info("User {} with {} membership earned {} bonus points.", user.getUsername(), user.getMembershipPlan(), bonusPoints);
-
         user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
 
         Order order = Order.builder()
@@ -154,6 +162,11 @@ public class OrderService {
                 .updatedAt(LocalDateTime.now())
                 .shippingFee(shippingFee)
                 .bonusWon(bonusPoints)
+                .discountCode(null)
+                .totalDiscount(BigDecimal.ZERO)
+                .discountRate(DiscountRate.ZERO)
+                .discountCodeUsed(false)
+                .totalPaid(finalPrice)
                 .build();
 
         orderRepository.save(order);
@@ -199,8 +212,6 @@ public class OrderService {
 
             transactionRepository.saveAll(transactions);
             walletRepository.save(wallet);
-
-            log.info("User {} made a payment of {} from their wallet for order {}", user.getUserId(), finalPrice, order.getOrderId());
         }
 
         List<OrderItem> orderItems = shoppingCards.stream()
@@ -233,12 +244,42 @@ public class OrderService {
 
         productRepository.saveAll(orderItems.stream().map(OrderItem::getProduct).collect(Collectors.toList()));
 
-        log.info("Order {} created for user: {}, stock updated", order.getOrderId(), user.getUsername());
+        Long discountId = orderRequest.discountId();
+        if (discountId != null) {
+            if (!user.isActiveDiscountCode()) {
+                throw new InvalidDiscountCodeException("User is not eligible to use a discount code!");
+            }
+
+            DiscountCode discountCode = discountCodeRepository.findById(discountId)
+                    .orElseThrow(() -> new InvalidDiscountCodeException("Invalid discount code"));
+
+            if (discountCode.getUser() != null && !discountCode.getUser().getUserId().equals(user.getUserId())) {
+                throw new InvalidDiscountCodeException("This discount code is not valid for the current user!");
+            }
+
+            BigDecimal discountAmount = order.getTotalPrice()
+                    .multiply(BigDecimal.valueOf(discountCode.getDiscountRate().getPercentage() / 100.0));
+            totalPrice = totalPrice.subtract(discountAmount);
+
+            order.setTotalDiscount(discountAmount);
+            order.setDiscountRate(discountCode.getDiscountRate());
+            order.setDiscountCode(discountCode);
+            order.setDiscountCodeUsed(true);
+            order.setTotalPaid(totalPrice.add(shippingFee));
+            discountCode.setUsed(true);
+            user.setActiveDiscountCode(false);
+        }
+
+        if (order.getTotalPrice().compareTo(new BigDecimal("800.00")) >= 0) {
+            user.setActiveDiscountCode(true);
+            discountCodeService.generateDiscountCode(request);
+        }
 
         updateUserTotalFees(user);
 
         return convertToOrderResponse(order);
     }
+
 
     public List<OrderResponse> getOrdersByUser(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
@@ -379,11 +420,12 @@ public class OrderService {
         user.setCancelledOrders(user.getCancelledOrders() + 1);
 
         order.setStatus(OrderStatus.CANCELLED);
+        user.setTotalShippingFeePaid(user.getTotalShippingFeePaid().subtract(shippingFee));
+        user.setTotalOrderFeePaid(user.getTotalOrderFeePaid().subtract(order.getTotalPrice()));
         orderRepository.save(order);
 
         log.info("Order {} has been canceled by user {}. {} bonus points deducted.", order.getOrderId(), user.getUsername(), bonusPointsToDeduct);
 
-        updateUserTotalFees(user);
 
         return new OrderCancellationResponse(
                 order.getTotalPrice(),
@@ -392,7 +434,7 @@ public class OrderService {
                 convertToOrderItemDetails(order.getOrderItems()),
                 order.getStatus(),
                 LocalDateTime.now(),
-                "Refund fee will be deposited into your account as soon as possible."
+                "Refund fee will be deposited into your wallet as soon as possible."
         );
     }
 

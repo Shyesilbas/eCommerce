@@ -37,6 +37,7 @@ public class User implements UserDetails {
     private Role role;
     private int totalOrders;
     private int cancelledOrders;
+    private boolean activeDiscountCode;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Address> addresses;
@@ -55,6 +56,9 @@ public class User implements UserDetails {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Wallet wallet;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<DiscountCode> discountCode;
 
     private BigDecimal bonusPointsWon;
 

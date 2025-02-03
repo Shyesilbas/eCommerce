@@ -130,6 +130,7 @@ public class UserService {
                 .membershipPlan(MembershipPlan.BASIC)
                 .totalOrderFeePaid(BigDecimal.ZERO)
                 .totalShippingFeePaid(BigDecimal.ZERO)
+                .activeDiscountCode(false)
                 .build();
 
         if (request.address() != null && !request.address().isEmpty()) {

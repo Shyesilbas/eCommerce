@@ -1,5 +1,6 @@
 package com.serhat.security.entity;
 
+import com.serhat.security.entity.enums.DiscountRate;
 import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.entity.enums.PaymentMethod;
 import jakarta.persistence.*;
@@ -35,6 +36,12 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Transaction> transactions;
 
+    @OneToOne
+    @JoinColumn(name = "discount_id")
+    private DiscountCode discountCode;
+
+    private boolean discountCodeUsed;
+
     private LocalDateTime orderDate;
 
     private BigDecimal totalPrice;
@@ -53,6 +60,11 @@ public class Order {
 
     private BigDecimal shippingFee;
     private BigDecimal bonusWon;
+    private BigDecimal totalDiscount;
+    private BigDecimal totalPaid;
+
+    @Enumerated(EnumType.STRING)
+    private DiscountRate discountRate;
     @PreUpdate
     public void setUpdatedAt() {
         this.updatedAt = LocalDateTime.now();

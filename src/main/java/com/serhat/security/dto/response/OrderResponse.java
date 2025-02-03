@@ -1,6 +1,7 @@
 package com.serhat.security.dto.response;
 
 import com.serhat.security.dto.object.AddressDto;
+import com.serhat.security.entity.enums.DiscountRate;
 import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.entity.enums.PaymentMethod;
 import lombok.Builder;
@@ -22,6 +23,9 @@ public record OrderResponse(
         int totalQuantity,
         List<OrderItemDetails> orderItems,
         BigDecimal shippingFee,
-        BigDecimal totalPaid
+        BigDecimal totalPaid,
+        Long discountId,
+        BigDecimal discountRate,
+        BigDecimal discountAmount
 ) {
 }

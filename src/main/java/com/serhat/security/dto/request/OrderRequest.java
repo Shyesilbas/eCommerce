@@ -6,6 +6,7 @@ import lombok.Builder;
 @Builder
 public record OrderRequest(
         Long shippingAddressId,
+        Long discountId,
         PaymentMethod paymentMethod,
         String notes
 ) {
