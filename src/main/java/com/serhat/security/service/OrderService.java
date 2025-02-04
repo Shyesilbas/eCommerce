@@ -123,6 +123,8 @@ public class OrderService {
                 .discountId(discountId)
                 .discountRate(discountRate)
                 .discountAmount(discountAmount)
+                .isBonusPointUsed(order.getIsBonusPointUsed())
+                .totalBonusPointsUsed(order.getBonusPointsUsed())
                 .build();
     }
 
@@ -150,6 +152,16 @@ public class OrderService {
         BigDecimal bonusPoints = calculateBonusPoints(user, totalPrice);
         user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
 
+        BigDecimal bonusPointsUsed = BigDecimal.ZERO;
+        if (orderRequest.useBonus() != null && orderRequest.useBonus()) {
+            BigDecimal availableBonusPoints = user.getBonusPointsWon();
+            if (availableBonusPoints.compareTo(BigDecimal.ZERO) > 0) {
+                bonusPointsUsed = availableBonusPoints.min(totalPrice);
+                totalPrice = totalPrice.subtract(bonusPointsUsed);
+                user.setBonusPointsWon(availableBonusPoints.subtract(bonusPointsUsed));
+            }
+        }
+
         Order order = Order.builder()
                 .user(user)
                 .orderDate(LocalDateTime.now())
@@ -166,7 +178,12 @@ public class OrderService {
                 .discountRate(DiscountRate.ZERO)
                 .discountCodeUsed(false)
                 .totalPaid(finalPrice)
+                .isBonusPointUsed(bonusPointsUsed.compareTo(BigDecimal.ZERO)>0)
+                .bonusPointsUsed(bonusPointsUsed)
                 .build();
+
+
+
 
         orderRepository.save(order);
 

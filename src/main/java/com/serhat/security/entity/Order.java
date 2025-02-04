@@ -65,6 +65,9 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     private DiscountRate discountRate;
+
+    private Boolean isBonusPointUsed;
+    private BigDecimal bonusPointsUsed;
     @PreUpdate
     public void setUpdatedAt() {
         this.updatedAt = LocalDateTime.now();

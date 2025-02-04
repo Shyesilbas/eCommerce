@@ -6,5 +6,6 @@ public enum TransactionType {
     PAYMENT,
     BONUS_DEDUCT,
     BONUS_GRANTED,
-    CANCEL_REFUND
+    CANCEL_REFUND,
+    BONUS_USED
 }

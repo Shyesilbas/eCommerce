@@ -26,6 +26,8 @@ public record OrderResponse(
         BigDecimal totalPaid,
         Long discountId,
         BigDecimal discountRate,
-        BigDecimal discountAmount
+        BigDecimal discountAmount,
+        Boolean isBonusPointUsed,
+        BigDecimal totalBonusPointsUsed
 ) {
 }
