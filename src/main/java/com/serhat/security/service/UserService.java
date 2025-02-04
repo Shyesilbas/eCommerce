@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -76,21 +77,22 @@ public class UserService {
         User user = tokenInterface.getUserFromToken(servletRequest);
         MembershipPlan currentPlan = user.getMembershipPlan();
 
-        if (request.membershipPlan() == null) {
-            throw new NullRequestException("Membership plan cannot be null.");
-        }
+        Optional<MembershipPlan> optionalMembershipPlan = Optional.ofNullable(request.membershipPlan());
+        optionalMembershipPlan.orElseThrow(() -> new NullRequestException("Membership plan cannot be null."));
+
+
         if (currentPlan.equals(request.membershipPlan())) {
             throw new SamePlanRequestException("You requested the same plan that you currently have.");
         }
 
         BigDecimal fee = request.membershipPlan().getFee();
-        Wallet wallet = user.getWallet();
+
+        Optional<Wallet> optionalWallet = Optional.ofNullable(user.getWallet());
+        Wallet wallet = optionalWallet.orElseThrow(() -> new WalletNotFoundException("Wallet not found"));
+
         String paymentMessage = "Membership plan updated successfully.";
 
         if (request.paymentMethod().equals(PaymentMethod.E_WALLET)) {
-            if (wallet == null) {
-                throw new WalletNotFoundException(user.getUsername() + " does not have a Wallet!");
-            }
             if (wallet.getBalance().compareTo(fee) < 0) {
                 throw new InsufficientFundsException("Insufficient funds in E-Wallet!");
             }

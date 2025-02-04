@@ -40,6 +40,7 @@ public class OrderService {
     private final TransactionRepository transactionRepository;
     private final DiscountCodeService discountCodeService;
     private final DiscountCodeRepository discountCodeRepository;
+    private final TransactionService transactionService;
     private boolean isAddressBelongsToUser(Long addressId, Long userId) {
         return addressRepository.existsByAddressIdAndUserUserId(addressId, userId);
     }
@@ -155,17 +156,7 @@ public class OrderService {
             totalPrice = totalPrice.subtract(discountAmount);
         }
 
-        BigDecimal bonusPointsUsed = BigDecimal.ZERO;
-        if (orderRequest.useBonus() != null && orderRequest.useBonus()) {
-            BigDecimal availableBonusPoints = user.getCurrentBonusPoints();
-            if (availableBonusPoints.compareTo(BigDecimal.ZERO) > 0) {
-                bonusPointsUsed = availableBonusPoints.min(totalPrice);
-                totalPrice = totalPrice.subtract(bonusPointsUsed);
-
-                user.setCurrentBonusPoints(availableBonusPoints.subtract(bonusPointsUsed));
-                user.setTotalSaved(user.getTotalSaved().add(bonusPointsUsed));
-            }
-        }
+        totalPrice = useBonusIfRequested(user, orderRequest, totalPrice);
 
         user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
         user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(bonusPoints));
@@ -187,51 +178,11 @@ public class OrderService {
                 .discountRate(discountCode != null ? discountCode.getDiscountRate() : DiscountRate.ZERO)
                 .discountCodeUsed(discountCode != null)
                 .totalPaid(finalPrice)
-                .isBonusPointUsed(bonusPointsUsed.compareTo(BigDecimal.ZERO) > 0)
-                .bonusPointsUsed(bonusPointsUsed)
+                .isBonusPointUsed(bonusPoints.compareTo(BigDecimal.ZERO) > 0)
+                .bonusPointsUsed(bonusPoints)
                 .build();
 
-        List<Transaction> transactions = new ArrayList<>();
-        if (orderRequest.paymentMethod() == PaymentMethod.E_WALLET) {
-            Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
-                    .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
-
-            if (wallet.getBalance().compareTo(finalPrice) < 0) {
-                throw new InsufficientFundsException("Insufficient funds in wallet");
-            }
-
-            wallet.setBalance(wallet.getBalance().subtract(finalPrice));
-            wallet.setBonusPoints(wallet.getBonusPoints().add(bonusPoints));
-
-            String paymentDescription = shippingFee.compareTo(BigDecimal.ZERO) > 0
-                    ? String.format("Payment for order (including shipping fee: %s)", shippingFee)
-                    : "Payment for order";
-
-            Transaction paymentTransaction = new Transaction();
-            paymentTransaction.setWallet(wallet);
-            paymentTransaction.setUser(user);
-            paymentTransaction.setOrder(order);
-            paymentTransaction.setAmount(finalPrice);
-            paymentTransaction.setTransactionType(TransactionType.PAYMENT);
-            paymentTransaction.setTransactionDate(LocalDateTime.now());
-            paymentTransaction.setDescription(paymentDescription);
-
-            transactions.add(paymentTransaction);
-
-            Transaction bonusTransaction = new Transaction();
-            bonusTransaction.setWallet(wallet);
-            bonusTransaction.setUser(user);
-            bonusTransaction.setOrder(order);
-            bonusTransaction.setAmount(bonusPoints);
-            bonusTransaction.setTransactionType(TransactionType.BONUS_GRANTED);
-            bonusTransaction.setTransactionDate(LocalDateTime.now());
-            bonusTransaction.setDescription("Bonus points granted for order");
-
-            transactions.add(bonusTransaction);
-
-            transactionRepository.saveAll(transactions);
-            walletRepository.save(wallet);
-        }
+        List<Transaction> transactions = transactionService.createTransactions(order, user, finalPrice, bonusPoints, shippingFee);
 
         List<OrderItem> orderItems = shoppingCards.stream()
                 .map(sc -> {
@@ -267,14 +218,30 @@ public class OrderService {
             discountCode.setStatus(CouponStatus.USED);
         }
 
-        if (order.getTotalPrice().compareTo(new BigDecimal("800.00")) >= 0) {
-            discountCodeService.generateDiscountCode(request);
-        }
-
+        generateDiscountCodeIfEligible(order, request);
         updateUserTotalFees(user);
 
         return convertToOrderResponse(order);
     }
+
+
+    private BigDecimal useBonusIfRequested(User user, OrderRequest orderRequest, BigDecimal totalPrice) {
+        BigDecimal bonusPointsUsed = BigDecimal.ZERO;
+
+        if (orderRequest.useBonus() != null && orderRequest.useBonus()) {
+            BigDecimal availableBonusPoints = user.getCurrentBonusPoints();
+            if (availableBonusPoints.compareTo(BigDecimal.ZERO) > 0) {
+                bonusPointsUsed = availableBonusPoints.min(totalPrice);
+                totalPrice = totalPrice.subtract(bonusPointsUsed);
+
+                user.setCurrentBonusPoints(availableBonusPoints.subtract(bonusPointsUsed));
+                user.setTotalSaved(user.getTotalSaved().add(bonusPointsUsed));
+            }
+        }
+
+        return totalPrice;
+    }
+
 
     private void validateDiscountCode(DiscountCode discountCode, User user) {
         if (discountCode.getUser() != null && !discountCode.getUser().getUserId().equals(user.getUserId())) {
@@ -287,6 +254,12 @@ public class OrderService {
 
         if (discountCode.getStatus().equals(CouponStatus.USED)) {
             throw new CouponAlreadyUsedException("The coupon you entered is already used");
+        }
+    }
+
+    private void generateDiscountCodeIfEligible(Order order , HttpServletRequest request){
+        if(order.getTotalPrice().compareTo(new BigDecimal("800.00")) >=0){
+            discountCodeService.generateDiscountCode(request);
         }
     }
 
@@ -325,22 +298,9 @@ public class OrderService {
                     order.setStatus(OrderStatus.REFUNDED);
 
                     if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
-                        Wallet wallet = walletRepository.findByUser_UserId(order.getUser().getUserId())
-                                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
-
-                        wallet.setBalance(wallet.getBalance().add(order.getTotalPrice()));
-                        walletRepository.save(wallet);
-
-                        Transaction transaction = new Transaction();
-                        transaction.setWallet(wallet);
-                        transaction.setUser(order.getUser());
-                        transaction.setAmount(order.getTotalPrice());
-                        transaction.setTransactionType(TransactionType.CANCEL_REFUND);
-                        transaction.setTransactionDate(LocalDateTime.now());
-                        transaction.setDescription("Refund for canceled order");
-
-                        transactionRepository.save(transaction);
-                        log.info("Order {} REFUNDED: {} added back to wallet", order.getOrderId(), order.getTotalPrice());}
+                        transactionService.createRefundTransaction(order, order.getUser(), order.getTotalPrice(), order.getShippingFee());
+                        log.info("Order {} REFUNDED: {} added back to wallet", order.getOrderId(), order.getTotalPrice());
+                    }
                     log.info("Order {} status updated to REFUNDED", order.getOrderId());
                 }
             }
@@ -363,6 +323,7 @@ public class OrderService {
     }
 
 
+    @Transactional
     public OrderCancellationResponse cancelOrder(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         Order order = orderRepository.findById(orderId)
@@ -387,20 +348,6 @@ public class OrderService {
                 user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(order.getBonusPointsUsed()));
                 wallet.setBonusPoints(wallet.getBonusPoints().add(order.getBonusPointsUsed()));
             }
-
-            wallet.setBalance(wallet.getBalance().add(totalPaid));
-            walletRepository.save(wallet);
-
-            Transaction refundTransaction = new Transaction();
-            refundTransaction.setWallet(wallet);
-            refundTransaction.setUser(user);
-            refundTransaction.setOrder(order);
-            refundTransaction.setAmount(totalPaid);
-            refundTransaction.setTransactionType(TransactionType.CANCEL_REFUND);
-            refundTransaction.setTransactionDate(LocalDateTime.now());
-            refundTransaction.setDescription(String.format("Refund for canceled order, including shipping fee: %s", shippingFee));
-
-            transactionRepository.save(refundTransaction);
         }
 
         order.getOrderItems().forEach(orderItem -> {
@@ -417,6 +364,7 @@ public class OrderService {
         user.setTotalShippingFeePaid(user.getTotalShippingFeePaid().subtract(shippingFee));
         user.setTotalOrderFeePaid(user.getTotalOrderFeePaid().subtract(order.getTotalPrice()));
         order.setStatus(OrderStatus.CANCELLED);
+        order.setUpdatedAt(LocalDateTime.now());
         orderRepository.save(order);
 
         return new OrderCancellationResponse(
@@ -426,7 +374,7 @@ public class OrderService {
                 convertToOrderItemDetails(order.getOrderItems()),
                 order.getStatus(),
                 LocalDateTime.now(),
-                "Refund fee will be deposited into your wallet as soon as possible.",
+                "Refund will be done after minutes.",
                 order.getIsBonusPointUsed(),
                 order.getBonusPointsUsed()
         );
