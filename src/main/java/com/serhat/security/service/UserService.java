@@ -125,6 +125,7 @@ public class UserService {
                 .email(request.email())
                 .role(request.role())
                 .bonusPointsWon(new BigDecimal("0.0"))
+                .currentBonusPoints(BigDecimal.ZERO)
                 .totalOrders(0)
                 .cancelledOrders(0)
                 .membershipPlan(MembershipPlan.BASIC)

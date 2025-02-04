@@ -60,6 +60,7 @@ public class User implements UserDetails {
     private List<DiscountCode> discountCode;
 
     private BigDecimal bonusPointsWon;
+    private BigDecimal currentBonusPoints;
 
     @Enumerated(EnumType.STRING)
     private MembershipPlan membershipPlan;

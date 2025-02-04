@@ -13,6 +13,8 @@ public record OrderCancellationResponse(
         List<OrderItemDetails> orderItems,
         OrderStatus status,
         LocalDateTime cancellationDate,
-        String message
+        String message,
+        Boolean isBonusPointsUsed,
+        BigDecimal bonusPointsUsed
 ) {
 }

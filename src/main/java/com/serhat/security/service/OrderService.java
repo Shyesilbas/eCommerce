@@ -95,37 +95,29 @@ public class OrderService {
     private OrderResponse convertToOrderResponse(Order order) {
         AddressDto shippingAddress = convertToAddressDto(order.getShippingAddressId());
         List<OrderItemDetails> orderItems = convertToOrderItemDetails(order.getOrderItems());
-        BigDecimal bonusWon = calculateBonusPoints(order.getUser(), order.getTotalPrice());
-        BigDecimal shippingFee = calculateShippingFee(order.getUser(), order.getTotalPrice());
-        BigDecimal totalPaid = order.getTotalPrice().add(shippingFee);
 
-        if (order.getTotalDiscount() != null && order.getTotalDiscount().compareTo(BigDecimal.ZERO) > 0) {
-            totalPaid = totalPaid.subtract(order.getTotalDiscount());
-        }
+        BigDecimal cartTotalPrice = order.getTotalPrice();
+        BigDecimal totalBeforeDiscount = cartTotalPrice.add(order.getShippingFee());
 
-        Long discountId = order.getDiscountCode() != null ? order.getDiscountCode().getId() : null;
-        BigDecimal discountRate = order.getDiscountCode() != null ? BigDecimal.valueOf(order.getDiscountCode().getDiscountRate().getPercentage()) : BigDecimal.ZERO;
-        BigDecimal discountAmount = order.getTotalDiscount() != null ? order.getTotalDiscount() : BigDecimal.ZERO;
+        return new OrderResponse(
+                order.getOrderId(),
+                order.getOrderDate(),
+                order.getStatus(),
+                shippingAddress,
+                order.getPaymentMethod(),
 
-        return OrderResponse.builder()
-                .orderId(order.getOrderId())
-                .totalPrice(order.getTotalPrice())
-                .totalQuantity(order.getOrderItems().stream().mapToInt(OrderItem::getQuantity).sum())
-                .bonusWon(bonusWon)
-                .shippingFee(shippingFee)
-                .orderDate(order.getOrderDate())
-                .status(order.getStatus())
-                .paymentMethod(order.getPaymentMethod())
-                .notes(order.getNotes())
-                .orderItems(orderItems)
-                .shippingAddress(shippingAddress)
-                .totalPaid(totalPaid)
-                .discountId(discountId)
-                .discountRate(discountRate)
-                .discountAmount(discountAmount)
-                .isBonusPointUsed(order.getIsBonusPointUsed())
-                .totalBonusPointsUsed(order.getBonusPointsUsed())
-                .build();
+                order.getTotalPrice(),
+                order.getShippingFee(),
+                totalBeforeDiscount,
+
+                order.getTotalDiscount(),
+                order.getBonusPointsUsed(),
+                order.getTotalPaid(),
+
+                order.getNotes(),
+                orderItems,
+                order.getBonusWon()
+        );
     }
 
 
@@ -147,25 +139,42 @@ public class OrderService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal shippingFee = calculateShippingFee(user, totalPrice);
-        BigDecimal finalPrice = totalPrice.add(shippingFee);
-
         BigDecimal bonusPoints = calculateBonusPoints(user, totalPrice);
-        user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
+        BigDecimal originalTotalPrice = totalPrice;
+
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        DiscountCode discountCode = null;
+        if (orderRequest.discountId() != null) {
+            discountCode = discountCodeRepository.findById(orderRequest.discountId())
+                    .orElseThrow(() -> new InvalidDiscountCodeException("Invalid discount code"));
+
+            validateDiscountCode(discountCode, user);
+
+            discountAmount = originalTotalPrice
+                    .multiply(BigDecimal.valueOf(discountCode.getDiscountRate().getPercentage() / 100.0));
+            totalPrice = totalPrice.subtract(discountAmount);
+        }
 
         BigDecimal bonusPointsUsed = BigDecimal.ZERO;
         if (orderRequest.useBonus() != null && orderRequest.useBonus()) {
-            BigDecimal availableBonusPoints = user.getBonusPointsWon();
+            BigDecimal availableBonusPoints = user.getCurrentBonusPoints();
             if (availableBonusPoints.compareTo(BigDecimal.ZERO) > 0) {
                 bonusPointsUsed = availableBonusPoints.min(totalPrice);
                 totalPrice = totalPrice.subtract(bonusPointsUsed);
-                user.setBonusPointsWon(availableBonusPoints.subtract(bonusPointsUsed));
+
+                user.setCurrentBonusPoints(availableBonusPoints.subtract(bonusPointsUsed));
+                user.setTotalSaved(user.getTotalSaved().add(bonusPointsUsed));
             }
         }
 
+        user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
+        user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(bonusPoints));
+
+        BigDecimal finalPrice = totalPrice.add(shippingFee);
         Order order = Order.builder()
                 .user(user)
                 .orderDate(LocalDateTime.now())
-                .totalPrice(totalPrice)
+                .totalPrice(originalTotalPrice)
                 .status(OrderStatus.APPROVED)
                 .shippingAddressId(orderRequest.shippingAddressId())
                 .paymentMethod(orderRequest.paymentMethod())
@@ -173,22 +182,16 @@ public class OrderService {
                 .updatedAt(LocalDateTime.now())
                 .shippingFee(shippingFee)
                 .bonusWon(bonusPoints)
-                .discountCode(null)
-                .totalDiscount(BigDecimal.ZERO)
-                .discountRate(DiscountRate.ZERO)
-                .discountCodeUsed(false)
+                .discountCode(discountCode)
+                .totalDiscount(discountAmount)
+                .discountRate(discountCode != null ? discountCode.getDiscountRate() : DiscountRate.ZERO)
+                .discountCodeUsed(discountCode != null)
                 .totalPaid(finalPrice)
-                .isBonusPointUsed(bonusPointsUsed.compareTo(BigDecimal.ZERO)>0)
+                .isBonusPointUsed(bonusPointsUsed.compareTo(BigDecimal.ZERO) > 0)
                 .bonusPointsUsed(bonusPointsUsed)
                 .build();
 
-
-
-
-        orderRepository.save(order);
-
         List<Transaction> transactions = new ArrayList<>();
-
         if (orderRequest.paymentMethod() == PaymentMethod.E_WALLET) {
             Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
                     .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
@@ -260,36 +263,8 @@ public class OrderService {
 
         productRepository.saveAll(orderItems.stream().map(OrderItem::getProduct).collect(Collectors.toList()));
 
-        Long discountId = orderRequest.discountId();
-        if (discountId != null) {
-
-            DiscountCode discountCode = discountCodeRepository.findById(discountId)
-                    .orElseThrow(() -> new InvalidDiscountCodeException("Invalid discount code"));
-
-            if (discountCode.getUser() != null && !discountCode.getUser().getUserId().equals(user.getUserId())) {
-                throw new InvalidDiscountCodeException("This discount code is not valid for the current user!");
-            }
-
-            if(discountCode.getStatus().equals(CouponStatus.EXPIRED)){
-                throw new DiscountCodeExpiredException("This coupon has expired!");
-            }
-
-            if(discountCode.getStatus().equals(CouponStatus.USED)){
-                throw new CouponAlreadyUsedException("The coupon you entered is already used");
-            }
-
-            BigDecimal discountAmount = order.getTotalPrice()
-                    .multiply(BigDecimal.valueOf(discountCode.getDiscountRate().getPercentage() / 100.0));
-            totalPrice = totalPrice.subtract(discountAmount);
-
-            order.setTotalDiscount(discountAmount);
-            order.setDiscountRate(discountCode.getDiscountRate());
-            order.setDiscountCode(discountCode);
-            order.setDiscountCodeUsed(true);
-            order.setTotalPaid(totalPrice.add(shippingFee));
+        if (discountCode != null) {
             discountCode.setStatus(CouponStatus.USED);
-
-            user.setTotalSaved(user.getTotalSaved().add(discountAmount));
         }
 
         if (order.getTotalPrice().compareTo(new BigDecimal("800.00")) >= 0) {
@@ -299,6 +274,20 @@ public class OrderService {
         updateUserTotalFees(user);
 
         return convertToOrderResponse(order);
+    }
+
+    private void validateDiscountCode(DiscountCode discountCode, User user) {
+        if (discountCode.getUser() != null && !discountCode.getUser().getUserId().equals(user.getUserId())) {
+            throw new InvalidDiscountCodeException("This discount code is not valid for the current user!");
+        }
+
+        if (discountCode.getStatus().equals(CouponStatus.EXPIRED)) {
+            throw new DiscountCodeExpiredException("This coupon has expired!");
+        }
+
+        if (discountCode.getStatus().equals(CouponStatus.USED)) {
+            throw new CouponAlreadyUsedException("The coupon you entered is already used");
+        }
     }
 
 
@@ -390,23 +379,13 @@ public class OrderService {
         Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
                 .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
 
-        BigDecimal bonusPointsToDeduct = calculateBonusPoints(user, order.getTotalPrice());
-
         BigDecimal shippingFee = calculateShippingFee(user, order.getTotalPrice());
-
         BigDecimal totalPaid = order.getTotalPrice().add(shippingFee);
 
         if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
-            if (user.getBonusPointsWon().compareTo(bonusPointsToDeduct) >= 0) {
-                user.setBonusPointsWon(user.getBonusPointsWon().subtract(bonusPointsToDeduct));
-            } else {
-                user.setBonusPointsWon(BigDecimal.ZERO);
-            }
-
-            if (wallet.getBonusPoints().compareTo(bonusPointsToDeduct) >= 0) {
-                wallet.setBonusPoints(wallet.getBonusPoints().subtract(bonusPointsToDeduct));
-            } else {
-                wallet.setBonusPoints(BigDecimal.ZERO);
+            if (order.getBonusPointsUsed().compareTo(BigDecimal.ZERO) > 0) {
+                user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(order.getBonusPointsUsed()));
+                wallet.setBonusPoints(wallet.getBonusPoints().add(order.getBonusPointsUsed()));
             }
 
             wallet.setBalance(wallet.getBalance().add(totalPaid));
@@ -422,8 +401,6 @@ public class OrderService {
             refundTransaction.setDescription(String.format("Refund for canceled order, including shipping fee: %s", shippingFee));
 
             transactionRepository.save(refundTransaction);
-
-            log.info("Order {} refunded: {} returned to user wallet.", order.getOrderId(), totalPaid);
         }
 
         order.getOrderItems().forEach(orderItem -> {
@@ -433,20 +410,14 @@ public class OrderService {
             if (product.getQuantity() > 0 && product.getStockStatus() == StockStatus.OUT_OF_STOCKS) {
                 product.setStockStatus(StockStatus.AVAILABLE);
             }
-
             productRepository.save(product);
-            log.info("Product {} stock restored: {} items now available.", product.getName(), product.getQuantity());
         });
 
         user.setCancelledOrders(user.getCancelledOrders() + 1);
-
-        order.setStatus(OrderStatus.CANCELLED);
         user.setTotalShippingFeePaid(user.getTotalShippingFeePaid().subtract(shippingFee));
         user.setTotalOrderFeePaid(user.getTotalOrderFeePaid().subtract(order.getTotalPrice()));
+        order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
-
-        log.info("Order {} has been canceled by user {}. {} bonus points deducted.", order.getOrderId(), user.getUsername(), bonusPointsToDeduct);
-
 
         return new OrderCancellationResponse(
                 order.getTotalPrice(),
@@ -455,9 +426,12 @@ public class OrderService {
                 convertToOrderItemDetails(order.getOrderItems()),
                 order.getStatus(),
                 LocalDateTime.now(),
-                "Refund fee will be deposited into your wallet as soon as possible."
+                "Refund fee will be deposited into your wallet as soon as possible.",
+                order.getIsBonusPointUsed(),
+                order.getBonusPointsUsed()
         );
     }
+
 
 
     public OrderResponse getOrderDetails(Long orderId, HttpServletRequest request) {
