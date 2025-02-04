@@ -2,9 +2,7 @@ package com.serhat.security.service;
 
 import com.serhat.security.dto.object.AddressDto;
 import com.serhat.security.dto.request.OrderRequest;
-import com.serhat.security.dto.response.OrderCancellationResponse;
-import com.serhat.security.dto.response.OrderItemDetails;
-import com.serhat.security.dto.response.OrderResponse;
+import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.*;
 import com.serhat.security.entity.enums.*;
 import com.serhat.security.exception.*;
@@ -37,7 +35,6 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final WalletRepository walletRepository;
-    private final TransactionRepository transactionRepository;
     private final DiscountCodeService discountCodeService;
     private final DiscountCodeRepository discountCodeRepository;
     private final TransactionService transactionService;
@@ -78,11 +75,10 @@ public class OrderService {
             case BASIC -> {
                 return (totalPrice.compareTo(BigDecimal.valueOf(200)) >= 0) ? BigDecimal.ZERO : BigDecimal.valueOf(10.99);
             }
-            default -> {
-                return BigDecimal.ZERO;
-            }
         }
+        return BigDecimal.ZERO;
     }
+
 
     private BigDecimal calculateBonusPoints(User user, BigDecimal totalPrice) {
         BigDecimal bonusRate = switch (user.getMembershipPlan()) {
@@ -106,15 +102,12 @@ public class OrderService {
                 order.getStatus(),
                 shippingAddress,
                 order.getPaymentMethod(),
-
                 order.getTotalPrice(),
                 order.getShippingFee(),
                 totalBeforeDiscount,
-
                 order.getTotalDiscount(),
                 order.getBonusPointsUsed(),
                 order.getTotalPaid(),
-
                 order.getNotes(),
                 orderItems,
                 order.getBonusWon()
@@ -124,108 +117,189 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(HttpServletRequest request, OrderRequest orderRequest) {
-        User user = tokenInterface.getUserFromToken(request);
+        User user = validateAndGetUser(request, orderRequest);
+        findWalletForUser(user);
+        List<ShoppingCard> shoppingCards = getValidatedShoppingCart(user);
 
-        if (!isAddressBelongsToUser(orderRequest.shippingAddressId(), user.getUserId())) {
-            throw new AddressNotBelongToUserException("Shipping address does not belong to the user!");
-        }
+        PriceDetails priceDetails = calculatePriceDetails(shoppingCards, user, orderRequest);
+        updateUserBonusPoints(user, priceDetails.bonusPoints());
 
-        List<ShoppingCard> shoppingCards = shoppingCardRepository.findByUser(user);
-        if (shoppingCards.isEmpty()) {
-            throw new EmptyShoppingCardException("No products in the shopping cart!");
-        }
+        Order order = createOrderEntity(user, orderRequest, priceDetails);
+        processOrderItems(order, shoppingCards);
 
-        BigDecimal totalPrice = shoppingCards.stream()
-                .map(sc -> sc.getProduct().getPrice().multiply(new BigDecimal(sc.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal shippingFee = calculateShippingFee(user, totalPrice);
-        BigDecimal bonusPoints = calculateBonusPoints(user, totalPrice);
-        BigDecimal originalTotalPrice = totalPrice;
-
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        DiscountCode discountCode = null;
-        if (orderRequest.discountId() != null) {
-            discountCode = discountCodeRepository.findById(orderRequest.discountId())
-                    .orElseThrow(() -> new InvalidDiscountCodeException("Invalid discount code"));
-
-            validateDiscountCode(discountCode, user);
-
-            discountAmount = originalTotalPrice
-                    .multiply(BigDecimal.valueOf(discountCode.getDiscountRate().getPercentage() / 100.0));
-            totalPrice = totalPrice.subtract(discountAmount);
-        }
-
-        totalPrice = useBonusIfRequested(user, orderRequest, totalPrice);
-
-        user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
-        user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(bonusPoints));
-
-        BigDecimal finalPrice = totalPrice.add(shippingFee);
-        Order order = Order.builder()
-                .user(user)
-                .orderDate(LocalDateTime.now())
-                .totalPrice(originalTotalPrice)
-                .status(OrderStatus.APPROVED)
-                .shippingAddressId(orderRequest.shippingAddressId())
-                .paymentMethod(orderRequest.paymentMethod())
-                .notes(orderRequest.notes())
-                .updatedAt(LocalDateTime.now())
-                .shippingFee(shippingFee)
-                .bonusWon(bonusPoints)
-                .discountCode(discountCode)
-                .totalDiscount(discountAmount)
-                .discountRate(discountCode != null ? discountCode.getDiscountRate() : DiscountRate.ZERO)
-                .discountCodeUsed(discountCode != null)
-                .totalPaid(finalPrice)
-                .isBonusPointUsed(bonusPoints.compareTo(BigDecimal.ZERO) > 0)
-                .bonusPointsUsed(bonusPoints)
-                .build();
-
-        List<Transaction> transactions = transactionService.createTransactions(order, user, finalPrice, bonusPoints, shippingFee);
-
-        List<OrderItem> orderItems = shoppingCards.stream()
-                .map(sc -> {
-                    Product product = sc.getProduct();
-                    if (product.getQuantity() < sc.getQuantity()) {
-                        throw new InsufficientStockException("Insufficient stock for product: " + product.getName());
-                    }
-
-                    product.setQuantity(product.getQuantity() - sc.getQuantity());
-
-                    if (product.getQuantity() == 0) {
-                        product.setStockStatus(StockStatus.OUT_OF_STOCKS);
-                    }
-
-                    return OrderItem.builder()
-                            .order(order)
-                            .product(product)
-                            .quantity(sc.getQuantity())
-                            .price(product.getPrice())
-                            .build();
-                }).collect(Collectors.toList());
-
-        order.setOrderItems(orderItems);
-        order.setTransactions(transactions);
-
-        orderRepository.save(order);
-        user.setTotalOrders(user.getTotalOrders() + 1);
-        shoppingCardRepository.deleteAll(shoppingCards);
-
-        productRepository.saveAll(orderItems.stream().map(OrderItem::getProduct).collect(Collectors.toList()));
-
-        if (discountCode != null) {
-            discountCode.setStatus(CouponStatus.USED);
-        }
-
-        generateDiscountCodeIfEligible(order, request);
-        updateUserTotalFees(user);
+        finalizeOrder(order, user, shoppingCards, request);
 
         return convertToOrderResponse(order);
     }
 
+    private User validateAndGetUser(HttpServletRequest request, OrderRequest orderRequest) {
+        User user = tokenInterface.getUserFromToken(request);
+        if (!isAddressBelongsToUser(orderRequest.shippingAddressId(), user.getUserId())) {
+            throw new AddressNotBelongToUserException("Shipping address does not belong to the user!");
+        }
+        return user;
+    }
 
-    private BigDecimal useBonusIfRequested(User user, OrderRequest orderRequest, BigDecimal totalPrice) {
+    private List<ShoppingCard> getValidatedShoppingCart(User user) {
+        List<ShoppingCard> shoppingCards = shoppingCardRepository.findByUser(user);
+        if (shoppingCards.isEmpty()) {
+            throw new EmptyShoppingCardException("No products in the shopping cart!");
+        }
+        return shoppingCards;
+    }
+    private PriceDetails calculatePriceDetails(List<ShoppingCard> shoppingCards, User user, OrderRequest orderRequest) {
+        BigDecimal totalPrice = calculateTotalPrice(shoppingCards);
+        BigDecimal originalTotalPrice = totalPrice;
+        BigDecimal shippingFee = calculateShippingFee(user, totalPrice);
+        BigDecimal bonusPoints = calculateBonusPoints(user, totalPrice);
+
+        DiscountDetails discountDetails = applyDiscountIfAvailable(orderRequest, originalTotalPrice, user);
+        totalPrice = totalPrice.subtract(discountDetails.discountAmount());
+
+        BonusUsageResult bonusUsageResult = useBonusIfRequested(user, orderRequest, totalPrice);
+        totalPrice = bonusUsageResult.updatedTotalPrice();
+        BigDecimal bonusPointsUsed = bonusUsageResult.bonusPointsUsed();
+
+        BigDecimal finalPrice = totalPrice.add(shippingFee);
+
+        return new PriceDetails(totalPrice, originalTotalPrice, shippingFee, bonusPoints,
+                discountDetails.discountAmount(), finalPrice, discountDetails.discountCode(), bonusPointsUsed);
+    }
+
+    private BigDecimal calculateTotalPrice(List<ShoppingCard> shoppingCards) {
+        return shoppingCards.stream()
+                .map(sc -> sc.getProduct().getPrice().multiply(new BigDecimal(sc.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private DiscountDetails applyDiscountIfAvailable(OrderRequest orderRequest, BigDecimal originalTotalPrice, User user) {
+        if (orderRequest.discountId() == null) {
+            return new DiscountDetails(BigDecimal.ZERO, null);
+        }
+
+        DiscountCode discountCode = discountCodeRepository.findById(orderRequest.discountId())
+                .orElseThrow(() -> new InvalidDiscountCodeException("Invalid discount code"));
+        validateDiscountCode(discountCode, user);
+
+        BigDecimal discountAmount = calculateDiscountAmount(originalTotalPrice, discountCode);
+        return new DiscountDetails(discountAmount, discountCode);
+    }
+
+    private BigDecimal calculateDiscountAmount(BigDecimal originalTotalPrice, DiscountCode discountCode) {
+        return originalTotalPrice
+                .multiply(BigDecimal.valueOf(discountCode.getDiscountRate().getPercentage() / 100.0));
+    }
+
+    private void updateUserBonusPoints(User user, BigDecimal bonusPoints) {
+        user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
+        user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(bonusPoints));
+    }
+
+    private Order createOrderEntity(User user, OrderRequest orderRequest, PriceDetails priceDetails) {
+        return Order.builder()
+                .user(user)
+                .orderDate(LocalDateTime.now())
+                .totalPrice(priceDetails.originalTotalPrice())
+                .status(OrderStatus.APPROVED)
+                .shippingAddressId(orderRequest.shippingAddressId())
+                .paymentMethod(PaymentMethod.E_WALLET)
+                .notes(orderRequest.notes())
+                .updatedAt(LocalDateTime.now())
+                .shippingFee(priceDetails.shippingFee())
+                .bonusWon(priceDetails.bonusPoints())
+                .discountCode(priceDetails.discountCode())
+                .totalDiscount(priceDetails.discountAmount())
+                .discountRate(priceDetails.discountCode() != null ?
+                        priceDetails.discountCode().getDiscountRate() : DiscountRate.ZERO)
+                .totalPaid(priceDetails.finalPrice())
+                .isBonusPointUsed(priceDetails.bonusPointsUsed().compareTo(BigDecimal.ZERO) > 0)
+                .bonusPointsUsed(priceDetails.bonusPointsUsed())
+                .build();
+    }
+
+    private void processOrderItems(Order order, List<ShoppingCard> shoppingCards) {
+        List<OrderItem> orderItems = createOrderItems(order, shoppingCards);
+        List<Transaction> transactions = createOrderTransactions(order);
+
+        order.setOrderItems(orderItems);
+        order.setTransactions(transactions);
+    }
+
+    private List<OrderItem> createOrderItems(Order order, List<ShoppingCard> shoppingCards) {
+        return shoppingCards.stream()
+                .map(sc -> createOrderItem(order, sc))
+                .collect(Collectors.toList());
+    }
+
+    private OrderItem createOrderItem(Order order, ShoppingCard sc) {
+        Product product = sc.getProduct();
+        validateProductStock(product, sc.getQuantity());
+        updateProductStock(product, sc.getQuantity());
+
+        return OrderItem.builder()
+                .order(order)
+                .product(product)
+                .quantity(sc.getQuantity())
+                .price(product.getPrice())
+                .build();
+    }
+
+    private void validateProductStock(Product product, int requestedQuantity) {
+        if (product.getQuantity() < requestedQuantity) {
+            throw new InsufficientStockException("Insufficient stock for product: " + product.getName());
+        }
+    }
+
+    private void updateProductStock(Product product, int quantity) {
+        product.setQuantity(product.getQuantity() - quantity);
+        if (product.getQuantity() == 0) {
+            product.setStockStatus(StockStatus.OUT_OF_STOCKS);
+        }
+    }
+
+    private List<Transaction> createOrderTransactions(Order order) {
+        return transactionService.createTransactions(
+                order, order.getUser(), order.getTotalPaid(), order.getBonusWon(), order.getShippingFee());
+    }
+
+    private void finalizeOrder(Order order, User user, List<ShoppingCard> shoppingCards, HttpServletRequest request) {
+        saveOrderAndUpdateUser(order, user);
+        clearShoppingCart(shoppingCards);
+        saveUpdatedProducts(order.getOrderItems());
+        updateDiscountCodeStatus(order.getDiscountCode());
+        generateDiscountCodeIfEligible(order, request);
+        updateUserTotalFees(user);
+    }
+
+    private void saveOrderAndUpdateUser(Order order, User user) {
+        orderRepository.save(order);
+        user.setTotalOrders(user.getTotalOrders() + 1);
+    }
+
+    private void clearShoppingCart(List<ShoppingCard> shoppingCards) {
+        shoppingCardRepository.deleteAll(shoppingCards);
+    }
+
+    private void saveUpdatedProducts(List<OrderItem> orderItems) {
+        productRepository.saveAll(orderItems.stream()
+                .map(OrderItem::getProduct)
+                .collect(Collectors.toList()));
+    }
+
+    private void updateDiscountCodeStatus(DiscountCode discountCode) {
+        if (discountCode != null) {
+            discountCode.setStatus(CouponStatus.USED);
+        }
+    }
+
+    private void findWalletForUser(User user) {
+         walletRepository.findByUser_UserId(user.getUserId())
+                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
+    }
+
+
+
+    private BonusUsageResult useBonusIfRequested(User user, OrderRequest orderRequest, BigDecimal totalPrice) {
         BigDecimal bonusPointsUsed = BigDecimal.ZERO;
 
         if (orderRequest.useBonus() != null && orderRequest.useBonus()) {
@@ -239,8 +313,9 @@ public class OrderService {
             }
         }
 
-        return totalPrice;
+        return new BonusUsageResult(totalPrice, bonusPointsUsed);
     }
+
 
 
     private void validateDiscountCode(DiscountCode discountCode, User user) {
@@ -379,9 +454,6 @@ public class OrderService {
                 order.getBonusPointsUsed()
         );
     }
-
-
-
     public OrderResponse getOrderDetails(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         Order order = orderRepository.findById(orderId)

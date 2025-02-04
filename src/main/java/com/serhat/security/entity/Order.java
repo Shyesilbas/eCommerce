@@ -40,7 +40,6 @@ public class Order {
     @JoinColumn(name = "discount_id")
     private DiscountCode discountCode;
 
-    private boolean discountCodeUsed;
 
     private LocalDateTime orderDate;
 
