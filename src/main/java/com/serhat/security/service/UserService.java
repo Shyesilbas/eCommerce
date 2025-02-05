@@ -13,6 +13,8 @@ import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.entity.enums.TransactionType;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
+import com.serhat.security.mapper.AddressMapper;
+import com.serhat.security.mapper.UserMapper;
 import com.serhat.security.repository.AddressRepository;
 import com.serhat.security.repository.TransactionRepository;
 import com.serhat.security.repository.UserRepository;
@@ -41,7 +43,9 @@ public class UserService {
     private final AddressRepository addressRepository;
     private final NotificationService notificationService;
     private final TokenInterface tokenInterface;
-    private final TransactionRepository transactionRepository;
+    private final AddressMapper addressMapper;
+    private final TransactionService transactionService;
+    private final UserMapper userMapper;
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
@@ -88,44 +92,16 @@ public class UserService {
         User user = tokenInterface.getUserFromToken(servletRequest);
         MembershipPlan currentPlan = user.getMembershipPlan();
 
-        Optional<MembershipPlan> optionalMembershipPlan = Optional.ofNullable(request.membershipPlan());
-        optionalMembershipPlan.orElseThrow(() -> new NullRequestException("Membership plan cannot be null."));
-
-
         if (currentPlan.equals(request.membershipPlan())) {
             throw new SamePlanRequestException("You requested the same plan that you currently have.");
         }
 
         BigDecimal fee = request.membershipPlan().getFee();
-
-        Optional<Wallet> optionalWallet = Optional.ofNullable(user.getWallet());
-        Wallet wallet = optionalWallet.orElseThrow(() -> new WalletNotFoundException("Wallet not found"));
-
-        String paymentMessage = "Membership plan updated successfully.";
-
-        if (request.paymentMethod().equals(PaymentMethod.E_WALLET)) {
-            if (wallet.getBalance().compareTo(fee) < 0) {
-                throw new InsufficientFundsException("Insufficient funds in E-Wallet!");
-            }
-
-            wallet.setBalance(wallet.getBalance().subtract(fee));
-            Transaction transaction = new Transaction();
-            transaction.setWallet(wallet);
-            transaction.setUser(user);
-            transaction.setOrder(null);
-            transaction.setAmount(fee);
-            transaction.setTransactionType(TransactionType.PAYMENT);
-            transaction.setTransactionDate(LocalDateTime.now());
-            transaction.setDescription("Membership plan payment via E-Wallet");
-            transactionRepository.save(transaction);
-
-            paymentMessage = "Membership plan updated successfully. Payment made via E-Wallet.";
-        }
-
+        transactionService.createMembershipTransaction(user, fee);
         user.setMembershipPlan(request.membershipPlan());
-        log.info("Membership plan updated for {} with payment method: {}", user.getUsername(), request.paymentMethod());
+        log.info("Membership plan updated for {} with payment method: {}", user.getUsername(), PaymentMethod.E_WALLET);
 
-        return new UpdateMembershipPlan(request.membershipPlan(), fee, paymentMessage);
+        return new UpdateMembershipPlan(request.membershipPlan(), fee, "Membership plan updated successfully.");
     }
 
 
@@ -137,7 +113,7 @@ public class UserService {
                 .phone(request.phone())
                 .email(request.email())
                 .role(request.role())
-                .bonusPointsWon(new BigDecimal("0.0"))
+                .bonusPointsWon(BigDecimal.ZERO)
                 .currentBonusPoints(BigDecimal.ZERO)
                 .totalOrders(0)
                 .cancelledOrders(0)
@@ -149,18 +125,8 @@ public class UserService {
 
         if (request.address() != null && !request.address().isEmpty()) {
             List<Address> addresses = request.address().stream()
-                    .map(addressDto -> Address.builder()
-                            .country(addressDto.getCountry())
-                            .city(addressDto.getCity())
-                            .street(addressDto.getStreet())
-                            .aptNo(addressDto.getAptNo())
-                            .flatNo(addressDto.getFlatNo())
-                            .description(addressDto.getDescription())
-                            .addressType(addressDto.getAddressType())
-                            .user(user)
-                            .build())
+                    .map(addressDto -> addressMapper.toAddress(addressDto, user))
                     .toList();
-
             user.setAddresses(addresses);
         }
 
@@ -249,21 +215,7 @@ public class UserService {
         log.info("User details: userId={}, email={}, username={}, role={}, password={}, total orders = {}",
                 user.getUserId(), user.getEmail(), user.getUsername(), user.getRole(), user.getPassword(), user.getTotalOrders());
 
-        return UserResponse.builder()
-                .userId(user.getUserId())
-                .email(user.getEmail())
-                .username(user.getUsername())
-                .phone(user.getPhone())
-                .password(user.getPassword())
-                .totalOrders(user.getTotalOrders())
-                .cancelledOrders(user.getCancelledOrders())
-                .bonusPoints(user.getBonusPointsWon())
-                .membershipPlan(user.getMembershipPlan())
-                .role(user.getRole())
-                .totalOrderFeePaid(user.getTotalOrderFeePaid())
-                .totalShippingFeePaid(user.getTotalShippingFeePaid())
-                .totalSaved(user.getTotalSaved())
-                .build();
+        return userMapper.toUserResponse(user);
     }
 
     public List<AddressResponse> addressInfo(HttpServletRequest request) {
@@ -274,18 +226,7 @@ public class UserService {
             throw new RuntimeException("No addresses found for user: " + user.getUsername());
         }
 
-        return addresses.stream()
-                .map(address -> AddressResponse.builder()
-                        .addressId(address.getAddressId())
-                        .country(address.getCountry())
-                        .city(address.getCity())
-                        .street(address.getStreet())
-                        .aptNo(address.getAptNo())
-                        .flatNo(address.getFlatNo())
-                        .description(address.getDescription())
-                        .addressType(address.getAddressType())
-                        .build())
-                .toList();
+        return addressMapper.toAddressResponseList(addresses);
     }
 
 

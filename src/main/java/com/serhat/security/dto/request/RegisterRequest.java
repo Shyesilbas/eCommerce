@@ -1,5 +1,6 @@
 package com.serhat.security.dto.request;
 
+import com.serhat.security.dto.object.AddressDto;
 import com.serhat.security.entity.Address;
 import com.serhat.security.entity.enums.MembershipPlan;
 import com.serhat.security.entity.enums.Role;
@@ -31,6 +32,6 @@ public record RegisterRequest(
         String phone,
 
 
-        List<Address> address
+        List<AddressDto> address
 ) {
 }

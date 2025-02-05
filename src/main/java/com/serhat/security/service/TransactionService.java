@@ -55,16 +55,18 @@ public class TransactionService {
 
             transactions.add(paymentTransaction);
 
-            Transaction bonusTransaction = new Transaction();
-            bonusTransaction.setWallet(wallet);
-            bonusTransaction.setUser(user);
-            bonusTransaction.setOrder(order);
-            bonusTransaction.setAmount(bonusPoints);
-            bonusTransaction.setTransactionType(TransactionType.BONUS_GRANTED);
-            bonusTransaction.setTransactionDate(LocalDateTime.now());
-            bonusTransaction.setDescription("Bonus points granted for order");
+            if (bonusPoints.compareTo(BigDecimal.ZERO) > 0) {
+                Transaction bonusTransaction = new Transaction();
+                bonusTransaction.setWallet(wallet);
+                bonusTransaction.setUser(user);
+                bonusTransaction.setOrder(order);
+                bonusTransaction.setAmount(bonusPoints);
+                bonusTransaction.setTransactionType(TransactionType.BONUS_GRANTED);
+                bonusTransaction.setTransactionDate(LocalDateTime.now());
+                bonusTransaction.setDescription("Bonus points granted for order");
 
-
+                transactions.add(bonusTransaction);
+            }
 
             transactionRepository.saveAll(transactions);
             walletRepository.save(wallet);
@@ -74,22 +76,60 @@ public class TransactionService {
     }
 
     @Transactional
-    public Transaction createRefundTransaction(Order order, User user, BigDecimal refundAmount, BigDecimal shippingFee) {
+    public void createRefundTransaction(Order order, User user, BigDecimal totalPaid, BigDecimal shippingFee) {
         Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
                 .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
 
-        wallet.setBalance(wallet.getBalance().add(refundAmount));
+        wallet.setBalance(wallet.getBalance().add(totalPaid));
         walletRepository.save(wallet);
+
+        List<Transaction> transactions = new ArrayList<>();
 
         Transaction refundTransaction = new Transaction();
         refundTransaction.setWallet(wallet);
         refundTransaction.setUser(user);
         refundTransaction.setOrder(order);
-        refundTransaction.setAmount(refundAmount);
+        refundTransaction.setAmount(totalPaid);
         refundTransaction.setTransactionType(TransactionType.CANCEL_REFUND);
         refundTransaction.setTransactionDate(LocalDateTime.now());
         refundTransaction.setDescription(String.format("Refund for canceled order, including shipping fee: %s", shippingFee));
+        transactions.add(refundTransaction);
 
-        return transactionRepository.save(refundTransaction);
+        Transaction bonusRefund = new Transaction();
+        bonusRefund.setWallet(wallet);
+        bonusRefund.setUser(user);
+        bonusRefund.setOrder(order);
+        bonusRefund.setAmount(order.getBonusWon());
+        bonusRefund.setTransactionType(TransactionType.CANCEL_REFUND);
+        bonusRefund.setTransactionDate(LocalDateTime.now());
+        bonusRefund.setDescription("Refund Bonus for canceled order");
+        transactions.add(bonusRefund);
+
+        transactionRepository.saveAll(transactions);
     }
+
+    @Transactional
+    public void createMembershipTransaction(User user, BigDecimal fee) {
+        Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
+                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
+
+        if (wallet.getBalance().compareTo(fee) < 0) {
+            throw new InsufficientFundsException("Insufficient funds in wallet");
+        }
+
+        wallet.setBalance(wallet.getBalance().subtract(fee));
+        walletRepository.save(wallet);
+
+        Transaction transaction = new Transaction();
+        transaction.setWallet(wallet);
+        transaction.setUser(user);
+        transaction.setOrder(null);
+        transaction.setAmount(fee);
+        transaction.setTransactionType(TransactionType.PAYMENT);
+        transaction.setTransactionDate(LocalDateTime.now());
+        transaction.setDescription("Membership plan payment via E-Wallet");
+
+        transactionRepository.save(transaction);
+    }
+
 }

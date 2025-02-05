@@ -11,6 +11,7 @@ import com.serhat.security.repository.DiscountCodeRepository;
 import com.serhat.security.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -111,11 +112,13 @@ public class PaymentService {
 
         if (orderRequest.useBonus() != null && orderRequest.useBonus()) {
             BigDecimal availableBonusPoints = user.getCurrentBonusPoints();
+
             if (availableBonusPoints.compareTo(BigDecimal.ZERO) > 0) {
                 bonusPointsUsed = availableBonusPoints.min(totalPrice);
                 totalPrice = totalPrice.subtract(bonusPointsUsed);
 
                 user.setCurrentBonusPoints(availableBonusPoints.subtract(bonusPointsUsed));
+                user.getWallet().setBonusPoints(user.getCurrentBonusPoints());
                 user.setTotalSaved(user.getTotalSaved().add(bonusPointsUsed));
             } else {
                 throw new NoBonusPointsException("No bonus points found");
@@ -125,6 +128,7 @@ public class PaymentService {
         return new BonusUsageResult(totalPrice, bonusPointsUsed);
     }
 
+    @Transactional
     public List<Transaction> createOrderTransactions(Order order) {
         return transactionService.createTransactions(
                 order, order.getUser(), order.getTotalPaid(), order.getBonusWon(), order.getShippingFee());

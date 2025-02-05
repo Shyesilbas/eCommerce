@@ -9,12 +9,13 @@ import java.util.List;
 public record OrderCancellationResponse(
         BigDecimal orderFee,
         BigDecimal shippingFee,
+        Boolean isBonusPointsUsed,
+        BigDecimal bonusPointsUsed,
+        BigDecimal totalDiscount,
         BigDecimal refundFee,
         List<OrderItemDetails> orderItems,
         OrderStatus status,
         LocalDateTime cancellationDate,
-        String message,
-        Boolean isBonusPointsUsed,
-        BigDecimal bonusPointsUsed
+        String message
 ) {
 }

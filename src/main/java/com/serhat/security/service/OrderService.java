@@ -150,6 +150,9 @@ public class OrderService {
         updateDiscountCodeStatus(order.getDiscountCode());
         generateDiscountCodeIfEligible(order, request);
         updateUserTotalFees(user);
+
+        BigDecimal totalSaved = order.getBonusPointsUsed().add(order.getTotalDiscount());
+        user.setTotalSaved(user.getTotalSaved().add(totalSaved));
     }
 
     private void saveOrderAndUpdateUser(Order order, User user) {
@@ -223,17 +226,6 @@ public class OrderService {
             } else if (order.getStatus() == OrderStatus.SHIPPED && minutesSinceOrder >= 180) {
                 order.setStatus(OrderStatus.DELIVERED);
                 log.info("Order {} status updated to DELIVERED", order.getOrderId());
-            } else if (order.getStatus() == OrderStatus.CANCELLED) {
-                long minutesSinceCancellation = java.time.Duration.between(order.getUpdatedAt(), LocalDateTime.now()).toMinutes();
-                if (minutesSinceCancellation >= 15) {
-                    order.setStatus(OrderStatus.REFUNDED);
-
-                    if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
-                        transactionService.createRefundTransaction(order, order.getUser(), order.getTotalPrice(), order.getShippingFee());
-                        log.info("Order {} REFUNDED: {} added back to wallet", order.getOrderId(), order.getTotalPrice());
-                    }
-                    log.info("Order {} status updated to REFUNDED", order.getOrderId());
-                }
             }
         }
         orderRepository.saveAll(orders);
@@ -254,46 +246,57 @@ public class OrderService {
         }
 
         Wallet wallet = paymentService.findWalletForUser(user);
-
         BigDecimal shippingFee = paymentService.calculateShippingFee(user, order.getTotalPrice());
-        BigDecimal totalPaid = order.getTotalPrice().add(shippingFee);
+        BigDecimal totalPaid = order.getTotalPaid();
 
-        if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
-            if (order.getBonusPointsUsed().compareTo(BigDecimal.ZERO) > 0) {
-                user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(order.getBonusPointsUsed()));
-                wallet.setBonusPoints(wallet.getBonusPoints().add(order.getBonusPointsUsed()));
-            }
+        if (order.getBonusPointsUsed().compareTo(BigDecimal.ZERO) > 0) {
+            user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(order.getBonusPointsUsed()));
+            wallet.setBonusPoints(user.getCurrentBonusPoints());
+            user.setTotalSaved(user.getTotalSaved().subtract(order.getBonusPointsUsed()));
         }
 
-        order.getOrderItems().forEach(orderItem -> {
+        if (order.getTotalDiscount().compareTo(BigDecimal.ZERO) > 0) {
+            user.setTotalSaved(user.getTotalSaved().subtract(order.getTotalDiscount()));
+        }
+
+        for (OrderItem orderItem : order.getOrderItems()) {
             Product product = orderItem.getProduct();
             product.setQuantity(product.getQuantity() + orderItem.getQuantity());
 
             if (product.getQuantity() > 0 && product.getStockStatus() == StockStatus.OUT_OF_STOCKS) {
                 product.setStockStatus(StockStatus.AVAILABLE);
             }
-            productRepository.save(product);
-        });
+        }
 
         user.setCancelledOrders(user.getCancelledOrders() + 1);
         user.setTotalShippingFeePaid(user.getTotalShippingFeePaid().subtract(shippingFee));
-        user.setTotalOrderFeePaid(user.getTotalOrderFeePaid().subtract(order.getTotalPrice()));
-        order.setStatus(OrderStatus.CANCELLED);
+        user.setTotalOrderFeePaid(user.getTotalOrderFeePaid().subtract(order.getTotalPaid()));
+
+        order.setStatus(OrderStatus.REFUNDED);
         order.setUpdatedAt(LocalDateTime.now());
+
+        if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
+            transactionService.createRefundTransaction(order, user, totalPaid, shippingFee);
+        }
+
         orderRepository.save(order);
+        productRepository.saveAll(order.getOrderItems().stream().map(OrderItem::getProduct).toList());
+        userRepository.save(user);
 
         return new OrderCancellationResponse(
                 order.getTotalPrice(),
                 order.getShippingFee(),
+                order.getIsBonusPointUsed(),
+                order.getBonusPointsUsed(),
+                order.getTotalDiscount(),
                 totalPaid,
                 orderMapper.toOrderItemDetails(order.getOrderItems()),
                 order.getStatus(),
                 LocalDateTime.now(),
-                "Refund will be done after minutes.",
-                order.getIsBonusPointUsed(),
-                order.getBonusPointsUsed()
+                "Refund processed immediately."
         );
     }
+
 
     public OrderResponse getOrderDetails(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
