@@ -7,6 +7,7 @@ import com.serhat.security.entity.*;
 import com.serhat.security.entity.enums.*;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
+import com.serhat.security.mapper.OrderMapper;
 import com.serhat.security.repository.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,96 +34,22 @@ public class OrderService {
     private final AddressRepository addressRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
-    private final WalletRepository walletRepository;
     private final DiscountCodeService discountCodeService;
-    private final DiscountCodeRepository discountCodeRepository;
     private final TransactionService transactionService;
+    private final PaymentService paymentService;
+    private final OrderMapper orderMapper;
+
     private boolean isAddressBelongsToUser(Long addressId, Long userId) {
         return addressRepository.existsByAddressIdAndUserUserId(addressId, userId);
     }
 
-    private AddressDto convertToAddressDto(Long addressId) {
-        return addressRepository.findById(addressId)
-                .map(address -> new AddressDto(
-                        address.getAddressId(), address.getCountry(), address.getCity(),
-                        address.getStreet(), address.getAptNo(), address.getFlatNo(),
-                        address.getDescription(), address.getAddressType()))
-                .orElseThrow(() -> new AddressNotFoundException("Address not found for ID: " + addressId));
-    }
-
-    private List<OrderItemDetails> convertToOrderItemDetails(List<OrderItem> orderItems) {
-        return orderItems.stream()
-                .map(item -> OrderItemDetails.builder()
-                        .productCode(item.getProduct().getProductCode())
-                        .productName(item.getProduct().getName())
-                        .price(item.getPrice())
-                        .quantity(item.getQuantity())
-                        .brand(item.getProduct().getBrand())
-                        .subtotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    private BigDecimal calculateShippingFee(User user, BigDecimal totalPrice) {
-        switch (user.getMembershipPlan()) {
-            case VIP -> {
-                return BigDecimal.ZERO;
-            }
-            case PREMIUM -> {
-                return (totalPrice.compareTo(BigDecimal.valueOf(100)) >= 0) ? BigDecimal.ZERO : BigDecimal.valueOf(6.99);
-            }
-            case BASIC -> {
-                return (totalPrice.compareTo(BigDecimal.valueOf(200)) >= 0) ? BigDecimal.ZERO : BigDecimal.valueOf(10.99);
-            }
-        }
-        return BigDecimal.ZERO;
-    }
-
-
-    private BigDecimal calculateBonusPoints(User user, BigDecimal totalPrice) {
-        BigDecimal bonusRate = switch (user.getMembershipPlan()) {
-            case VIP -> BigDecimal.valueOf(0.05);
-            case PREMIUM -> BigDecimal.valueOf(0.03);
-            case BASIC -> BigDecimal.valueOf(0.01);
-        };
-        return totalPrice.multiply(bonusRate);
-    }
-
-    private OrderResponse convertToOrderResponse(Order order) {
-        AddressDto shippingAddress = convertToAddressDto(order.getShippingAddressId());
-        List<OrderItemDetails> orderItems = convertToOrderItemDetails(order.getOrderItems());
-
-        BigDecimal cartTotalPrice = order.getTotalPrice();
-        BigDecimal totalBeforeDiscount = cartTotalPrice.add(order.getShippingFee());
-        BigDecimal saved = totalBeforeDiscount.subtract(order.getTotalPaid());
-
-        return new OrderResponse(
-                order.getOrderId(),
-                order.getOrderDate(),
-                order.getStatus(),
-                shippingAddress,
-                order.getPaymentMethod(),
-                order.getTotalPrice(),
-                order.getShippingFee(),
-                totalBeforeDiscount,
-                order.getTotalDiscount(),
-                order.getBonusPointsUsed(),
-                order.getTotalPaid(),
-                saved,
-                order.getNotes(),
-                orderItems,
-                order.getBonusWon()
-        );
-    }
-
-
     @Transactional
     public OrderResponse createOrder(HttpServletRequest request, OrderRequest orderRequest) {
         User user = validateAndGetUser(request, orderRequest);
-        findWalletForUser(user); // user have to have a wallet for payment
-        List<ShoppingCard> shoppingCards = getValidatedShoppingCart(user); // get user's shopping card
+        paymentService.findWalletForUser(user);
+        List<ShoppingCard> shoppingCards = getValidatedShoppingCart(user);
 
-        PriceDetails priceDetails = calculatePriceDetails(shoppingCards, user, orderRequest);
+        PriceDetails priceDetails = paymentService.calculatePriceDetails(shoppingCards, user, orderRequest);
         updateUserBonusPoints(user, priceDetails.bonusPoints());
 
         Order order = createOrderEntity(user, orderRequest, priceDetails);
@@ -131,7 +57,7 @@ public class OrderService {
 
         finalizeOrder(order, user, shoppingCards, request);
 
-        return convertToOrderResponse(order);
+        return orderMapper.toOrderResponse(order);
     }
 
     private User validateAndGetUser(HttpServletRequest request, OrderRequest orderRequest) {
@@ -148,48 +74,6 @@ public class OrderService {
             throw new EmptyShoppingCardException("No products in the shopping cart!");
         }
         return shoppingCards;
-    }
-    private PriceDetails calculatePriceDetails(List<ShoppingCard> shoppingCards, User user, OrderRequest orderRequest) {
-        BigDecimal totalPrice = calculateTotalPrice(shoppingCards);
-        BigDecimal originalTotalPrice = totalPrice;
-        BigDecimal shippingFee = calculateShippingFee(user, totalPrice);
-        BigDecimal bonusPoints = calculateBonusPoints(user, totalPrice);
-
-        DiscountDetails discountDetails = applyDiscountIfAvailable(orderRequest, originalTotalPrice, user);
-        totalPrice = totalPrice.subtract(discountDetails.discountAmount());
-
-        BonusUsageResult bonusUsageResult = useBonusIfRequested(user, orderRequest, totalPrice);
-        totalPrice = bonusUsageResult.updatedTotalPrice();
-        BigDecimal bonusPointsUsed = bonusUsageResult.bonusPointsUsed();
-
-        BigDecimal finalPrice = totalPrice.add(shippingFee);
-
-        return new PriceDetails(totalPrice, originalTotalPrice, shippingFee, bonusPoints,
-                discountDetails.discountAmount(), finalPrice, discountDetails.discountCode(), bonusPointsUsed);
-    }
-
-    private BigDecimal calculateTotalPrice(List<ShoppingCard> shoppingCards) {
-        return shoppingCards.stream()
-                .map(sc -> sc.getProduct().getPrice().multiply(new BigDecimal(sc.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    private DiscountDetails applyDiscountIfAvailable(OrderRequest orderRequest, BigDecimal originalTotalPrice, User user) {
-        if (orderRequest.discountId() == null) {
-            return new DiscountDetails(BigDecimal.ZERO, null);
-        }
-
-        DiscountCode discountCode = discountCodeRepository.findById(orderRequest.discountId())
-                .orElseThrow(() -> new InvalidDiscountCodeException("Invalid discount code"));
-        validateDiscountCode(discountCode, user);
-
-        BigDecimal discountAmount = calculateDiscountAmount(originalTotalPrice, discountCode);
-        return new DiscountDetails(discountAmount, discountCode);
-    }
-
-    private BigDecimal calculateDiscountAmount(BigDecimal originalTotalPrice, DiscountCode discountCode) {
-        return originalTotalPrice
-                .multiply(BigDecimal.valueOf(discountCode.getDiscountRate().getPercentage() / 100.0));
     }
 
     private void updateUserBonusPoints(User user, BigDecimal bonusPoints) {
@@ -221,7 +105,7 @@ public class OrderService {
 
     private void processOrderItems(Order order, List<ShoppingCard> shoppingCards) {
         List<OrderItem> orderItems = createOrderItems(order, shoppingCards);
-        List<Transaction> transactions = createOrderTransactions(order);
+        List<Transaction> transactions = paymentService.createOrderTransactions(order);
 
         order.setOrderItems(orderItems);
         order.setTransactions(transactions);
@@ -259,11 +143,6 @@ public class OrderService {
         }
     }
 
-    private List<Transaction> createOrderTransactions(Order order) {
-        return transactionService.createTransactions(
-                order, order.getUser(), order.getTotalPaid(), order.getBonusWon(), order.getShippingFee());
-    }
-
     private void finalizeOrder(Order order, User user, List<ShoppingCard> shoppingCards, HttpServletRequest request) {
         saveOrderAndUpdateUser(order, user);
         clearShoppingCart(shoppingCards);
@@ -294,32 +173,6 @@ public class OrderService {
         }
     }
 
-    private void findWalletForUser(User user) {
-         walletRepository.findByUser_UserId(user.getUserId())
-                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
-    }
-
-
-
-    private BonusUsageResult useBonusIfRequested(User user, OrderRequest orderRequest, BigDecimal totalPrice) {
-        BigDecimal bonusPointsUsed = BigDecimal.ZERO;
-
-        if (orderRequest.useBonus() != null && orderRequest.useBonus()) {
-            BigDecimal availableBonusPoints = user.getCurrentBonusPoints();
-            if (availableBonusPoints.compareTo(BigDecimal.ZERO) > 0) {
-                bonusPointsUsed = availableBonusPoints.min(totalPrice);
-                totalPrice = totalPrice.subtract(bonusPointsUsed);
-
-                user.setCurrentBonusPoints(availableBonusPoints.subtract(bonusPointsUsed));
-                user.setTotalSaved(user.getTotalSaved().add(bonusPointsUsed));
-            }else{
-                throw new NoBonusPointsException("No bonus points found");
-            }
-        }
-
-        return new BonusUsageResult(totalPrice, bonusPointsUsed);
-    }
-
     private void updateUserTotalFees(User user) {
         BigDecimal totalShippingFee = orderRepository.findByUser(user).stream()
                 .map(Order::getShippingFee)
@@ -329,33 +182,16 @@ public class OrderService {
                 .map(order -> order.getTotalPaid().subtract(order.getShippingFee()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-
         user.setTotalShippingFeePaid(totalShippingFee);
         user.setTotalOrderFeePaid(totalOrderFee);
         userRepository.save(user);
     }
 
-
-    private void validateDiscountCode(DiscountCode discountCode, User user) {
-        if (discountCode.getUser() != null && !discountCode.getUser().getUserId().equals(user.getUserId())) {
-            throw new InvalidDiscountCodeException("This discount code is not valid for the current user!");
-        }
-
-        if (discountCode.getStatus().equals(CouponStatus.EXPIRED)) {
-            throw new DiscountCodeExpiredException("This coupon has expired!");
-        }
-
-        if (discountCode.getStatus().equals(CouponStatus.USED)) {
-            throw new CouponAlreadyUsedException("The coupon you entered is already used");
-        }
-    }
-
-    private void generateDiscountCodeIfEligible(Order order , HttpServletRequest request){
-        if(order.getTotalPrice().compareTo(new BigDecimal("800.00")) >=0){
+    private void generateDiscountCodeIfEligible(Order order, HttpServletRequest request) {
+        if (order.getTotalPrice().compareTo(new BigDecimal("800.00")) >= 0) {
             discountCodeService.generateDiscountCode(request);
         }
     }
-
 
     public List<OrderResponse> getOrdersByUser(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
@@ -365,7 +201,9 @@ public class OrderService {
             throw new NoOrderException("No orders found");
         }
 
-        return orders.stream().map(this::convertToOrderResponse).collect(Collectors.toList());
+        return orders.stream()
+                .map(orderMapper::toOrderResponse)
+                .collect(Collectors.toList());
     }
 
     @Scheduled(fixedRate = 60000)
@@ -415,10 +253,9 @@ public class OrderService {
             throw new OrderCancellationException("Order cannot be canceled as it is already shipped or delivered!");
         }
 
-        Wallet wallet = walletRepository.findByUser_UserId(user.getUserId())
-                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
+        Wallet wallet = paymentService.findWalletForUser(user);
 
-        BigDecimal shippingFee = calculateShippingFee(user, order.getTotalPrice());
+        BigDecimal shippingFee = paymentService.calculateShippingFee(user, order.getTotalPrice());
         BigDecimal totalPaid = order.getTotalPrice().add(shippingFee);
 
         if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
@@ -449,7 +286,7 @@ public class OrderService {
                 order.getTotalPrice(),
                 order.getShippingFee(),
                 totalPaid,
-                convertToOrderItemDetails(order.getOrderItems()),
+                orderMapper.toOrderItemDetails(order.getOrderItems()),
                 order.getStatus(),
                 LocalDateTime.now(),
                 "Refund will be done after minutes.",
@@ -457,6 +294,7 @@ public class OrderService {
                 order.getBonusPointsUsed()
         );
     }
+
     public OrderResponse getOrderDetails(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         Order order = orderRepository.findById(orderId)
@@ -466,6 +304,6 @@ public class OrderService {
             throw new RuntimeException("You are not authorized to view this order!");
         }
 
-        return convertToOrderResponse(order);
+        return orderMapper.toOrderResponse(order);
     }
 }
