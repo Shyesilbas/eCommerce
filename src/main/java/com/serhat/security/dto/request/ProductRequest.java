@@ -16,7 +16,8 @@ public record ProductRequest(
         String stockStatus,
         String color,
         int quantity,
-        String category
+        String category,
+        boolean isReturnable
 ) {
 
 }

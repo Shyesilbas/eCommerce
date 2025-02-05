@@ -24,6 +24,7 @@ public class ProductMapper {
                 .color(productRequest.color())
                 .quantity(productRequest.quantity())
                 .category(Category.valueOf(productRequest.category()))
+                .isReturnable(productRequest.isReturnable())
                 .build();
     }
 
@@ -40,7 +41,8 @@ public class ProductMapper {
                 product.getStockStatus(),
                 product.getColor(),
                 product.getQuantity(),
-                product.getCategory()
+                product.getCategory(),
+                product.isReturnable()
         );
     }
 

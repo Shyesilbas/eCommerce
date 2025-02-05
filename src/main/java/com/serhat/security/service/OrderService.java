@@ -245,6 +245,13 @@ public class OrderService {
             throw new OrderCancellationException("Order cannot be canceled as it is already shipped or delivered!");
         }
 
+        boolean isItemsReturnable = order.getOrderItems().stream()
+                .allMatch(orderItem -> orderItem.getProduct().isReturnable());
+
+        if (!isItemsReturnable) {
+            throw new OrderCancellationException("All the items must be returnable to cancel the order!");
+        }
+
         Wallet wallet = paymentService.findWalletForUser(user);
         BigDecimal shippingFee = paymentService.calculateShippingFee(user, order.getTotalPrice());
         BigDecimal totalPaid = order.getTotalPaid();

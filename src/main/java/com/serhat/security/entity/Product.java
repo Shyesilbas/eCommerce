@@ -44,6 +44,7 @@ public class Product {
     private String color;
     @Column(name = "quantity",nullable = false)
     private int quantity;
+    private boolean isReturnable;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PriceHistory> priceHistoryList = new ArrayList<>();

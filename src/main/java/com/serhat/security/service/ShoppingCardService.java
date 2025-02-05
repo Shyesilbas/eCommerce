@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,22 +55,12 @@ public class ShoppingCardService {
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
 
         if (!shoppingCardRepository.existsByUserAndProduct(user, product)) {
-            ShoppingCard shoppingCard = ShoppingCard.builder()
-                    .user(user)
-                    .product(product)
-                    .addedAt(LocalDate.now())
-                    .quantity(1)
-                    .build();
+            ShoppingCard shoppingCard = shoppingCardMapper.convertToShoppingCard(user, product);
             shoppingCardRepository.save(shoppingCard);
-            log.info("Product {} added to shopping card for user {}", productId, user.getUsername());
         }
 
-        return new AddedToCardResponse(
-                product.getName(),
-                product.getBrand(),
-                product.getProductCode(),
-                product.getPrice()
-        );
+        return shoppingCardMapper.convertToAddedToCardResponse(product);
+
     }
 
     @Transactional
@@ -79,7 +68,6 @@ public class ShoppingCardService {
         if (quantity < 0) {
             throw new InvalidQuantityException("Quantity cannot be negative!");
         }
-
         User user = tokenInterface.getUserFromToken(servletRequest);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
@@ -95,12 +83,7 @@ public class ShoppingCardService {
             shoppingCardRepository.save(shoppingCard);
             log.info("Product {} quantity updated to {} for user {}", productId, shoppingCard.getQuantity(), user.getUsername());
         }
-
-        return new QuantityUpdateResponse(
-                product.getName(),
-                product.getProductCode(),
-                quantity
-        );
+       return shoppingCardMapper.quantityUpdateResponse(product,quantity);
     }
 
 

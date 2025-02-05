@@ -19,7 +19,8 @@ public record ProductDto(
         StockStatus stockStatus,
         String color,
         int quantity,
-        Category category
+        Category category,
+        boolean isReturnable
 ) {
 
 

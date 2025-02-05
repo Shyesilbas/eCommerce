@@ -44,6 +44,7 @@ OrderMapper {
                         .quantity(item.getQuantity())
                         .brand(item.getProduct().getBrand())
                         .subtotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                        .isReturnable(item.isReturnable())
                         .build())
                 .collect(Collectors.toList());
     }

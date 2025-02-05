@@ -11,7 +11,8 @@ public record OrderItemDetails(
         BigDecimal price,
         Integer quantity,
         String brand,
-        BigDecimal subtotal
+        BigDecimal subtotal,
+        boolean isReturnable
 
 ) {
 }
