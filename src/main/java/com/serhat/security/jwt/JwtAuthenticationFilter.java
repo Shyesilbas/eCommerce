@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.util.Collections;
 
 @Slf4j
@@ -55,37 +56,66 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
                     log.warn("Token is blacklisted for user: {}", username);
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.getWriter().write("Token is blacklisted");
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\": \"Token is blacklisted. Please log in again.\"}");
                     return;
                 }
 
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
                 User user = (User) userDetails;
 
-                if (jwtUtil.validateToken(jwt, user)) {
-                    String role = jwtUtil.extractRole(jwt).name();
-                    log.info("Valid token found for user: {} with role: {}", username, role);
-
-                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            Collections.singletonList(authority)
-                    );
-
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                    log.info("Authentication set in SecurityContext for user: {}", username);
-                } else {
-                    log.warn("Invalid token for user: {}", username);
-                    throw new InvalidTokenException("Invalid or expired token");
+                if (!jwtUtil.validateToken(jwt, user)) {
+                    log.warn("Invalid or expired token for user: {}", username);
+                    throw new InvalidTokenException("Invalid or expired token. Please log in again.");
                 }
+
+                String role = jwtUtil.extractRole(jwt).name();
+                log.info("Valid token found for user: {} with role: {}", username, role);
+
+                SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        Collections.singletonList(authority)
+                );
+
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+                log.info("Authentication set in SecurityContext for user: {}", username);
+
+            } catch (InvalidTokenException e) {
+                log.error("Invalid token: {}", e.getMessage());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+                return;
+
+            } catch (AccessDeniedException e) {
+                log.error("Access denied: {}", e.getMessage());
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\": \"Access denied. You do not have permission to access this resource.\"}");
+                return;
+
             } catch (Exception e) {
-                log.error("Error processing JWT token", e);
-                throw new InvalidTokenException("Authentication failed");
+
+                log.error("Unexpected error: {}", e.getMessage());
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\": \"An unexpected error occurred. Please try again later.\"}");
+                return;
             }
+        } else if (jwt == null && request.getRequestURI().startsWith("/api/")) {
+
+            log.warn("No token provided for API access: {}", request.getRequestURI());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Access denied. No token provided. Please log in.\"}");
+            return;
         }
 
         filterChain.doFilter(request, response);
     }
+
 }
+

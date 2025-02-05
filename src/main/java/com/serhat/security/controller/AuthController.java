@@ -32,14 +32,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request) {
-        try {
-            authService.logout(request);
-            return ResponseEntity.ok("Logged out successfully.");
-        } catch (Exception e) {
-            log.error("Logout error: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Logout failed: " + e.getMessage());
-        }
+    public ResponseEntity<AuthResponse> logout(HttpServletRequest request) {
+        return ResponseEntity.ok(authService.logout(request));
     }
 
     @PostMapping("/register")
@@ -52,5 +46,11 @@ public class AuthController {
     @GetMapping("/test/CUSTOMER")
     public String testCustomer(){
         return "Only customer can access";
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/test/ADMIN")
+    public String testAdmin(){
+        return "Only admin can access";
     }
 }

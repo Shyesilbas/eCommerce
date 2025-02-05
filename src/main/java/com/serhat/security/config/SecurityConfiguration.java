@@ -1,5 +1,6 @@
 package com.serhat.security.config;
 
+import com.serhat.security.component.CustomAccessDeniedHandler;
 import com.serhat.security.jwt.JwtAuthenticationFilter;
 import com.serhat.security.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -30,6 +30,7 @@ import java.util.List;
 public class SecurityConfiguration {
     private final JwtAuthenticationFilter jwtAuthenticationFiler;
     private final UserDetailsServiceImpl userDetailsService;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
 
     @Bean
@@ -44,6 +45,9 @@ public class SecurityConfiguration {
                     corsConfig.setMaxAge(3600L);
                     return corsConfig;
                 }))
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/auth/login","/auth/register","/auth/logout","/api/products/info/id/{productCode}","/api/products/info/{productCode}","/api/products/allProducts","/api/products/categories").permitAll()
