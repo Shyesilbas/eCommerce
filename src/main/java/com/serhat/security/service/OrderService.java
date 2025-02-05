@@ -95,6 +95,7 @@ public class OrderService {
 
         BigDecimal cartTotalPrice = order.getTotalPrice();
         BigDecimal totalBeforeDiscount = cartTotalPrice.add(order.getShippingFee());
+        BigDecimal saved = totalBeforeDiscount.subtract(order.getTotalPaid());
 
         return new OrderResponse(
                 order.getOrderId(),
@@ -108,6 +109,7 @@ public class OrderService {
                 order.getTotalDiscount(),
                 order.getBonusPointsUsed(),
                 order.getTotalPaid(),
+                saved,
                 order.getNotes(),
                 orderItems,
                 order.getBonusWon()
@@ -118,8 +120,8 @@ public class OrderService {
     @Transactional
     public OrderResponse createOrder(HttpServletRequest request, OrderRequest orderRequest) {
         User user = validateAndGetUser(request, orderRequest);
-        findWalletForUser(user);
-        List<ShoppingCard> shoppingCards = getValidatedShoppingCart(user);
+        findWalletForUser(user); // user have to have a wallet for payment
+        List<ShoppingCard> shoppingCards = getValidatedShoppingCart(user); // get user's shopping card
 
         PriceDetails priceDetails = calculatePriceDetails(shoppingCards, user, orderRequest);
         updateUserBonusPoints(user, priceDetails.bonusPoints());
@@ -310,12 +312,28 @@ public class OrderService {
 
                 user.setCurrentBonusPoints(availableBonusPoints.subtract(bonusPointsUsed));
                 user.setTotalSaved(user.getTotalSaved().add(bonusPointsUsed));
+            }else{
+                throw new NoBonusPointsException("No bonus points found");
             }
         }
 
         return new BonusUsageResult(totalPrice, bonusPointsUsed);
     }
 
+    private void updateUserTotalFees(User user) {
+        BigDecimal totalShippingFee = orderRepository.findByUser(user).stream()
+                .map(Order::getShippingFee)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalOrderFee = orderRepository.findByUser(user).stream()
+                .map(order -> order.getTotalPaid().subtract(order.getShippingFee()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+
+        user.setTotalShippingFeePaid(totalShippingFee);
+        user.setTotalOrderFeePaid(totalOrderFee);
+        userRepository.save(user);
+    }
 
 
     private void validateDiscountCode(DiscountCode discountCode, User user) {
@@ -382,21 +400,6 @@ public class OrderService {
         }
         orderRepository.saveAll(orders);
     }
-
-    private void updateUserTotalFees(User user) {
-        BigDecimal totalShippingFee = orderRepository.findByUser(user).stream()
-                .map(Order::getShippingFee)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalOrderFee = orderRepository.findByUser(user).stream()
-                .map(Order::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        user.setTotalShippingFeePaid(totalShippingFee);
-        user.setTotalOrderFeePaid(totalOrderFee);
-        userRepository.save(user);
-    }
-
 
     @Transactional
     public OrderCancellationResponse cancelOrder(Long orderId, HttpServletRequest request) {

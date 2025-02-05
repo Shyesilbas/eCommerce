@@ -350,6 +350,18 @@ public class GlobalExceptionHandler{
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(NoBonusPointsException.class)
+    public ResponseEntity<ErrorResponse> handleNoBonusPointsException(NoBonusPointsException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                "No Bonus points!",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(DiscountCodeNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleDiscountCodeNotFoundException(DiscountCodeNotFoundException e){
 

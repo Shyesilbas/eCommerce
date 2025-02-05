@@ -24,6 +24,7 @@ public record OrderResponse(
         BigDecimal discountAmount,
         BigDecimal bonusPointsUsed,
         BigDecimal totalPaid,
+        BigDecimal saved,
 
         String notes,
         List<OrderItemDetails> orderItems,

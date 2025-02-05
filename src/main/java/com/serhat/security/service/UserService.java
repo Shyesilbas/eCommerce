@@ -72,6 +72,17 @@ public class UserService {
         }
     }
 
+    public BonusPointInformation bonusPointInformation(HttpServletRequest request){
+        User user = tokenInterface.getUserFromToken(request);
+        BigDecimal currentBonus = user.getCurrentBonusPoints();
+        BigDecimal totalBonusWon = user.getBonusPointsWon();
+
+        return new BonusPointInformation(
+                totalBonusWon,
+                currentBonus
+        );
+    }
+
     @Transactional
     public UpdateMembershipPlan updateMembershipPlan(HttpServletRequest servletRequest, UpdateMembershipRequest request) {
         User user = tokenInterface.getUserFromToken(servletRequest);

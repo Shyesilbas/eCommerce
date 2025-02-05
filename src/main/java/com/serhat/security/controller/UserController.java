@@ -35,6 +35,11 @@ public class UserController {
         return ResponseEntity.ok(userResponse);
     }
 
+    @GetMapping("/bonusInfo")
+    public ResponseEntity<BonusPointInformation> bonusPointInfo(HttpServletRequest request){
+        return ResponseEntity.ok(userService.bonusPointInformation(request));
+    }
+
     @GetMapping("/addressInfo")
     public ResponseEntity<List<AddressResponse>> getAddressInfo(HttpServletRequest request){
         List<AddressResponse> addressResponse = userService.addressInfo(request);
