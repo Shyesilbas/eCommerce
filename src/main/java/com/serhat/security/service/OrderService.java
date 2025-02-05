@@ -283,24 +283,8 @@ public class OrderService {
         productRepository.saveAll(order.getOrderItems().stream().map(OrderItem::getProduct).toList());
         userRepository.save(user);
 
-        return createOrderCancellationResponse(order, totalPaid);
+        return orderMapper.toOrderCancellationResponse(order, totalPaid);
     }
-
-    private OrderCancellationResponse createOrderCancellationResponse(Order order, BigDecimal totalPaid) {
-        return new OrderCancellationResponse(
-                order.getTotalPrice(),
-                order.getShippingFee(),
-                order.getIsBonusPointUsed(),
-                order.getBonusPointsUsed(),
-                order.getTotalDiscount(),
-                totalPaid,
-                orderMapper.toOrderItemDetails(order.getOrderItems()),
-                order.getStatus(),
-                LocalDateTime.now(),
-                "Refund processed immediately."
-        );
-    }
-
     public OrderResponse getOrderDetails(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         Order order = orderRepository.findById(orderId)
