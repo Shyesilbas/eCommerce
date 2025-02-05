@@ -1,12 +1,11 @@
 package com.serhat.security.jwt;
 
-import com.serhat.security.entity.enums.Role;
+import com.serhat.security.entity.User;
 import com.serhat.security.exception.InvalidTokenException;
 import com.serhat.security.service.TokenBlacklistService;
 import com.serhat.security.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
@@ -16,7 +15,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -50,22 +48,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             username = jwtUtil.extractUsername(jwt);
         }
 
-        if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
-            log.warn("Token is blacklisted for user: {}", username);
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token is blacklisted");
-            return;
-        }
-
         if (jwt != null && username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 log.info("Processing token for username: {}", username);
 
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-                log.info("Loaded UserDetails for username: {} with authorities: {}", username, userDetails.getAuthorities());
+                if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
+                    log.warn("Token is blacklisted for user: {}", username);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.getWriter().write("Token is blacklisted");
+                    return;
+                }
 
-                if (jwtUtil.validateToken(jwt, userDetails)) {
-                    Role role = jwtUtil.extractRole(jwt);
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                User user = (User) userDetails;
+
+                if (jwtUtil.validateToken(jwt, user)) {
+                    String role = jwtUtil.extractRole(jwt).name();
                     log.info("Valid token found for user: {} with role: {}", username, role);
 
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
@@ -88,8 +86,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-
         filterChain.doFilter(request, response);
     }
-
 }

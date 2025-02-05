@@ -1,6 +1,7 @@
 package com.serhat.security.jwt;
 
 import com.serhat.security.entity.Token;
+import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.Role;
 import com.serhat.security.entity.enums.TokenStatus;
 import com.serhat.security.exception.InvalidTokenException;
@@ -8,12 +9,10 @@ import com.serhat.security.exception.TokenNotFoundException;
 import com.serhat.security.repository.TokenRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -41,23 +40,22 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(UserDetails userDetails, Role role) {
-        log.info("Generating token for user: {}", userDetails.getUsername());
+    public String generateToken(User user, Role role) {
+        log.info("Generating token for user: {}", user.getUsername());
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role.name());
 
         String token = Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(user.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
 
-        log.info("Token generated successfully for user: {}", userDetails.getUsername());
+        log.info("Token generated successfully for user: {}", user.getUsername());
         return token;
     }
-
 
     public String extractUsername(String token) {
         log.debug("Extracting username from token");
@@ -71,14 +69,10 @@ public class JwtUtil {
         return Role.valueOf(roleName);
     }
 
-
-
-
     public Date extractExpiration(String token) {
         log.debug("Extracting expiration from token");
         return extractClaim(token, Claims::getExpiration);
     }
-
 
     public boolean isTokenInvalid(String token) {
         try {
@@ -101,15 +95,14 @@ public class JwtUtil {
         }
     }
 
-
-    public boolean validateToken(String token, UserDetails userDetails) {
-        log.info("Validating token for user: {}", userDetails.getUsername());
+    public boolean validateToken(String token, User user) {
+        log.info("Validating token for user: {}", user.getUsername());
         try {
             final String username = extractUsername(token);
             Token storedToken = tokenRepository.findByToken(token)
                     .orElseThrow(() -> new InvalidTokenException("Token not found in database"));
 
-            boolean isValid = username.equals(userDetails.getUsername()) && !isTokenInvalid(token);
+            boolean isValid = username.equals(user.getUsername()) && !isTokenInvalid(token);
 
             log.info("Token validation result: {}", isValid);
 
@@ -120,14 +113,6 @@ public class JwtUtil {
         }
     }
 
-
-
-    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        log.debug("Extracting claim from token");
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
-    }
-
     public String getTokenFromAuthorizationHeader(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -136,6 +121,34 @@ public class JwtUtil {
         throw new RuntimeException("JWT token not found in Authorization header");
     }
 
+    public void invalidateToken(String jwtToken) {
+        Token token = tokenRepository.findByToken(jwtToken)
+                .orElseThrow(() -> new TokenNotFoundException("Token not found"));
+
+        token.setTokenStatus(TokenStatus.LOGGED_OUT);
+        token.setExpired_at(new Date());
+        tokenRepository.save(token);
+        log.debug("Token invalidated: {}", jwtToken);
+    }
+
+    public void saveUserToken(User user, String token) {
+        Token newToken = Token.builder()
+                .username(user.getUsername())
+                .token(token)
+                .createdAt(new Date())
+                .expiresAt(new Date(System.currentTimeMillis() + expiration))
+                .tokenStatus(TokenStatus.ACTIVE)
+                .build();
+
+        tokenRepository.save(newToken);
+        log.debug("Token saved for user: {}", user.getUsername());
+    }
+
+    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        log.debug("Extracting claim from token");
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
 
     private Claims extractAllClaims(String token) {
         log.debug("Extracting all claims from token");

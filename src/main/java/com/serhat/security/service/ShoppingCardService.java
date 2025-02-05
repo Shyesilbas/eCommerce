@@ -12,6 +12,7 @@ import com.serhat.security.exception.InvalidQuantityException;
 import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.exception.ProductNotFoundInCardException;
 import com.serhat.security.interfaces.TokenInterface;
+import com.serhat.security.mapper.ShoppingCardMapper;
 import com.serhat.security.repository.ProductRepository;
 import com.serhat.security.repository.ShoppingCardRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,6 +33,7 @@ public class ShoppingCardService {
     private final ShoppingCardRepository shoppingCardRepository;
     private final TokenInterface tokenInterface;
     private final ProductRepository productRepository;
+    private final ShoppingCardMapper shoppingCardMapper;
 
     public List<CardProductDto> getShoppingCardByUser(HttpServletRequest servletRequest) {
         User user = tokenInterface.getUserFromToken(servletRequest);
@@ -43,22 +45,8 @@ public class ShoppingCardService {
         }
 
         return shoppingCards.stream()
-                .map(this::convertToCardProductDto)
+                .map(shoppingCardMapper::convertToCardProductDto)
                 .collect(Collectors.toList());
-    }
-
-    private CardProductDto convertToCardProductDto(ShoppingCard shoppingCard) {
-        Product product = shoppingCard.getProduct();
-        return CardProductDto.builder()
-                .productId(product.getProductId())
-                .productCode(product.getProductCode())
-                .name(product.getName())
-                .price(product.getPrice())
-                .description(product.getDescription())
-                .brand(product.getBrand())
-                .category(product.getCategory())
-                .quantity(shoppingCard.getQuantity())
-                .build();
     }
 
     @Transactional

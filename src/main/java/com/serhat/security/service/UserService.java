@@ -4,19 +4,15 @@ import com.serhat.security.dto.object.AddressDto;
 import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.Address;
-import com.serhat.security.entity.Transaction;
 import com.serhat.security.entity.User;
-import com.serhat.security.entity.Wallet;
 import com.serhat.security.entity.enums.MembershipPlan;
 import com.serhat.security.entity.enums.NotificationTopic;
 import com.serhat.security.entity.enums.PaymentMethod;
-import com.serhat.security.entity.enums.TransactionType;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.mapper.AddressMapper;
 import com.serhat.security.mapper.UserMapper;
 import com.serhat.security.repository.AddressRepository;
-import com.serhat.security.repository.TransactionRepository;
 import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +25,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -47,11 +42,14 @@ public class UserService {
     private final TransactionService transactionService;
     private final UserMapper userMapper;
 
+    public User getUserFromToken(HttpServletRequest request){
+        return tokenInterface.getUserFromToken(request);
+    }
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
         validateUserRegistration(request);
 
-        User user = buildUserFromRequest(request);
+        User user = userMapper.toUser(request);
         saveRawPassword("Register", user.getUsername(), request.password());
         userRepository.save(user);
 
@@ -65,34 +63,37 @@ public class UserService {
     }
 
     private void validateUserRegistration(RegisterRequest request) {
-        if (userRepository.findByEmail(request.email()).isPresent()) {
-            throw new EmailAlreadyExistException("Email Exists!");
-        }
-        if (userRepository.findByUsername(request.username()).isPresent()) {
-            throw new UsernameAlreadyExists("Username exists!");
-        }
-        if (userRepository.findByPhone(request.phone()).isPresent()) {
-            throw new UsernameAlreadyExists("Phone exists!");
-        }
+        Optional<User> existingUser = userRepository.findByEmailOrUsernameOrPhone(
+                request.email(),
+                request.username(),
+                request.phone()
+        );
+
+        existingUser.ifPresent(user -> {
+            if (user.getEmail().equals(request.email())) {
+                throw new EmailAlreadyExistException("Email already exists!");
+            }
+            if (user.getUsername().equals(request.username())) {
+                throw new UsernameAlreadyExists("Username already exists!");
+            }
+            if (user.getPhone().equals(request.phone())) {
+                throw new PhoneAlreadyExistsException("Phone number already exists!");
+            }
+        });
     }
 
     public BonusPointInformation bonusPointInformation(HttpServletRequest request){
-        User user = tokenInterface.getUserFromToken(request);
-        BigDecimal currentBonus = user.getCurrentBonusPoints();
-        BigDecimal totalBonusWon = user.getBonusPointsWon();
-
+        User user = getUserFromToken(request);
         return new BonusPointInformation(
-                totalBonusWon,
-                currentBonus
+                user.getBonusPointsWon(),
+                user.getCurrentBonusPoints()
         );
     }
 
     @Transactional
     public UpdateMembershipPlan updateMembershipPlan(HttpServletRequest servletRequest, UpdateMembershipRequest request) {
-        User user = tokenInterface.getUserFromToken(servletRequest);
-        MembershipPlan currentPlan = user.getMembershipPlan();
-
-        if (currentPlan.equals(request.membershipPlan())) {
+        User user = getUserFromToken(servletRequest);
+        if (user.getMembershipPlan().equals(request.membershipPlan())) {
             throw new SamePlanRequestException("You requested the same plan that you currently have.");
         }
 
@@ -105,40 +106,12 @@ public class UserService {
     }
 
 
-
-    private User buildUserFromRequest(RegisterRequest request) {
-        User user = User.builder()
-                .username(request.username())
-                .password(passwordEncoder.encode(request.password()))
-                .phone(request.phone())
-                .email(request.email())
-                .role(request.role())
-                .bonusPointsWon(BigDecimal.ZERO)
-                .currentBonusPoints(BigDecimal.ZERO)
-                .totalOrders(0)
-                .cancelledOrders(0)
-                .membershipPlan(MembershipPlan.BASIC)
-                .totalOrderFeePaid(BigDecimal.ZERO)
-                .totalShippingFeePaid(BigDecimal.ZERO)
-                .totalSaved(BigDecimal.ZERO)
-                .build();
-
-        if (request.address() != null && !request.address().isEmpty()) {
-            List<Address> addresses = request.address().stream()
-                    .map(addressDto -> addressMapper.toAddress(addressDto, user))
-                    .toList();
-            user.setAddresses(addresses);
-        }
-
-        return user;
-    }
-
     private void saveRawPassword(String message, String username, String rawPassword) {
         String filePath = "raw_credentials.txt";
         try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filePath, true))) {
             bufferedWriter.write(message + " Username: " + username + " Raw Password: " + rawPassword);
             bufferedWriter.newLine();
-            log.info("WRITTEN TO FILE");
+            log.info("Raw password written to file.");
         } catch (IOException e) {
             log.error("Error writing to file: " + e.getMessage());
         }
@@ -146,7 +119,7 @@ public class UserService {
 
     @Transactional
     public UpdatePhoneResponse updatePhone(HttpServletRequest request, UpdatePhoneRequest updatePhoneRequest) {
-        User user = tokenInterface.getUserFromToken(request);
+        User user = getUserFromToken(request);
 
         if (userRepository.findByPhone(updatePhoneRequest.phone()).isPresent()) {
             throw new EmailAlreadyExistException("Phone already exists!");
@@ -161,7 +134,7 @@ public class UserService {
 
     @Transactional
     public UpdateEmailResponse updateEmail(HttpServletRequest request, UpdateEmailRequest updateEmailRequest) {
-        User user = tokenInterface.getUserFromToken(request);
+        User user = getUserFromToken(request);
 
         if (userRepository.findByEmail(updateEmailRequest.newEmail()).isPresent()) {
             throw new EmailAlreadyExistException("Email already exists!");
@@ -176,7 +149,7 @@ public class UserService {
 
     @Transactional
     public UpdatePasswordResponse updatePassword(HttpServletRequest request, UpdatePasswordRequest updatePasswordRequest) {
-        User user = tokenInterface.getUserFromToken(request);
+        User user = getUserFromToken(request);
 
         if (user.getPassword().equals(updatePasswordRequest.newPassword())) {
             throw new RuntimeException("Passwords are same.");
@@ -210,59 +183,35 @@ public class UserService {
     }
 
     public UserResponse userInfo(HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
-
-        log.info("User details: userId={}, email={}, username={}, role={}, password={}, total orders = {}",
-                user.getUserId(), user.getEmail(), user.getUsername(), user.getRole(), user.getPassword(), user.getTotalOrders());
+        User user = getUserFromToken(request);
+        log.info("User details: userId={}, email={}, username={}, role={}, total orders={}",
+                user.getUserId(), user.getEmail(), user.getUsername(), user.getRole(), user.getTotalOrders());
 
         return userMapper.toUserResponse(user);
     }
 
     public List<AddressResponse> addressInfo(HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
+        User user = getUserFromToken(request);
         List<Address> addresses = addressRepository.findByUser_Username(user.getUsername());
 
         if (addresses.isEmpty()) {
             throw new RuntimeException("No addresses found for user: " + user.getUsername());
         }
-
         return addressMapper.toAddressResponseList(addresses);
     }
 
-
     @Transactional
     public UpdateAddressResponse updateAddress(Long addressId, HttpServletRequest request, UpdateAddressRequest updateAddressRequest) {
-        User user = tokenInterface.getUserFromToken(request);
+        User user = getUserFromToken(request);
 
         Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException("Address not found with ID: " + addressId));
+                .orElseThrow(() -> new AddressNotFoundException("Address not found with ID: " + addressId));
 
         if (!address.getUser().getUsername().equals(user.getUsername())) {
-            throw new RuntimeException("Address does not belong to the user: " + user.getUsername());
+            throw new UnauthorizedAccessException("Address does not belong to the user: " + user.getUsername());
         }
 
-        if (updateAddressRequest.country() != null) {
-            address.setCountry(updateAddressRequest.country());
-        }
-        if (updateAddressRequest.city() != null) {
-            address.setCity(updateAddressRequest.city());
-        }
-        if (updateAddressRequest.street() != null) {
-            address.setStreet(updateAddressRequest.street());
-        }
-        if (updateAddressRequest.aptNo() != null) {
-            address.setAptNo(updateAddressRequest.aptNo());
-        }
-        if (updateAddressRequest.flatNo() != null) {
-            address.setFlatNo(updateAddressRequest.flatNo());
-        }
-        if (updateAddressRequest.description() != null) {
-            address.setDescription(updateAddressRequest.description());
-        }
-        if (updateAddressRequest.addressType() != null) {
-            address.setAddressType(updateAddressRequest.addressType());
-        }
-
+        addressMapper.updateAddressFromDto(address, updateAddressRequest);
         addressRepository.save(address);
         notificationService.addNotification(request, NotificationTopic.ADDRESS_UPDATED);
 
@@ -274,22 +223,11 @@ public class UserService {
         );
     }
 
-
     @Transactional
     public AddAddressResponse addAddress(HttpServletRequest request, AddAddressRequest addAddressRequest) {
-        User user = tokenInterface.getUserFromToken(request);
-
+        User user = getUserFromToken(request);
         AddressDto addressDto = addAddressRequest.addressDto();
-        Address newAddress = Address.builder()
-                .country(addressDto.country())
-                .city(addressDto.city())
-                .street(addressDto.street())
-                .aptNo(addressDto.aptNo())
-                .flatNo(addressDto.flatNo())
-                .description(addressDto.description())
-                .addressType(addressDto.addressType())
-                .user(user)
-                .build();
+        Address newAddress = addressMapper.toAddress(addressDto, user);
 
         addressRepository.save(newAddress);
         notificationService.addNotification(request, NotificationTopic.ADDRESS_ADDED);
@@ -302,15 +240,15 @@ public class UserService {
         );
     }
 
+
     @Transactional
     public DeleteAddressResponse deleteAddress(Long addressId, HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
-
+        User user = getUserFromToken(request);
         Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException("Address not found with ID: " + addressId));
+                .orElseThrow(() -> new AddressNotFoundException("Address not found with ID: " + addressId));
 
         if (!address.getUser().getUsername().equals(user.getUsername())) {
-            throw new RuntimeException("Address does not belong to the user: " + user.getUsername());
+            throw new UnauthorizedAccessException("Address does not belong to the user: " + user.getUsername());
         }
 
         addressRepository.delete(address);

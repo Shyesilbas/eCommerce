@@ -26,15 +26,15 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request , HttpServletResponse response) {
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         log.debug("Received login request for user: {}", request.username());
-        return ResponseEntity.ok(authService.login(request,response));
+        return ResponseEntity.ok(authService.login(request));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> logout(HttpServletRequest request) {
         try {
-            authService.logout(request, response);
+            authService.logout(request);
             return ResponseEntity.ok("Logged out successfully.");
         } catch (Exception e) {
             log.error("Logout error: ", e);

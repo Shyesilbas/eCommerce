@@ -1,6 +1,7 @@
 package com.serhat.security.mapper;
 
 import com.serhat.security.dto.object.AddressDto;
+import com.serhat.security.dto.request.UpdateAddressRequest;
 import com.serhat.security.dto.response.AddressResponse;
 import com.serhat.security.entity.Address;
 import com.serhat.security.entity.User;
@@ -61,5 +62,29 @@ public class AddressMapper {
         return addresses.stream()
                 .map(this::toAddressResponse)
                 .collect(Collectors.toList());
+    }
+
+    public void updateAddressFromDto(Address address, UpdateAddressRequest dto) {
+        if (dto.country() != null) {
+            address.setCountry(dto.country());
+        }
+        if (dto.city() != null) {
+            address.setCity(dto.city());
+        }
+        if (dto.street() != null) {
+            address.setStreet(dto.street());
+        }
+        if (dto.aptNo() != null) {
+            address.setAptNo(dto.aptNo());
+        }
+        if (dto.flatNo() != null) {
+            address.setFlatNo(dto.flatNo());
+        }
+        if (dto.description() != null) {
+            address.setDescription(dto.description());
+        }
+        if (dto.addressType() != null) {
+            address.setAddressType(dto.addressType());
+        }
     }
 }

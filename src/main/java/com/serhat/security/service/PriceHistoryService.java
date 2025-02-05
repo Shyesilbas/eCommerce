@@ -2,12 +2,15 @@ package com.serhat.security.service;
 
 import com.serhat.security.dto.response.PriceHistoryResponse;
 import com.serhat.security.entity.PriceHistory;
+import com.serhat.security.entity.Product;
+import com.serhat.security.mapper.PriceHistoryMapper;
 import com.serhat.security.repository.PriceHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -18,20 +21,13 @@ import java.util.List;
 @Slf4j
 public class PriceHistoryService {
     private final PriceHistoryRepository priceHistoryRepository;
+    private final PriceHistoryMapper mapper;
 
     public List<PriceHistoryResponse> getPriceHistory(Long productId) {
         List<PriceHistory> priceHistories = priceHistoryRepository.findByProduct_ProductIdOrderByChangeDateDesc(productId);
 
         return priceHistories.stream()
-                .map(priceHistory -> new PriceHistoryResponse(
-                        priceHistory.getProduct().getName(),
-                        priceHistory.getProduct().getProductId(),
-                        priceHistory.getOldPrice(),
-                        priceHistory.getNewPrice(),
-                        priceHistory.getChangePercentage(),
-                        priceHistory.getTotalChangePercentage(),
-                        priceHistory.getChangeDate()
-                ))
+                .map(mapper::mapToPriceHistoryResponse)
                 .toList();
     }
 
@@ -43,17 +39,24 @@ public class PriceHistoryService {
                 productId, start, end);
 
         return priceHistories.stream()
-                .map(priceHistory -> new PriceHistoryResponse(
-                        priceHistory.getProduct().getName(),
-                        priceHistory.getProduct().getProductId(),
-                        priceHistory.getOldPrice(),
-                        priceHistory.getNewPrice(),
-                        priceHistory.getChangePercentage(),
-                        priceHistory.getTotalChangePercentage(),
-                        priceHistory.getChangeDate()
-                ))
+                .map(mapper::mapToPriceHistoryResponse)
                 .toList();
     }
+
+    public void createAndSavePriceHistory(Product product, BigDecimal oldPrice, BigDecimal newPrice, double changePercentage, double totalChangePercentage) {
+        PriceHistory priceHistory = PriceHistory.builder()
+                .product(product)
+                .oldPrice(oldPrice)
+                .newPrice(newPrice)
+                .changePercentage(changePercentage)
+                .totalChangePercentage(totalChangePercentage)
+                .changeDate(LocalDateTime.now())
+                .build();
+
+        priceHistoryRepository.save(priceHistory);
+        log.info("Price history saved for product: {}", product.getProductId());
+    }
+
 
     private LocalDateTime parseStartDate(String date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");

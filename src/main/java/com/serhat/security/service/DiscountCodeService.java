@@ -9,6 +9,7 @@ import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.entity.enums.DiscountRate;
 import com.serhat.security.exception.DiscountCodeNotFoundException;
 import com.serhat.security.interfaces.TokenInterface;
+import com.serhat.security.mapper.DiscountMapper;
 import com.serhat.security.repository.DiscountCodeRepository;
 import com.serhat.security.repository.OrderRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,8 +29,7 @@ public class DiscountCodeService {
 
     private final DiscountCodeRepository discountCodeRepository;
     private final TokenInterface tokenInterface;
-    private final OrderRepository orderRepository;
-
+    private final DiscountMapper discountResponseMapper;
 
     @Transactional
     public DiscountCode generateDiscountCode(HttpServletRequest request) {
@@ -40,7 +40,7 @@ public class DiscountCodeService {
         discountCode.setCode(UUID.randomUUID().toString());
         discountCode.setUser(user);
         discountCode.setDiscountRate(discountRate);
-        discountCode.setExpiresAt(discountCode.getExpiresAt());
+        discountCode.setExpiresAt(LocalDateTime.now().plusDays(30));
         discountCode.setStatus(CouponStatus.NOT_USED);
 
         discountCodeRepository.save(discountCode);
@@ -51,19 +51,13 @@ public class DiscountCodeService {
         User user = tokenInterface.getUserFromToken(request);
         List<DiscountCode> availableCodes = discountCodeRepository.findByUserAndStatus(user, CouponStatus.NOT_USED);
 
-        if(availableCodes.isEmpty()){
+        if (availableCodes.isEmpty()) {
             throw new DiscountCodeNotFoundException("No Discount code found for the criteria");
         }
 
         return availableCodes.stream()
-                .map(code-> new AvailableDiscountResponse(
-                        code.getId(),
-                        code.getDiscountRate(),
-                        code.getCode()
-                ))
+                .map(discountResponseMapper::toAvailableDiscountResponse)
                 .toList();
-
-
     }
 
     public List<UsedDiscountResponse> getUsedDiscountCodes(HttpServletRequest request) {
@@ -75,39 +69,23 @@ public class DiscountCodeService {
         }
 
         return usedCodes.stream()
-                .map(code -> orderRepository.findByDiscountCode(code)
-                        .map(order -> new UsedDiscountResponse(
-                                code.getId(),
-                                order.getOrderId(),
-                                order.getTotalPrice(),
-                                code.getDiscountRate(),
-                                order.getTotalDiscount(),
-                                code.getCode()
-                        ))
-                        .orElseThrow(() -> new DiscountCodeNotFoundException("Order not found for discount code: " + code.getId()))
-                )
+                .map(discountResponseMapper::toUsedDiscountResponse)
                 .toList();
     }
-
 
     public List<ExpiredDiscountResponse> getExpiredDiscountCodes(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         List<DiscountCode> expiredCodes = discountCodeRepository
                 .findByUserAndStatusAndExpiresAtBefore(user, CouponStatus.NOT_USED, LocalDateTime.now());
 
-        if(expiredCodes.isEmpty()){
+        if (expiredCodes.isEmpty()) {
             throw new DiscountCodeNotFoundException("No Discount code found for the criteria");
         }
 
         return expiredCodes.stream()
-                .map(code->new ExpiredDiscountResponse(
-                        code.getId(),
-                        code.getDiscountRate(),
-                        code.getCode()
-                ))
+                .map(discountResponseMapper::toExpiredDiscountResponse)
                 .toList();
     }
-
 
     private DiscountRate determineDiscountRate() {
         double random = Math.random();
@@ -126,9 +104,10 @@ public class DiscountCodeService {
         List<DiscountCode> expiredCodes = discountCodeRepository.findByStatusAndExpiresAtBefore(CouponStatus.NOT_USED, LocalDateTime.now());
 
         if (!expiredCodes.isEmpty()) {
-            expiredCodes.forEach(code->  code.setStatus(CouponStatus.EXPIRED));
+            expiredCodes.forEach(code -> code.setStatus(CouponStatus.EXPIRED));
             discountCodeRepository.saveAll(expiredCodes);
             log.info("{} discount codes marked as EXPIRED.", expiredCodes.size());
         }
     }
 }
+

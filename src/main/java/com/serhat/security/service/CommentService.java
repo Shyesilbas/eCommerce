@@ -10,6 +10,7 @@ import com.serhat.security.entity.Product;
 import com.serhat.security.entity.User;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
+import com.serhat.security.mapper.CommentMapper;
 import com.serhat.security.repository.CommentRepository;
 import com.serhat.security.repository.OrderRepository;
 import com.serhat.security.repository.ProductRepository;
@@ -33,6 +34,7 @@ public class CommentService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final TokenInterface tokenInterface;
+    private final CommentMapper commentMapper;
 
     @Transactional
     public CommentResponse createComment(HttpServletRequest request, CommentRequest commentRequest) {
@@ -58,7 +60,7 @@ public class CommentService {
         commentRepository.save(comment);
         log.info("Comment created by user: {}", user.getUsername());
 
-        return mapToCommentResponse(comment);
+        return commentMapper.mapToCommentResponse(comment);
     }
 
     public AverageRatingResponse getAverageProductRating(Long productId) {
@@ -91,7 +93,7 @@ public class CommentService {
             throw new CommentNotFoundForProductException("No comments found for this product.");
         }
         return comments.stream()
-                .map(this::mapToCommentResponse)
+                .map(commentMapper::mapToCommentResponse)
                 .collect(Collectors.toList());
     }
 
@@ -103,7 +105,7 @@ public class CommentService {
             throw new CommentNotFoundForUserException("No comments found for this user.");
         }
         return comments.stream()
-                .map(this::mapToCommentResponse)
+                .map(commentMapper::mapToCommentResponse)
                 .collect(Collectors.toList());
     }
 
@@ -113,7 +115,7 @@ public class CommentService {
             throw new CommentNotFoundForProductException("No highly rated comments found for this product.");
         }
         return comments.stream()
-                .map(this::mapToCommentResponse)
+                .map(commentMapper::mapToCommentResponse)
                 .collect(Collectors.toList());
     }
 
@@ -123,7 +125,7 @@ public class CommentService {
             throw new CommentNotFoundForProductException("No low-rated comments found for this product.");
         }
         return comments.stream()
-                .map(this::mapToCommentResponse)
+                .map(commentMapper::mapToCommentResponse)
                 .collect(Collectors.toList());
     }
 
@@ -147,10 +149,6 @@ public class CommentService {
                 brand
         );
     }
-
-
-
-
     @Transactional
     public void deleteComment(Long commentId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
@@ -170,17 +168,5 @@ public class CommentService {
                 .anyMatch(orderItem -> orderItem.getProduct().equals(product));
     }
 
-    private CommentResponse mapToCommentResponse(Comment comment) {
-        return CommentResponse.builder()
-                .commentId(comment.getCommentId())
-                .userId(comment.getUser().getUserId())
-                .username(comment.getUser().getUsername())
-                .productId(comment.getProduct().getProductId())
-                .productName(comment.getProduct().getName())
-                .content(comment.getContent())
-                .createdAt(comment.getCreatedAt())
-                .rating(comment.getRating())
-                .build();
-    }
 
 }

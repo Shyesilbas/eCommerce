@@ -17,6 +17,7 @@ import com.serhat.security.entity.enums.StockStatus;
 import com.serhat.security.exception.InvalidAmountException;
 import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.jwt.JwtUtil;
+import com.serhat.security.mapper.ProductMapper;
 import com.serhat.security.repository.OrderRepository;
 import com.serhat.security.repository.PriceHistoryRepository;
 import com.serhat.security.repository.ProductRepository;
@@ -42,13 +43,14 @@ public class ProductService {
     private final OrderRepository orderRepository;
     private final PriceHistoryRepository priceHistoryRepository;
     private final JwtUtil jwtUtil;
+    private final ProductMapper productMapper;
+    private final PriceHistoryService priceHistoryService;
 
     private void validateAdminRole(HttpServletRequest request) {
         if (jwtUtil.extractRole(jwtUtil.getTokenFromAuthorizationHeader(request)) != Role.ADMIN) {
             throw new RuntimeException("Only ADMIN users can perform this action.");
         }
     }
-
     private Product getProductById(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found for: " + productId));
@@ -58,7 +60,7 @@ public class ProductService {
         validateAdminRole(request);
         Product product = getProductById(productId);
 
-        if(quantity<0){
+        if (quantity < 0) {
             throw new InvalidAmountException("Product quantity cannot be negative");
         }
 
@@ -66,11 +68,7 @@ public class ProductService {
         productRepository.save(product);
         log.info("Product quantity updated: {} -> {}", productId, quantity);
 
-        return new ProductQuantityUpdate(
-                product.getName(),
-                product.getProductCode(),
-                quantity
-        );
+        return new ProductQuantityUpdate(product.getName(), product.getProductCode(), quantity);
     }
 
     public ProductPriceUpdate updateProductPrice(Long productId, BigDecimal price, HttpServletRequest request) {
@@ -82,52 +80,37 @@ public class ProductService {
         }
 
         BigDecimal oldPrice = product.getPrice();
-        double changePercentage = oldPrice.compareTo(BigDecimal.ZERO) == 0 ? 0.0 :
-                price.subtract(oldPrice).divide(oldPrice, 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue();
+        double changePercentage = calculateChangePercentage(oldPrice, price);
+        double totalChangePercentage = calculateTotalChangePercentage(product.getProductId(), price);
 
-        PriceHistory firstPriceHistory = priceHistoryRepository.findFirstByProduct_ProductIdOrderByChangeDateAsc(productId);
-        BigDecimal firstPrice = firstPriceHistory == null ? oldPrice : firstPriceHistory.getOldPrice();
-
-        double totalChangePercentage = calculateTotalChangePercentage(firstPrice, price);
-
-        PriceHistory priceHistory = PriceHistory.builder()
-                .product(product)
-                .oldPrice(oldPrice)
-                .newPrice(price)
-                .changePercentage(changePercentage)
-                .totalChangePercentage(totalChangePercentage)
-                .changeDate(LocalDateTime.now())
-                .build();
-
-        priceHistoryRepository.save(priceHistory);
+        priceHistoryService.createAndSavePriceHistory(product, oldPrice, price, changePercentage, totalChangePercentage);
 
         product.setPrice(price);
         productRepository.save(product);
         log.info("Product price updated: {} -> {}", productId, price);
 
-        return new ProductPriceUpdate(
-                product.getName(),
-                product.getProductCode(),
-                price
-        );
+        return new ProductPriceUpdate(product.getName(), product.getProductCode(), price);
     }
 
-
-    private double calculateTotalChangePercentage(BigDecimal firstPrice, BigDecimal currentPrice) {
-        if (firstPrice.compareTo(BigDecimal.ZERO) == 0) {
+    private double calculateChangePercentage(BigDecimal oldPrice, BigDecimal newPrice) {
+        if (oldPrice.compareTo(BigDecimal.ZERO) == 0) {
             return 0.0;
         }
-        return currentPrice.subtract(firstPrice)
-                .divide(firstPrice, 4, RoundingMode.HALF_UP)
+        return newPrice.subtract(oldPrice)
+                .divide(oldPrice, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
                 .doubleValue();
     }
 
+    private double calculateTotalChangePercentage(Long productId, BigDecimal currentPrice) {
+        PriceHistory firstPriceHistory = priceHistoryRepository.findFirstByProduct_ProductIdOrderByChangeDateAsc(productId);
+        BigDecimal firstPrice = firstPriceHistory == null ? currentPrice : firstPriceHistory.getOldPrice();
+        return calculateChangePercentage(firstPrice, currentPrice);
+    }
 
     public long totalProductCountByCategory(Category category) {
         return productRepository.countByCategory(category);
     }
-
 
     public Page<Product> getAllProducts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("productId"));
@@ -135,12 +118,19 @@ public class ProductService {
     }
 
     public List<BestSellerProductDTO> bestSellersByCategory(Category category, int size) {
-        List<Order> deliveredOrders = orderRepository.findByStatus(OrderStatus.DELIVERED);
+        return getBestSellers(size, category);
+    }
 
+    public List<BestSellerProductDTO> bestSellers(int size) {
+        return getBestSellers(size, null);
+    }
+
+    private List<BestSellerProductDTO> getBestSellers(int size, Category category) {
+        List<Order> deliveredOrders = orderRepository.findByStatus(OrderStatus.DELIVERED);
         List<Long> productIds = deliveredOrders.stream()
                 .flatMap(order -> order.getOrderItems().stream())
                 .map(OrderItem::getProduct)
-                .filter(product -> product.getCategory() == category)
+                .filter(product -> category == null || product.getCategory() == category)
                 .map(Product::getProductId)
                 .toList();
 
@@ -154,124 +144,29 @@ public class ProductService {
                 .collect(Collectors.toList());
 
         List<Product> bestSellingProducts = productRepository.findAllById(sortedProductIds);
-
         return bestSellingProducts.stream()
-                .map(product -> new BestSellerProductDTO(
-                        product.getName(),
-                        product.getOriginOfCountry(),
-                        product.getProductCode(),
-                        product.getDescription(),
-                        product.getPrice(),
-                        product.getBrand(),
-                        product.getColor(),
-                        product.getCategory()))
+                .map(productMapper::mapToBestSeller)
                 .collect(Collectors.toList());
     }
 
-
-    public List<BestSellerProductDTO> bestSellers(int size) {
-        List<Order> deliveredOrders = orderRepository.findByStatus(OrderStatus.DELIVERED);
-
-        List<Long> productIds = deliveredOrders.stream()
-                .flatMap(order -> order.getOrderItems().stream())
-                .map(orderItem -> orderItem.getProduct().getProductId())
-                .toList();
-
-        Map<Long, Long> productSalesCount = productIds.stream()
-                .collect(Collectors.groupingBy(productId -> productId, Collectors.counting()));
-
-        List<Long> sortedProductIds = productSalesCount.entrySet().stream()
-                .sorted((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()))
-                .map(Map.Entry::getKey)
-                .limit(size)
-                .collect(Collectors.toList());
-
-        List<Product> bestSellingProducts = productRepository.findAllById(sortedProductIds);
-
-        return bestSellingProducts.stream()
-                .map(product -> new BestSellerProductDTO(
-                        product.getName(),
-                        product.getOriginOfCountry(),
-                        product.getProductCode(),
-                        product.getDescription(),
-                        product.getPrice(),
-                        product.getBrand(),
-                        product.getColor(),
-                        product.getCategory()))
-                .collect(Collectors.toList());
-    }
-
-
-
-    public long totalProductCount(){
+    public long totalProductCount() {
         return productRepository.count();
     }
 
     public ProductDto productInfo(String productCode) {
         Product product = productRepository.findByProductCode(productCode)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found for: " + productCode));
-
-        return new ProductDto(
-                product.getProductId(),
-                product.getName(),
-                product.getOriginOfCountry(),
-                product.getProductCode(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getBrand(),
-                product.getAverageRating(),
-                product.getStockStatus(),
-                product.getColor(),
-                product.getQuantity(),
-                product.getCategory()
-        );
+        return productMapper.mapToProductDto(product);
     }
 
     public ProductDto productInfoById(Long productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found for: " + productId));
-
-        return new ProductDto(
-                product.getProductId(),
-                product.getName(),
-                product.getOriginOfCountry(),
-                product.getProductCode(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getBrand(),
-                product.getAverageRating(),
-                product.getStockStatus(),
-                product.getColor(),
-                product.getQuantity(),
-                product.getCategory()
-        );
+        return productMapper.mapToProductDto(getProductById(productId));
     }
 
-
     public ProductResponse addProduct(ProductRequest productRequest, HttpServletRequest request) {
-        String jwtToken = jwtUtil.getTokenFromAuthorizationHeader(request);
+        validateAdminRole(request);
 
-        Role role =  jwtUtil.extractRole(jwtToken);
-
-        if (role != Role.ADMIN) {
-            log.warn("Unauthorized access attempt to add product by role: {}", role);
-            throw new RuntimeException("Only ADMIN users can add products.");
-        }
-
-        Product product = Product.builder()
-                .name(productRequest.name())
-                .originOfCountry(productRequest.originOfCountry())
-                .productCode(productRequest.productCode())
-                .description(productRequest.description())
-                .price(productRequest.price())
-                .brand(productRequest.brand())
-                .averageRating(productRequest.averageRating())
-                .stockStatus(StockStatus.valueOf(productRequest.stockStatus()))
-                .color(productRequest.color())
-                .quantity(productRequest.quantity())
-                .category(Category.valueOf(productRequest.category()))
-                .build();
-
+        Product product = productMapper.mapToProduct(productRequest);
         Product savedProduct = productRepository.save(product);
         log.info("Product added successfully: {}", savedProduct.getProductCode());
 
@@ -283,23 +178,24 @@ public class ProductService {
                 .build();
     }
 
+    private Pageable createPageable(int page, int size) {
+        return PageRequest.of(page, size);
+    }
+
     public Page<Product> getProductsByCategory(Category category, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findByCategory(category, pageable);
+        return productRepository.findByCategory(category, createPageable(page, size));
     }
 
     public Page<Product> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findByPriceBetween(minPrice, maxPrice, pageable);
+        return productRepository.findByPriceBetween(minPrice, maxPrice, createPageable(page, size));
     }
 
     public Page<Product> getProductsByPriceAndCategory(BigDecimal minPrice, BigDecimal maxPrice, Category category, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findByPriceBetweenAndCategory(minPrice, maxPrice, category, pageable);
+        return productRepository.findByPriceBetweenAndCategory(minPrice, maxPrice, category, createPageable(page, size));
     }
 
     public Page<Product> getProductsByBrand(String brand, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findByBrandIgnoreCase(brand, pageable);
+        return productRepository.findByBrandIgnoreCase(brand, createPageable(page, size));
     }
+
 }

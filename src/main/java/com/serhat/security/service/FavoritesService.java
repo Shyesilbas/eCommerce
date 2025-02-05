@@ -8,6 +8,7 @@ import com.serhat.security.exception.EmptyFavoriteListException;
 import com.serhat.security.exception.FavoriteProductNotFoundException;
 import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.interfaces.TokenInterface;
+import com.serhat.security.mapper.FavoritesMapper;
 import com.serhat.security.repository.FavoritesRepository;
 import com.serhat.security.repository.ProductRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,6 +28,7 @@ public class FavoritesService {
     private final TokenInterface tokenInterface;
     private final FavoritesRepository favoritesRepository;
     private final ProductRepository productRepository;
+    private final FavoritesMapper favoritesMapper;
 
     public List<FavoriteProductDto> getFavoritesByUser(HttpServletRequest servletRequest) {
         User user = tokenInterface.getUserFromToken(servletRequest);
@@ -38,25 +40,8 @@ public class FavoritesService {
         }
 
         return favorites.stream()
-                .map(this::convertToFavoriteProductDto)
+                .map(favoritesMapper::mapToFavoriteProductDto)
                 .collect(Collectors.toList());
-    }
-
-    private FavoriteProductDto convertToFavoriteProductDto(Favorites favorite) {
-        Product product = favorite.getProduct();
-        return FavoriteProductDto.builder()
-                .productId(product.getProductId())
-                .productCode(product.getProductCode())
-                .name(product.getName())
-                .price(product.getPrice())
-                .description(product.getDescription())
-                .brand(product.getBrand())
-                .color(product.getColor())
-                .category(product.getCategory())
-                .averageRating(product.getAverageRating())
-                .favorite_since(favorite.getAddedAt())
-                .isFavorite(favorite.isFavorite())
-                .build();
     }
 
     @Transactional
