@@ -42,6 +42,7 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final DiscountCodeService discountService;
     private final NotificationService notificationService;
+    private final StockAlertService stockAlertService;
     private boolean isAddressBelongsToUser(Long addressId, Long userId) {
         return addressRepository.existsByAddressIdAndUserUserId(addressId, userId);
     }
@@ -99,10 +100,15 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    public void manageStockAlerts(Long productId) {
+        stockAlertService.handleStockAlert(productId);
+    }
+
     private OrderItem createOrderItem(Order order, ShoppingCard sc) {
         Product product = sc.getProduct();
         validateProductStock(product, sc.getQuantity());
         updateProductStock(product, sc.getQuantity());
+        manageStockAlerts(product.getProductId());
 
         return OrderItem.builder()
                 .order(order)
@@ -123,6 +129,9 @@ public class OrderService {
         product.setQuantity(product.getQuantity() - quantity);
         if (product.getQuantity() == 0) {
             product.setStockStatus(StockStatus.OUT_OF_STOCKS);
+        }
+        if(product.getQuantity()<0){
+            throw new InvalidQuantityException("Quantity cannot be negative");
         }
     }
 

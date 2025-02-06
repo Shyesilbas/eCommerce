@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,6 +44,7 @@ public class ProductService {
     private final JwtUtil jwtUtil;
     private final ProductMapper productMapper;
     private final PriceHistoryService priceHistoryService;
+    private final StockAlertService stockAlertService;
 
     private void validateAdminRole(HttpServletRequest request) {
         if (jwtUtil.extractRole(jwtUtil.getTokenFromAuthorizationHeader(request)) != Role.ADMIN) {
@@ -56,6 +56,9 @@ public class ProductService {
                 .orElseThrow(() -> new ProductNotFoundException("Product not found for: " + productId));
     }
 
+    public void manageStockAlerts(Long productId) {
+        stockAlertService.handleStockAlert(productId);
+    }
     public ProductQuantityUpdate updateProductQuantity(Long productId, int quantity, HttpServletRequest request) {
         validateAdminRole(request);
         Product product = getProductById(productId);
@@ -63,11 +66,17 @@ public class ProductService {
         if (quantity < 0) {
             throw new InvalidAmountException("Product quantity cannot be negative");
         }
+        if(quantity == 0){
+            product.setStockStatus(StockStatus.OUT_OF_STOCKS);
+        }
+        if(quantity>0){
+            product.setStockStatus(StockStatus.AVAILABLE);
+        }
 
         product.setQuantity(quantity);
         productRepository.save(product);
-        log.info("Product quantity updated: {} -> {}", productId, quantity);
-
+        log.info("Product quantity updated: id {} -> {}", productId, quantity);
+        manageStockAlerts(product.getProductId());
         return new ProductQuantityUpdate(product.getName(), product.getProductCode(), quantity);
     }
 
