@@ -6,6 +6,8 @@ import com.serhat.security.dto.response.OrderResponse;
 import com.serhat.security.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,8 +25,8 @@ public class OrderController {
     }
 
     @GetMapping("/list-order")
-    public ResponseEntity<List<OrderResponse>> listOrders(HttpServletRequest request){
-        return ResponseEntity.ok(service.getOrdersByUser(request));
+    public ResponseEntity<Page<OrderResponse>>getOrdersByUser(HttpServletRequest request, Pageable pageable) {
+        return ResponseEntity.ok(service.getOrdersByUser(request, pageable));
     }
 
     @GetMapping("/order-detail")

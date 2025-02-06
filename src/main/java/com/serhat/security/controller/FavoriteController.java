@@ -5,6 +5,8 @@ import com.serhat.security.service.FavoritesService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,8 +21,8 @@ public class FavoriteController {
     private final FavoritesService favoritesService;
 
     @GetMapping("/get-favorites")
-    public ResponseEntity<List<FavoriteProductDto>> getFavoritesByUser(HttpServletRequest request) {
-        List<FavoriteProductDto> favorites = favoritesService.getFavoritesByUser(request);
+    public ResponseEntity<Page<FavoriteProductDto>> getFavoritesByUser(HttpServletRequest request , Pageable pageable) {
+        Page<FavoriteProductDto> favorites = favoritesService.getFavoritesByUser(request,pageable);
         return ResponseEntity.ok(favorites);
     }
 

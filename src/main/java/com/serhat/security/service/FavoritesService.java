@@ -14,6 +14,8 @@ import com.serhat.security.repository.ProductRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,19 +32,18 @@ public class FavoritesService {
     private final ProductRepository productRepository;
     private final FavoritesMapper favoritesMapper;
 
-    public List<FavoriteProductDto> getFavoritesByUser(HttpServletRequest servletRequest) {
+    public Page<FavoriteProductDto> getFavoritesByUser(HttpServletRequest servletRequest, Pageable pageable) {
         User user = tokenInterface.getUserFromToken(servletRequest);
 
-        List<Favorites> favorites = favoritesRepository.findByUser(user);
+        Page<Favorites> favoritesPage = favoritesRepository.findByUser(user, pageable);
 
-        if (favorites.isEmpty()) {
-           throw new EmptyFavoriteListException("Favorite list is empty");
+        if (favoritesPage.isEmpty()) {
+            throw new EmptyFavoriteListException("Favorite list is empty");
         }
 
-        return favorites.stream()
-                .map(favoritesMapper::mapToFavoriteProductDto)
-                .collect(Collectors.toList());
+        return favoritesPage.map(favoritesMapper::mapToFavoriteProductDto);
     }
+
 
     @Transactional
     public void addFavorite(HttpServletRequest servletRequest, Long productId) {

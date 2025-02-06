@@ -3,6 +3,7 @@ package com.serhat.security.service;
 import com.serhat.security.dto.object.NotificationDTO;
 import com.serhat.security.dto.response.NotificationAddedResponse;
 import com.serhat.security.entity.Notification;
+import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.NotificationTopic;
 import com.serhat.security.exception.NoNotificationsFoundException;
@@ -48,6 +49,20 @@ public class NotificationService {
                 notification.getAt(),
                 notification.getNotificationTopic());
     }
+
+    @Transactional
+    public void addOrderNotification(User user, Order order, NotificationTopic topic) {
+        Notification notification = Notification.builder()
+                .user(user)
+                .at(LocalDateTime.now())
+                .notificationTopic(topic)
+                .message("Your order #" + order.getOrderId() + " is now " + topic.name().replace("_", " ").toLowerCase())
+                .build();
+
+        notificationRepository.save(notification);
+        log.info("Notification added: User {}, Order ID {}, Topic {}", user.getUsername(), order.getOrderId(), topic);
+    }
+
 
     public List<NotificationDTO> getNotifications(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);

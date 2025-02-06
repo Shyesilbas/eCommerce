@@ -28,7 +28,9 @@ public record OrderResponse(
 
         String notes,
         List<OrderItemDetails> orderItems,
-        BigDecimal bonusWon
+        BigDecimal bonusWon,
+        String discountMessage,
+        boolean isOrderReturnable
 ) {
 }
 

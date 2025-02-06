@@ -139,7 +139,7 @@ public class ShoppingCardService {
         if (totalPrice.compareTo(discountService.getDiscountThreshold()) < 0) {
             message = "Add " + leftToDiscountCode + " to obtain a discount code!";
         } else {
-            message = "You will obtain a Discount code";
+            message = "You will obtain a discount code because cart total exceeds the order threshold";
         }
 
         long totalItems = totalItems(request);

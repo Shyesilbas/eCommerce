@@ -1,6 +1,5 @@
 package com.serhat.security.service;
 
-import com.serhat.security.dto.object.AddressDto;
 import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.*;
@@ -12,13 +11,15 @@ import com.serhat.security.repository.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,6 +41,7 @@ public class OrderService {
     private final PaymentService paymentService;
     private final OrderMapper orderMapper;
     private final DiscountCodeService discountService;
+    private final NotificationService notificationService;
     private boolean isAddressBelongsToUser(Long addressId, Long userId) {
         return addressRepository.existsByAddressIdAndUserUserId(addressId, userId);
     }
@@ -53,10 +55,11 @@ public class OrderService {
         PriceDetails priceDetails = paymentService.calculatePriceDetails(shoppingCards, user, orderRequest);
         updateUserBonusPoints(user, priceDetails.bonusPoints());
 
-        Order order = createOrderEntity(user, orderRequest, priceDetails);
+        Order order = orderMapper.createOrderEntity(user, orderRequest, priceDetails);
         processOrderItems(order, shoppingCards);
 
         finalizeOrder(order, user, shoppingCards, request);
+        notificationService.addOrderNotification(user,order,NotificationTopic.ORDER_PLACED);
 
         return orderMapper.toOrderResponse(order);
     }
@@ -80,28 +83,6 @@ public class OrderService {
     private void updateUserBonusPoints(User user, BigDecimal bonusPoints) {
         user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
         user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(bonusPoints));
-    }
-
-    private Order createOrderEntity(User user, OrderRequest orderRequest, PriceDetails priceDetails) {
-        return Order.builder()
-                .user(user)
-                .orderDate(LocalDateTime.now())
-                .totalPrice(priceDetails.originalTotalPrice())
-                .status(OrderStatus.APPROVED)
-                .shippingAddressId(orderRequest.shippingAddressId())
-                .paymentMethod(PaymentMethod.E_WALLET)
-                .notes(orderRequest.notes())
-                .updatedAt(LocalDateTime.now())
-                .shippingFee(priceDetails.shippingFee())
-                .bonusWon(priceDetails.bonusPoints())
-                .discountCode(priceDetails.discountCode())
-                .totalDiscount(priceDetails.discountAmount())
-                .discountRate(priceDetails.discountCode() != null ?
-                        priceDetails.discountCode().getDiscountRate() : DiscountRate.ZERO)
-                .totalPaid(priceDetails.finalPrice())
-                .isBonusPointUsed(priceDetails.bonusPointsUsed().compareTo(BigDecimal.ZERO) > 0)
-                .bonusPointsUsed(priceDetails.bonusPointsUsed())
-                .build();
     }
 
     private void processOrderItems(Order order, List<ShoppingCard> shoppingCards) {
@@ -128,6 +109,7 @@ public class OrderService {
                 .product(product)
                 .quantity(sc.getQuantity())
                 .price(product.getPrice())
+                .isReturnable(product.isReturnable())
                 .build();
     }
 
@@ -197,19 +179,15 @@ public class OrderService {
         }
     }
 
-
-
-    public List<OrderResponse> getOrdersByUser(HttpServletRequest request) {
+    public Page<OrderResponse> getOrdersByUser(HttpServletRequest request, Pageable pageable) {
         User user = tokenInterface.getUserFromToken(request);
-        List<Order> orders = orderRepository.findByUser(user);
+        Page<Order> orders = orderRepository.findByUser(user, pageable);
 
         if (orders.isEmpty()) {
             throw new NoOrderException("No orders found");
         }
 
-        return orders.stream()
-                .map(orderMapper::toOrderResponse)
-                .collect(Collectors.toList());
+        return orders.map(orderMapper::toOrderResponse);
     }
 
     @Scheduled(fixedRate = 60000)
@@ -218,16 +196,14 @@ public class OrderService {
         List<Order> orders = orderRepository.findAll();
 
         for (Order order : orders) {
-            long minutesSinceOrder = java.time.Duration.between(order.getOrderDate(), LocalDateTime.now()).toMinutes();
-
-            if (order.getStatus() == OrderStatus.PENDING && minutesSinceOrder >= 15) {
-                order.setStatus(OrderStatus.APPROVED);
-                log.info("Order {} status updated to APPROVED", order.getOrderId());
-            } else if (order.getStatus() == OrderStatus.APPROVED && minutesSinceOrder >= 60) {
+            long minutesSinceOrder = Duration.between(order.getOrderDate(), LocalDateTime.now()).toMinutes();
+           if (order.getStatus() == OrderStatus.APPROVED && minutesSinceOrder >= 60) {
                 order.setStatus(OrderStatus.SHIPPED);
+                notificationService.addOrderNotification(order.getUser(), order, NotificationTopic.ORDER_SHIPPED);
                 log.info("Order {} status updated to SHIPPED", order.getOrderId());
             } else if (order.getStatus() == OrderStatus.SHIPPED && minutesSinceOrder >= 180) {
                 order.setStatus(OrderStatus.DELIVERED);
+                notificationService.addOrderNotification(order.getUser(), order, NotificationTopic.ORDER_DELIVERED);
                 log.info("Order {} status updated to DELIVERED", order.getOrderId());
             }
         }
@@ -292,6 +268,7 @@ public class OrderService {
         orderRepository.save(order);
         productRepository.saveAll(order.getOrderItems().stream().map(OrderItem::getProduct).toList());
         userRepository.save(user);
+        notificationService.addOrderNotification(user, order, NotificationTopic.ORDER_CANCELLED);
 
         return orderMapper.toOrderCancellationResponse(order, totalPaid);
     }

@@ -67,6 +67,8 @@ public class Order {
 
     private Boolean isBonusPointUsed;
     private BigDecimal bonusPointsUsed;
+
+    private boolean isOrderReturnable;
     @PreUpdate
     public void setUpdatedAt() {
         this.updatedAt = LocalDateTime.now();
