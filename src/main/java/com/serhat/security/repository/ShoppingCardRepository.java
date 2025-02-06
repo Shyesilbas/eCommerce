@@ -18,4 +18,6 @@ public interface ShoppingCardRepository extends JpaRepository<ShoppingCard,Long>
     void deleteByUserAndProduct(User user, Product product);
 
     Optional<ShoppingCard> findByUserAndProduct(User user, Product product);
+
+    int countByUser(User user);
 }

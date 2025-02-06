@@ -13,11 +13,15 @@ import com.serhat.security.mapper.DiscountMapper;
 import com.serhat.security.repository.DiscountCodeRepository;
 import com.serhat.security.repository.OrderRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -25,11 +29,15 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Getter
 public class DiscountCodeService {
 
     private final DiscountCodeRepository discountCodeRepository;
     private final TokenInterface tokenInterface;
     private final DiscountMapper discountResponseMapper;
+
+    @Value("${discount.code.threshold}")
+    private BigDecimal discountThreshold;
 
     @Transactional
     public DiscountCode generateDiscountCode(HttpServletRequest request) {

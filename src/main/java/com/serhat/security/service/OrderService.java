@@ -12,6 +12,7 @@ import com.serhat.security.repository.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class OrderService {
     private final TransactionService transactionService;
     private final PaymentService paymentService;
     private final OrderMapper orderMapper;
-
+    private final DiscountCodeService discountService;
     private boolean isAddressBelongsToUser(Long addressId, Long userId) {
         return addressRepository.existsByAddressIdAndUserUserId(addressId, userId);
     }
@@ -191,10 +192,12 @@ public class OrderService {
     }
 
     private void generateDiscountCodeIfEligible(Order order, HttpServletRequest request) {
-        if (order.getTotalPrice().compareTo(new BigDecimal("800.00")) >= 0) {
+        if (order.getTotalPrice().compareTo(discountService.getDiscountThreshold()) >= 0) {
             discountCodeService.generateDiscountCode(request);
         }
     }
+
+
 
     public List<OrderResponse> getOrdersByUser(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);

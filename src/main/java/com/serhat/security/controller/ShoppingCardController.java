@@ -4,6 +4,7 @@ import com.serhat.security.dto.object.CardProductDto;
 import com.serhat.security.dto.object.FavoriteProductDto;
 import com.serhat.security.dto.response.AddedToCardResponse;
 import com.serhat.security.dto.response.QuantityUpdateResponse;
+import com.serhat.security.dto.response.ShoppingCardInfo;
 import com.serhat.security.dto.response.TotalInfo;
 import com.serhat.security.service.ShoppingCardService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +26,7 @@ public class ShoppingCardController {
 
     @GetMapping("/get-items")
     public ResponseEntity<List<CardProductDto>> getShoppingCardItems(HttpServletRequest request) {
-       return ResponseEntity.ok(service.getShoppingCardByUser(request));
+       return ResponseEntity.ok(service.getItems(request));
     }
 
     @GetMapping("/total-price")
@@ -38,9 +39,10 @@ public class ShoppingCardController {
         return ResponseEntity.ok(service.totalProduct(request));
     }
 
-    @GetMapping("/totalInfos")
-    public TotalInfo getTotalInfo(HttpServletRequest request) {
-        return service.calculateTotalInfo(request);
+    @GetMapping("/card-details")
+    public ResponseEntity<ShoppingCardInfo> getShoppingCardTotalInfo(HttpServletRequest request) {
+        ShoppingCardInfo ShoppingCardInfo = service.getShoppingCardTotalInfo(request);
+        return ResponseEntity.ok(ShoppingCardInfo);
     }
 
     @PostMapping("/add-to-card")
