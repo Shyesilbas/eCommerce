@@ -108,6 +108,22 @@ public class TransactionService {
     }
 
     @Transactional
+    public void createGiftCardTransaction(User user, BigDecimal amount) {
+        Wallet wallet = getWalletByUser(user);
+
+        if (wallet.getBalance().compareTo(amount) < 0) {
+            throw new InsufficientFundsException("Insufficient funds in wallet");
+        }
+
+        wallet.setBalance(wallet.getBalance().subtract(amount));
+
+        Transaction transaction = transactionMapper.toTransaction(wallet, user, null, amount, TransactionType.PAYMENT, "Gift card payment via E-Wallet");
+
+        transactionRepository.save(transaction);
+        walletRepository.save(wallet);
+    }
+
+    @Transactional
     public void createDepositTransaction(User user, BigDecimal amount) {
         Wallet wallet = getWalletByUser(user);
 

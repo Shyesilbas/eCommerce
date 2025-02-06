@@ -2,16 +2,18 @@ package com.serhat.security.entity.enums;
 
 import lombok.Getter;
 
+import java.math.BigDecimal;
+
 @Getter
 public enum GiftAmount {
-    HUNDRED(100),
-    TWO_HUNDRED(200),
-    FIVE_HUNDRED(500),
-    THOUSAND(1000);
+    HUNDRED(new BigDecimal("100.00")),
+    TWO_HUNDRED(new BigDecimal("200.00")),
+    FIVE_HUNDRED(new BigDecimal("500.00")),
+    THOUSAND(new BigDecimal("1000.00"));
 
-    private final int amount;
+    private final BigDecimal amount;
 
-    GiftAmount(int amount) {
+    GiftAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
