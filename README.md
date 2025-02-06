@@ -5,6 +5,7 @@ Features
 -Favorites: Add products to your favorites list
 -Shopping Cart: Add products to your cart to place orders
 -Order Management: Place, cancel, and track order history
+-Payment Service: Handle the Payment with Wallet
 -Wallet System: Deposits, payments, and transaction history
 -Discount Codes: Automatic code generation based on spending
 -Price History: Track price changes of products over time
