@@ -1,9 +1,12 @@
 package com.serhat.security.entity;
 
 import com.serhat.security.entity.enums.CouponStatus;
-import com.serhat.security.entity.enums.DiscountRate;
+import com.serhat.security.entity.enums.GiftAmount;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -13,8 +16,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "discount_code")
-public class DiscountCode {
+@Table(name = "gift_card")
+public class GiftCard {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,13 +26,9 @@ public class DiscountCode {
     private String code;
 
     @Enumerated(EnumType.STRING)
-    private DiscountRate discountRate;
-
-
+    private GiftAmount giftAmount;
     private LocalDateTime createdAt;
-
     private LocalDateTime expiresAt;
-
 
     @Enumerated(EnumType.STRING)
     private CouponStatus status = CouponStatus.NOT_USED;
@@ -42,7 +41,6 @@ public class DiscountCode {
     public void prePersist() {
         this.code = UUID.randomUUID().toString();
         this.createdAt = LocalDateTime.now();
-        this.expiresAt = this.createdAt.plusMonths(1);
+        this.expiresAt = this.createdAt.plusYears(1);
     }
-
 }
