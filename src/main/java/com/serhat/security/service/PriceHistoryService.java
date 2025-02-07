@@ -7,6 +7,8 @@ import com.serhat.security.mapper.PriceHistoryMapper;
 import com.serhat.security.repository.PriceHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 
@@ -23,25 +25,24 @@ public class PriceHistoryService {
     private final PriceHistoryRepository priceHistoryRepository;
     private final PriceHistoryMapper mapper;
 
-    public List<PriceHistoryResponse> getPriceHistory(Long productId) {
-        List<PriceHistory> priceHistories = priceHistoryRepository.findByProduct_ProductIdOrderByChangeDateDesc(productId);
+    public Page<PriceHistoryResponse> getPriceHistory(Long productId, Pageable pageable) {
+        Page<PriceHistory> priceHistoryPage = priceHistoryRepository
+                .findByProduct_ProductIdOrderByChangeDateDesc(productId, pageable);
 
-        return priceHistories.stream()
-                .map(mapper::mapToPriceHistoryResponse)
-                .toList();
+        return priceHistoryPage.map(mapper::mapToPriceHistoryResponse);
     }
 
-    public List<PriceHistoryResponse> getPriceHistoryInDateRange(Long productId, String startDate, String endDate) {
+
+    public Page<PriceHistoryResponse> getPriceHistoryInDateRange(Long productId, String startDate, String endDate, Pageable pageable) {
         LocalDateTime start = parseStartDate(startDate);
         LocalDateTime end = parseEndDate(endDate);
 
-        List<PriceHistory> priceHistories = priceHistoryRepository.findByProduct_ProductIdAndChangeDateBetween(
-                productId, start, end);
+        Page<PriceHistory> priceHistoryPage = priceHistoryRepository.findByProduct_ProductIdAndChangeDateBetween(
+                productId, start, end, pageable);
 
-        return priceHistories.stream()
-                .map(mapper::mapToPriceHistoryResponse)
-                .toList();
+        return priceHistoryPage.map(mapper::mapToPriceHistoryResponse);
     }
+
 
     public void createAndSavePriceHistory(Product product, BigDecimal oldPrice, BigDecimal newPrice, double changePercentage, double totalChangePercentage) {
         PriceHistory priceHistory = PriceHistory.builder()

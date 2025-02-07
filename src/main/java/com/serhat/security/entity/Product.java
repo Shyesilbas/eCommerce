@@ -46,11 +46,7 @@ public class Product {
     private int quantity;
     private boolean isReturnable;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PriceHistory> priceHistoryList = new ArrayList<>();
-
     @Enumerated(EnumType.STRING)
     private Category category;
-
 
 }

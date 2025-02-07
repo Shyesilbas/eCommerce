@@ -62,18 +62,17 @@ public class ProductController {
 
 
     @GetMapping("/byCategory")
-    public Page<Product> getProductsByCategory(
+    public ResponseEntity<Page<ProductDto>> getProductsByCategory(
             @RequestParam Category category,
             @RequestParam int page,
             @RequestParam int size) {
-        return productService.getProductsByCategory(category, page, size);
+        return ResponseEntity.ok(productService.getProductsByCategory(category, page, size));
     }
     @GetMapping("/allProducts")
-    public ResponseEntity<Page<Product>> getAllProducts(
+    public ResponseEntity<Page<ProductDto>> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<Product> products = productService.getAllProducts(page, size);
-        return ResponseEntity.ok(products);
+       return ResponseEntity.ok(productService.getAllProducts(page, size));
     }
 
     @GetMapping("/allProductsWithoutPagination")
@@ -83,34 +82,33 @@ public class ProductController {
     }
 
     @GetMapping("/byPriceRange")
-    public ResponseEntity<Page<Product>> getProductsByPriceRange(
+    public ResponseEntity<Page<ProductDto>> getProductsByPriceRange(
             @RequestParam BigDecimal minPrice,
             @RequestParam BigDecimal maxPrice,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<Product> products = productService.getProductsByPriceRange(minPrice, maxPrice, page, size);
-        return ResponseEntity.ok(products);
+        return ResponseEntity.ok(productService.getProductsByPriceRange(minPrice,maxPrice,page,size));
     }
 
     @GetMapping("/byPriceAndCategory")
-    public ResponseEntity<Page<Product>> getProductsByPriceAndCategory(
+    public ResponseEntity<Page<ProductDto>> getProductsByPriceAndCategory(
             @RequestParam BigDecimal minPrice,
             @RequestParam BigDecimal maxPrice,
             @RequestParam Category category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<Product> products = productService.getProductsByPriceAndCategory(minPrice, maxPrice, category, page, size);
-        return ResponseEntity.ok(products);
+        return ResponseEntity.ok(productService.getProductsByPriceAndCategory(minPrice,maxPrice,category,page,size));
+
     }
 
 
     @GetMapping("/byBrand")
-    public ResponseEntity<Page<Product>> getProductsByBrand(
+    public ResponseEntity<Page<ProductDto>> getProductsByBrand(
             @RequestParam String brand,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<Product> products = productService.getProductsByBrand(brand, page, size);
-        return ResponseEntity.ok(products);
+        return ResponseEntity.ok(productService.getProductsByBrand(brand,page,size));
+
     }
 
 

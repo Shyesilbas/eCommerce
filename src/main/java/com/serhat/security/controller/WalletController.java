@@ -6,6 +6,8 @@ import com.serhat.security.entity.Transaction;
 import com.serhat.security.service.WalletService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -44,7 +46,12 @@ public class WalletController {
     }
 
     @GetMapping("/transactions")
-    public ResponseEntity<List<TransactionResponse>> getTransactionHistory(HttpServletRequest request) {
-        return  ResponseEntity.ok(walletService.getTransactionHistory(request));
+    public ResponseEntity<Page<TransactionResponse>> getTransactionHistory(
+            HttpServletRequest request,
+             Pageable pageable) {
+
+        Page<TransactionResponse> transactions = walletService.getTransactionHistory(request, pageable);
+        return ResponseEntity.ok(transactions);
     }
+
 }

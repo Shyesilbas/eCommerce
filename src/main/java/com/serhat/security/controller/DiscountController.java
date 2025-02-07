@@ -7,6 +7,8 @@ import com.serhat.security.entity.DiscountCode;
 import com.serhat.security.service.DiscountCodeService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,20 +28,24 @@ public class DiscountController {
     }
 
     @GetMapping("/available")
-    public ResponseEntity<List<AvailableDiscountResponse>> getAvailableDiscountCodes(HttpServletRequest request) {
-        List<AvailableDiscountResponse> availableDiscounts = discountCodeService.getAvailableDiscountCodes(request);
-        return ResponseEntity.ok(availableDiscounts);
+    public ResponseEntity<Page<AvailableDiscountResponse>> getAvailableDiscountCodes(
+            HttpServletRequest request,
+             Pageable pageable) {
+        return ResponseEntity.ok(discountCodeService.getAvailableDiscountCodes(request, pageable));
     }
 
     @GetMapping("/used")
-    public ResponseEntity<List<UsedDiscountResponse>> getUsedDiscountCodes(HttpServletRequest request) {
-        List<UsedDiscountResponse> usedDiscounts = discountCodeService.getUsedDiscountCodes(request);
-        return ResponseEntity.ok(usedDiscounts);
+    public ResponseEntity<Page<UsedDiscountResponse>> getUsedDiscountCodes(
+            HttpServletRequest request,
+            Pageable pageable) {
+        return ResponseEntity.ok(discountCodeService.getUsedDiscountCodes(request, pageable));
     }
 
     @GetMapping("/expired")
-    public ResponseEntity<List<ExpiredDiscountResponse>> getExpiredDiscountCodes(HttpServletRequest request) {
-        List<ExpiredDiscountResponse> expiredDiscounts = discountCodeService.getExpiredDiscountCodes(request);
-        return ResponseEntity.ok(expiredDiscounts);
+    public ResponseEntity<Page<ExpiredDiscountResponse>> getExpiredDiscountCodes(
+            HttpServletRequest request,
+             Pageable pageable) {
+        return ResponseEntity.ok(discountCodeService.getExpiredDiscountCodes(request, pageable));
     }
+
 }

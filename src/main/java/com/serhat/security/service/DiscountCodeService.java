@@ -17,6 +17,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,45 +58,40 @@ public class DiscountCodeService {
         return discountCode;
     }
 
-    public List<AvailableDiscountResponse> getAvailableDiscountCodes(HttpServletRequest request) {
+    public Page<AvailableDiscountResponse> getAvailableDiscountCodes(HttpServletRequest request, Pageable pageable) {
         User user = tokenInterface.getUserFromToken(request);
-        List<DiscountCode> availableCodes = discountCodeRepository.findByUserAndStatus(user, CouponStatus.NOT_USED);
+        Page<DiscountCode> availableCodes = discountCodeRepository.findByUserAndStatus(user, CouponStatus.NOT_USED, pageable);
 
         if (availableCodes.isEmpty()) {
-            throw new DiscountCodeNotFoundException("No Discount code found for the criteria");
+            throw new DiscountCodeNotFoundException("No available discount codes found.");
         }
 
-        return availableCodes.stream()
-                .map(discountResponseMapper::toAvailableDiscountResponse)
-                .toList();
+        return availableCodes.map(discountResponseMapper::toAvailableDiscountResponse);
     }
 
-    public List<UsedDiscountResponse> getUsedDiscountCodes(HttpServletRequest request) {
+    public Page<UsedDiscountResponse> getUsedDiscountCodes(HttpServletRequest request, Pageable pageable) {
         User user = tokenInterface.getUserFromToken(request);
-        List<DiscountCode> usedCodes = discountCodeRepository.findByUserAndStatus(user, CouponStatus.USED);
+        Page<DiscountCode> usedCodes = discountCodeRepository.findByUserAndStatus(user, CouponStatus.USED, pageable);
 
         if (usedCodes.isEmpty()) {
-            throw new DiscountCodeNotFoundException("No Discount code found for the criteria");
+            throw new DiscountCodeNotFoundException("No used discount codes found.");
         }
 
-        return usedCodes.stream()
-                .map(discountResponseMapper::toUsedDiscountResponse)
-                .toList();
+        return usedCodes.map(discountResponseMapper::toUsedDiscountResponse);
     }
 
-    public List<ExpiredDiscountResponse> getExpiredDiscountCodes(HttpServletRequest request) {
+    public Page<ExpiredDiscountResponse> getExpiredDiscountCodes(HttpServletRequest request, Pageable pageable) {
         User user = tokenInterface.getUserFromToken(request);
-        List<DiscountCode> expiredCodes = discountCodeRepository
-                .findByUserAndStatusAndExpiresAtBefore(user, CouponStatus.NOT_USED, LocalDateTime.now());
+        Page<DiscountCode> expiredCodes = discountCodeRepository
+                .findByUserAndStatusAndExpiresAtBefore(user, CouponStatus.NOT_USED, LocalDateTime.now(), pageable);
 
         if (expiredCodes.isEmpty()) {
-            throw new DiscountCodeNotFoundException("No Discount code found for the criteria");
+            throw new DiscountCodeNotFoundException("No expired discount codes found.");
         }
 
-        return expiredCodes.stream()
-                .map(discountResponseMapper::toExpiredDiscountResponse)
-                .toList();
+        return expiredCodes.map(discountResponseMapper::toExpiredDiscountResponse);
     }
+
 
     private DiscountRate determineDiscountRate() {
         double random = Math.random();
@@ -109,13 +107,25 @@ public class DiscountCodeService {
     @Scheduled(cron = "0 0 * * * ?")
     @Transactional
     public void markExpiredDiscountCodes() {
-        List<DiscountCode> expiredCodes = discountCodeRepository.findByStatusAndExpiresAtBefore(CouponStatus.NOT_USED, LocalDateTime.now());
+        Pageable pageable = PageRequest.of(0, 20);
+        boolean hasMorePages = true;
 
-        if (!expiredCodes.isEmpty()) {
-            expiredCodes.forEach(code -> code.setStatus(CouponStatus.EXPIRED));
-            discountCodeRepository.saveAll(expiredCodes);
-            log.info("{} discount codes marked as EXPIRED.", expiredCodes.size());
+        while (hasMorePages) {
+            Page<DiscountCode> expiredCodesPage = discountCodeRepository
+                    .findByStatusAndExpiresAtBefore(CouponStatus.NOT_USED, LocalDateTime.now(), pageable);
+
+            if (expiredCodesPage.isEmpty()) {
+                hasMorePages = false;
+            } else {
+                expiredCodesPage.getContent().forEach(code -> code.setStatus(CouponStatus.EXPIRED));
+                discountCodeRepository.saveAll(expiredCodesPage.getContent());
+
+                log.info("{} discount codes marked as EXPIRED.", expiredCodesPage.getContent().size());
+
+                pageable = expiredCodesPage.nextPageable();
+            }
         }
     }
+
 }
 

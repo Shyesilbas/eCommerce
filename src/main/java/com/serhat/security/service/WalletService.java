@@ -5,7 +5,6 @@ import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.Transaction;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.Wallet;
-import com.serhat.security.entity.enums.TransactionType;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.mapper.TransactionMapper;
@@ -15,13 +14,12 @@ import com.serhat.security.repository.WalletRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +30,7 @@ public class WalletService {
     private final TokenInterface tokenInterface;
     private final WalletMapper walletMapper;
     private final TransactionMapper transactionMapper;
+    private final TransactionRepository transactionRepository;
 
     private Wallet getUsersWallet(User user){
         return walletRepository.findByUser_UserId(user.getUserId())
@@ -49,12 +48,7 @@ public class WalletService {
 
          Wallet wallet = walletMapper.toWalletAndSave(walletRequest);
 
-         return new WalletCreatedResponse(
-                 wallet.getWalletId(),
-                 wallet.getWalletName(),
-                 wallet.getBalance(),
-                 wallet.getDescription()
-         );
+         return walletMapper.toWalletCreatedResponse(wallet);
     }
 
     @Transactional
@@ -72,52 +66,48 @@ public class WalletService {
 
        wallet.setWalletLimit(newLimit);
 
-        return new WalletLimitUpdateResponse(
-                "Limit Updated Successfully",
-                newLimit,
-                LocalDateTime.now()
-        );
-
+        return walletMapper.toWalletLimitUpdateResponse(wallet,newLimit);
     }
 
     @Transactional
     public DepositSuccessfulResponse depositMoney(HttpServletRequest request, BigDecimal amount) {
-        User user = tokenInterface.getUserFromToken(request);
-        Long userId = user.getUserId();
-
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidAmountException("Deposit amount must be greater than zero");
         }
 
-        Wallet wallet =getUsersWallet(user);
-
-        if(amount.compareTo(wallet.getWalletLimit())>0){
-            throw new LimitExceededException("Your deposit amount request exceeds the limit you have set ");
-        }
-
-        wallet.setBalance(wallet.getBalance().add(amount));
-
-        transactionService.createDepositTransaction(user,amount);
-        walletRepository.save(wallet);
-
-        log.info("User {} deposited {} into their wallet", userId, amount);
-
-        return new DepositSuccessfulResponse(
-                amount,
-                wallet.getBalance(),
-                LocalDateTime.now(),
-                TransactionType.DEPOSIT
-        );
-    }
-
-    public List<TransactionResponse> getTransactionHistory(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         Wallet wallet = getUsersWallet(user);
 
-        return wallet.getTransactions().stream()
-                .map(transactionMapper::toTransactionResponse)
-                .collect(Collectors.toList());
+        checkAmountAndLimit(wallet, amount);
+
+        wallet.setBalance(wallet.getBalance().add(amount));
+        walletRepository.save(wallet);
+
+        transactionService.createDepositTransaction(user, amount);
+
+        log.info("User {} deposited {} into their wallet. New balance: {}",
+                user.getUserId(), amount, wallet.getBalance());
+
+        return walletMapper.toDepositSuccessfulResponse(amount,wallet);
     }
+
+    private void checkAmountAndLimit(Wallet wallet, BigDecimal amount) {
+        BigDecimal limit = wallet.getWalletLimit();
+        BigDecimal balanceAfterDepositRequest = wallet.getBalance().add(amount);
+
+        if (balanceAfterDepositRequest.compareTo(limit) > 0) {
+            throw new LimitExceededException("After deposit, you will exceed your limit. Update your limit.");
+        }
+    }
+
+    public Page<TransactionResponse> getTransactionHistory(HttpServletRequest request, Pageable pageable) {
+        User user = tokenInterface.getUserFromToken(request);
+        Wallet wallet = getUsersWallet(user);
+
+        Page<Transaction> transactionPage = transactionRepository.findByWallet(wallet, pageable);
+        return transactionPage.map(transactionMapper::toTransactionResponse);
+    }
+
 
     public WalletInfoResponse walletInfo(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);

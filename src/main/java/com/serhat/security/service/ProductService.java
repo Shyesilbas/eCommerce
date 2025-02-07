@@ -121,9 +121,10 @@ public class ProductService {
         return productRepository.countByCategory(category);
     }
 
-    public Page<Product> getAllProducts(int page, int size) {
+    public Page<ProductDto> getAllProducts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("productId"));
-        return productRepository.findAll(pageable);
+        Page<Product> products = productRepository.findAll(pageable);
+        return products.map(productMapper::mapToProductDto);
     }
 
     public List<BestSellerProductDTO> bestSellersByCategory(Category category, int size) {
@@ -135,7 +136,7 @@ public class ProductService {
     }
 
     private List<BestSellerProductDTO> getBestSellers(int size, Category category) {
-        List<Order> deliveredOrders = orderRepository.findByStatus(OrderStatus.DELIVERED);
+        List<Order> deliveredOrders = orderRepository.findByStatusNot(OrderStatus.REFUNDED);
         List<Long> productIds = deliveredOrders.stream()
                 .flatMap(order -> order.getOrderItems().stream())
                 .map(OrderItem::getProduct)
@@ -191,20 +192,24 @@ public class ProductService {
         return PageRequest.of(page, size);
     }
 
-    public Page<Product> getProductsByCategory(Category category, int page, int size) {
-        return productRepository.findByCategory(category, createPageable(page, size));
+    public Page<ProductDto> getProductsByCategory(Category category, int page, int size) {
+        Page<Product> products = productRepository.findByCategory(category, createPageable(page, size));
+        return products.map(productMapper::mapToProductDto);
     }
 
-    public Page<Product> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, int page, int size) {
-        return productRepository.findByPriceBetween(minPrice, maxPrice, createPageable(page, size));
+    public Page<ProductDto> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, int page, int size) {
+        Page<Product> products = productRepository.findByPriceBetween(minPrice,maxPrice,createPageable(page, size));
+        return products.map(productMapper::mapToProductDto);
     }
 
-    public Page<Product> getProductsByPriceAndCategory(BigDecimal minPrice, BigDecimal maxPrice, Category category, int page, int size) {
-        return productRepository.findByPriceBetweenAndCategory(minPrice, maxPrice, category, createPageable(page, size));
+    public Page<ProductDto> getProductsByPriceAndCategory(BigDecimal minPrice, BigDecimal maxPrice, Category category, int page, int size) {
+        Page<Product> products = productRepository.findByPriceBetweenAndCategory(minPrice,maxPrice,category,createPageable(page, size));
+        return products.map(productMapper::mapToProductDto);
     }
 
-    public Page<Product> getProductsByBrand(String brand, int page, int size) {
-        return productRepository.findByBrandIgnoreCase(brand, createPageable(page, size));
+    public Page<ProductDto> getProductsByBrand(String brand, int page, int size) {
+        Page<Product> products = productRepository.findByBrandIgnoreCase(brand,createPageable(page, size));
+        return products.map(productMapper::mapToProductDto);
     }
 
 }
