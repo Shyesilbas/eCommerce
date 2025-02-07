@@ -4,6 +4,12 @@ import com.serhat.security.dto.object.AddressDto;
 import com.serhat.security.entity.enums.AddressType;
 
 public record AddAddressRequest(
-    AddressDto addressDto
+        String country,
+        String city,
+        String street,
+        String aptNo,
+        String flatNo,
+        String description,
+        AddressType addressType
 ) {
 }

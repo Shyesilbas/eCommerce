@@ -4,6 +4,7 @@ import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.enums.MembershipPlan;
 import com.serhat.security.entity.enums.PaymentMethod;
+import com.serhat.security.exception.AddBonusRequest;
 import com.serhat.security.exception.InvalidPasswordException;
 import com.serhat.security.exception.UserNotFoundException;
 import com.serhat.security.service.AuthService;
@@ -13,11 +14,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,10 +44,14 @@ public class UserController {
     }
 
     @GetMapping("/addressInfo")
-    public ResponseEntity<List<AddressResponse>> getAddressInfo(HttpServletRequest request){
-        List<AddressResponse> addressResponse = userService.addressInfo(request);
+    public ResponseEntity<Page<AddressResponse>> getAddressInfo(
+            HttpServletRequest request,
+            @RequestParam int page,
+            @RequestParam int size) {
+        Page<AddressResponse> addressResponse = userService.addressInfo(request, page, size);
         return ResponseEntity.ok(addressResponse);
     }
+
 
     @PutMapping("/update-address")
     public ResponseEntity<UpdateAddressResponse> updateAddress(
@@ -116,6 +123,11 @@ public class UserController {
     @PostMapping("/add-address")
     public ResponseEntity<AddAddressResponse> addAddress(@RequestBody AddAddressRequest request , HttpServletRequest servletRequest){
         return ResponseEntity.ok(userService.addAddress(servletRequest, request));
+    }
+
+    @PostMapping("/add-bonus")
+    public ResponseEntity<AddBonusResponse> addAddress(@RequestBody AddBonusRequest addBonusRequest  , HttpServletRequest request){
+        return ResponseEntity.ok(userService.addBonus(request, addBonusRequest));
     }
 
     @DeleteMapping("/delete-address")

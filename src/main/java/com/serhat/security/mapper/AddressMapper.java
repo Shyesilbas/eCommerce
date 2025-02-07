@@ -1,6 +1,7 @@
 package com.serhat.security.mapper;
 
 import com.serhat.security.dto.object.AddressDto;
+import com.serhat.security.dto.request.AddAddressRequest;
 import com.serhat.security.dto.request.UpdateAddressRequest;
 import com.serhat.security.dto.response.AddressResponse;
 import com.serhat.security.entity.Address;
@@ -32,17 +33,29 @@ public class AddressMapper {
                 .orElseThrow(() -> new AddressNotFoundException("Address not found for ID: " + addressId));
     }
 
-    public Address toAddress(AddressDto addressDto, User user) {
+    public Address toAddress(AddAddressRequest addAddressRequest, User user) {
         return Address.builder()
-                .country(addressDto.country())
-                .city(addressDto.city())
-                .street(addressDto.street())
-                .aptNo(addressDto.aptNo())
-                .flatNo(addressDto.flatNo())
-                .description(addressDto.description())
-                .addressType(addressDto.addressType())
+                .country(addAddressRequest.country())
+                .city(addAddressRequest.city())
+                .street(addAddressRequest.street())
+                .aptNo(addAddressRequest.aptNo())
+                .flatNo(addAddressRequest.flatNo())
+                .description(addAddressRequest.description())
+                .addressType(addAddressRequest.addressType())
                 .user(user)
                 .build();
+    }
+
+    public AddAddressRequest toAddAddressRequest(AddressDto addressDto) {
+        return new AddAddressRequest(
+                addressDto.country(),
+                addressDto.city(),
+                addressDto.street(),
+                addressDto.aptNo(),
+                addressDto.flatNo(),
+                addressDto.description(),
+                addressDto.addressType()
+        );
     }
 
     public AddressResponse toAddressResponse(Address address) {

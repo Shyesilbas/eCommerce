@@ -1,6 +1,7 @@
 package com.serhat.security.mapper;
 
 import com.serhat.security.dto.request.RegisterRequest;
+import com.serhat.security.dto.response.AddBonusResponse;
 import com.serhat.security.dto.response.UserResponse;
 import com.serhat.security.entity.Address;
 import com.serhat.security.entity.User;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -36,6 +38,15 @@ public class UserMapper {
 
     }
 
+    public AddBonusResponse toAddBonusResponse(User user,BigDecimal amount){
+        return new AddBonusResponse(
+                amount.toString() + " bonus added to your bonus balance!",
+                amount,
+                user.getCurrentBonusPoints(),
+                user.getBonusPointsWon()
+        );
+    }
+
     public User toUser(RegisterRequest request) {
         User user = User.builder()
                 .username(request.username())
@@ -55,10 +66,11 @@ public class UserMapper {
 
         if (request.address() != null && !request.address().isEmpty()) {
             List<Address> addresses = request.address().stream()
-                    .map(addressDto -> addressMapper.toAddress(addressDto, user))
-                    .toList();
+                    .map(addAddressRequest -> addressMapper.toAddress(addAddressRequest, user))
+                    .collect(Collectors.toList());
             user.setAddresses(addresses);
         }
         return user;
     }
+
 }

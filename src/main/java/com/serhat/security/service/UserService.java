@@ -17,6 +17,9 @@ import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,6 +91,25 @@ public class UserService {
                 user.getBonusPointsWon(),
                 user.getCurrentBonusPoints()
         );
+    }
+
+    @Transactional
+    public AddBonusResponse addBonus(HttpServletRequest request,AddBonusRequest bonusRequest){
+        User user = tokenInterface.getUserFromToken(request);
+
+        BonusPointInformation bonusInfo = bonusPointInformation(request);
+        BigDecimal currentBonus = bonusInfo.currentBonusPoints();
+        BigDecimal totalBonusWon = bonusInfo.totalBonusWon();
+
+       if(bonusRequest.amount().compareTo(BigDecimal.ZERO)<=0){
+           throw new InvalidAmountException("Amount must be positive!");
+       }
+       user.setBonusPointsWon(totalBonusWon.add(bonusRequest.amount()));
+       user.setCurrentBonusPoints(currentBonus.add(bonusRequest.amount()));
+       userRepository.save(user);
+
+
+       return userMapper.toAddBonusResponse(user,bonusRequest.amount());
     }
 
     @Transactional
@@ -190,14 +212,16 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
-    public List<AddressResponse> addressInfo(HttpServletRequest request) {
+    public Page<AddressResponse> addressInfo(HttpServletRequest request, int page, int size) {
         User user = getUserFromToken(request);
-        List<Address> addresses = addressRepository.findByUser_Username(user.getUsername());
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Address> addresses = addressRepository.findByUser_Username(user.getUsername(), pageable);
 
         if (addresses.isEmpty()) {
             throw new RuntimeException("No addresses found for user: " + user.getUsername());
         }
-        return addressMapper.toAddressResponseList(addresses);
+
+        return addresses.map(addressMapper::toAddressResponse);
     }
 
     @Transactional
@@ -226,8 +250,7 @@ public class UserService {
     @Transactional
     public AddAddressResponse addAddress(HttpServletRequest request, AddAddressRequest addAddressRequest) {
         User user = getUserFromToken(request);
-        AddressDto addressDto = addAddressRequest.addressDto();
-        Address newAddress = addressMapper.toAddress(addressDto, user);
+        Address newAddress = addressMapper.toAddress(addAddressRequest, user);
 
         addressRepository.save(newAddress);
         notificationService.addNotification(request, NotificationTopic.ADDRESS_ADDED);

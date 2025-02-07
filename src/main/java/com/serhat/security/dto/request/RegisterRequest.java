@@ -32,6 +32,6 @@ public record RegisterRequest(
         String phone,
 
 
-        List<AddressDto> address
+        List<AddAddressRequest> address
 ) {
 }
