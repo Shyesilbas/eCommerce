@@ -7,6 +7,7 @@ import lombok.Builder;
 public record OrderRequest(
         Long shippingAddressId,
         Long discountId,
+        Long giftCardId,
         String notes,
         Boolean useBonus
 ) {

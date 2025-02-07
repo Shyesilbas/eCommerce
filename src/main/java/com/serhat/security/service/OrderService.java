@@ -142,9 +142,6 @@ public class OrderService {
         updateDiscountCodeStatus(order.getDiscountCode());
         generateDiscountCodeIfEligible(order, request);
         updateUserTotalFees(user);
-
-        BigDecimal totalSaved = order.getBonusPointsUsed().add(order.getTotalDiscount());
-        user.setTotalSaved(user.getTotalSaved().add(totalSaved));
     }
 
     private void saveOrderAndUpdateUser(Order order, User user) {
@@ -177,8 +174,13 @@ public class OrderService {
                 .map(order -> order.getTotalPaid().subtract(order.getShippingFee()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        BigDecimal totalSaved = orderRepository.findByUser(user).stream()
+                .map(Order::getTotalSaved)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         user.setTotalShippingFeePaid(totalShippingFee);
         user.setTotalOrderFeePaid(totalOrderFee);
+        user.setTotalSaved(totalSaved);
         userRepository.save(user);
     }
 
@@ -239,19 +241,11 @@ public class OrderService {
         if (!isItemsReturnable) {
             throw new OrderCancellationException("All the items must be returnable to cancel the order!");
         }
-
-        Wallet wallet = paymentService.findWalletForUser(user);
         BigDecimal shippingFee = paymentService.calculateShippingFee(user, order.getTotalPrice());
         BigDecimal totalPaid = order.getTotalPaid();
 
-        if (order.getBonusPointsUsed().compareTo(BigDecimal.ZERO) > 0) {
-            user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(order.getBonusPointsUsed()));
-            wallet.setBonusPoints(user.getCurrentBonusPoints());
-            user.setTotalSaved(user.getTotalSaved().subtract(order.getBonusPointsUsed()));
-        }
-
-        if (order.getTotalDiscount().compareTo(BigDecimal.ZERO) > 0) {
-            user.setTotalSaved(user.getTotalSaved().subtract(order.getTotalDiscount()));
+        if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
+            transactionService.createRefundTransaction(order, user, totalPaid, shippingFee);
         }
 
         for (OrderItem orderItem : order.getOrderItems()) {
@@ -263,24 +257,28 @@ public class OrderService {
             }
         }
 
-        user.setCancelledOrders(user.getCancelledOrders() + 1);
-        user.setTotalShippingFeePaid(user.getTotalShippingFeePaid().subtract(shippingFee));
-        user.setTotalOrderFeePaid(user.getTotalOrderFeePaid().subtract(order.getTotalPaid()));
+        updateUserAfterOrderCancel(user, order, shippingFee, totalPaid);
 
         order.setStatus(OrderStatus.REFUNDED);
         order.setUpdatedAt(LocalDateTime.now());
 
-        if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
-            transactionService.createRefundTransaction(order, user, totalPaid, shippingFee);
-        }
-
         orderRepository.save(order);
         productRepository.saveAll(order.getOrderItems().stream().map(OrderItem::getProduct).toList());
-        userRepository.save(user);
+
         notificationService.addOrderNotification(user, order, NotificationTopic.ORDER_CANCELLED);
 
         return orderMapper.toOrderCancellationResponse(order, totalPaid);
     }
+
+    private void updateUserAfterOrderCancel(User user, Order order, BigDecimal shippingFee, BigDecimal totalPaid) {
+        user.setCancelledOrders(user.getCancelledOrders() + 1);
+        user.setTotalShippingFeePaid(user.getTotalShippingFeePaid().subtract(shippingFee));
+        user.setTotalOrderFeePaid(user.getTotalOrderFeePaid().subtract(totalPaid));
+        user.setBonusPointsWon(user.getBonusPointsWon().subtract(order.getBonusWon()));
+        user.setCurrentBonusPoints(user.getCurrentBonusPoints().subtract(order.getBonusWon()));
+        userRepository.save(user);
+    }
+
     public OrderResponse getOrderDetails(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         Order order = orderRepository.findById(orderId)

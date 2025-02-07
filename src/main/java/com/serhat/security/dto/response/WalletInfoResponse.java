@@ -6,7 +6,6 @@ public record WalletInfoResponse(
         String description,
         String walletName,
         BigDecimal walletLimit,
-        BigDecimal balance,
-        BigDecimal bonusPoints
+        BigDecimal balance
 ) {
 }

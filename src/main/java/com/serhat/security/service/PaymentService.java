@@ -8,6 +8,7 @@ import com.serhat.security.entity.*;
 import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.exception.*;
 import com.serhat.security.repository.DiscountCodeRepository;
+import com.serhat.security.repository.GiftCardRepository;
 import com.serhat.security.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ public class PaymentService {
     private final WalletRepository walletRepository;
     private final DiscountCodeRepository discountCodeRepository;
     private final TransactionService transactionService;
-
+    private final GiftCardRepository giftCardRepository;
     public Wallet findWalletForUser(User user) {
       return   walletRepository.findByUser_UserId(user.getUserId())
                 .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
@@ -56,8 +57,17 @@ public class PaymentService {
         BigDecimal shippingFee = calculateShippingFee(user, totalPrice);
         BigDecimal bonusPoints = calculateBonusPoints(user, totalPrice);
 
+        if (orderRequest.discountId() != null && orderRequest.giftCardId() != null) {
+            throw new InvalidOrderException("Cannot use both discount code and gift card in the same order.");
+        }
+
         DiscountDetails discountDetails = applyDiscountIfAvailable(orderRequest, originalTotalPrice, user);
         totalPrice = totalPrice.subtract(discountDetails.discountAmount());
+
+        GiftCard giftCard = applyGiftCardIfAvailable(orderRequest, totalPrice);
+        if (giftCard != null) {
+            totalPrice = totalPrice.subtract(giftCard.getGiftAmount().getAmount());
+        }
 
         BonusUsageResult bonusUsageResult = useBonusIfRequested(user, orderRequest, totalPrice);
         totalPrice = bonusUsageResult.updatedTotalPrice();
@@ -65,9 +75,21 @@ public class PaymentService {
 
         BigDecimal finalPrice = totalPrice.add(shippingFee);
 
-        return new PriceDetails(totalPrice, originalTotalPrice, shippingFee, bonusPoints,
-                discountDetails.discountAmount(), finalPrice, discountDetails.discountCode(), bonusPointsUsed);
+        BigDecimal totalSaved = discountDetails.discountAmount().add(bonusPointsUsed);
+
+        return new PriceDetails(
+                totalPrice,
+                originalTotalPrice,
+                shippingFee,
+                bonusPoints,
+                discountDetails.discountAmount(),
+                finalPrice,
+                discountDetails.discountCode(),
+                bonusPointsUsed,
+                totalSaved
+        );
     }
+
 
     private BigDecimal calculateTotalPrice(List<ShoppingCard> shoppingCards) {
         return shoppingCards.stream()
@@ -82,8 +104,8 @@ public class PaymentService {
 
         DiscountCode discountCode = discountCodeRepository.findById(orderRequest.discountId())
                 .orElseThrow(() -> new InvalidDiscountCodeException("Invalid discount code"));
-        validateDiscountCode(discountCode, user);
 
+        validateDiscountCode(discountCode, user);
         BigDecimal discountAmount = calculateDiscountAmount(originalTotalPrice, discountCode);
         return new DiscountDetails(discountAmount, discountCode);
     }
@@ -107,6 +129,34 @@ public class PaymentService {
         }
     }
 
+    private GiftCard applyGiftCardIfAvailable(OrderRequest orderRequest, BigDecimal totalPrice) {
+        if (orderRequest.giftCardId() == null) {
+            return null;
+        }
+
+        GiftCard giftCard = giftCardRepository.findById(orderRequest.giftCardId())
+                .orElseThrow(() -> new InvalidGiftCardException("Invalid gift card"));
+
+        validateGiftCard(giftCard);
+        if (giftCard.getGiftAmount().getAmount().compareTo(totalPrice) > 0) {
+            throw new InvalidGiftCardException("Gift card balance exceeds the total price.");
+        }
+
+        giftCard.setStatus(CouponStatus.USED);
+        giftCardRepository.save(giftCard);
+        return giftCard;
+    }
+
+    public void validateGiftCard(GiftCard giftCard) {
+        if (giftCard.getStatus().equals(CouponStatus.USED)){
+            throw new UsedGiftCardException("Gift cart is used!");
+        }
+
+        if (giftCard.getGiftAmount().getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidGiftCardException("This gift card has no balance!");
+        }
+    }
+
     private BonusUsageResult useBonusIfRequested(User user, OrderRequest orderRequest, BigDecimal totalPrice) {
         BigDecimal bonusPointsUsed = BigDecimal.ZERO;
 
@@ -118,8 +168,6 @@ public class PaymentService {
                 totalPrice = totalPrice.subtract(bonusPointsUsed);
 
                 user.setCurrentBonusPoints(availableBonusPoints.subtract(bonusPointsUsed));
-                user.getWallet().setBonusPoints(user.getCurrentBonusPoints());
-                user.setTotalSaved(user.getTotalSaved().add(bonusPointsUsed));
             } else {
                 throw new NoBonusPointsException("No bonus points found");
             }

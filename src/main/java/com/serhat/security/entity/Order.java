@@ -41,6 +41,11 @@ public class Order {
     private DiscountCode discountCode;
 
 
+    @OneToOne
+    @JoinColumn(name = "gift_card_id")
+    private GiftCard giftCard;
+
+
     private LocalDateTime orderDate;
 
     private BigDecimal totalPrice;
@@ -61,6 +66,8 @@ public class Order {
     private BigDecimal bonusWon;
     private BigDecimal totalDiscount;
     private BigDecimal totalPaid;
+    private BigDecimal totalSaved;
+
 
     @Enumerated(EnumType.STRING)
     private DiscountRate discountRate;

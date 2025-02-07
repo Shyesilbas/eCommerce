@@ -22,7 +22,6 @@ public class WalletMapper {
         wallet.setWalletLimit(walletRequest.limit());
         wallet.setWalletPin(walletRequest.walletPin());
         wallet.setBalance(BigDecimal.ZERO);
-        wallet.setBonusPoints(BigDecimal.ZERO);
         walletRepository.save(wallet);
         return wallet;
     }
@@ -43,8 +42,7 @@ public class WalletMapper {
                 wallet.getDescription(),
                 wallet.getWalletName(),
                 wallet.getWalletLimit(),
-                wallet.getBalance(),
-                wallet.getBonusPoints()
+                wallet.getBalance()
         );
     }
 }

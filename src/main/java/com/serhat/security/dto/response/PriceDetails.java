@@ -12,6 +12,7 @@ public record PriceDetails(
         BigDecimal discountAmount,
         BigDecimal finalPrice,
         DiscountCode discountCode,
-        BigDecimal bonusPointsUsed
+        BigDecimal bonusPointsUsed,
+        BigDecimal totalSaved
 ) {
 }

@@ -6,20 +6,20 @@ import com.serhat.security.dto.response.OrderCancellationResponse;
 import com.serhat.security.dto.response.OrderItemDetails;
 import com.serhat.security.dto.response.OrderResponse;
 import com.serhat.security.dto.response.PriceDetails;
-import com.serhat.security.entity.Order;
-import com.serhat.security.entity.OrderItem;
-import com.serhat.security.entity.ShoppingCard;
-import com.serhat.security.entity.User;
+import com.serhat.security.entity.*;
 import com.serhat.security.entity.enums.DiscountRate;
 import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.entity.enums.PaymentMethod;
+import com.serhat.security.repository.GiftCardRepository;
 import com.serhat.security.service.DiscountCodeService;
+import com.serhat.security.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -28,14 +28,18 @@ public class
 OrderMapper {
     private final AddressMapper addressMapper;
     private final DiscountCodeService discountService;
+    private final GiftCardRepository giftCardRepository;
 
     public OrderCancellationResponse toOrderCancellationResponse(Order order, BigDecimal totalPaid) {
+        BigDecimal giftCardAmount = (order.getGiftCard() != null) ? order.getGiftCard().getGiftAmount().getAmount() : BigDecimal.ZERO;
+
         return new OrderCancellationResponse(
                 order.getTotalPrice(),
                 order.getShippingFee(),
                 order.getIsBonusPointUsed(),
                 order.getBonusPointsUsed(),
                 order.getTotalDiscount(),
+                giftCardAmount,
                 totalPaid,
                 toOrderItemDetails(order.getOrderItems()),
                 order.getStatus(),
@@ -64,10 +68,11 @@ OrderMapper {
 
         BigDecimal cartTotalPrice = order.getTotalPrice();
         BigDecimal totalBeforeDiscount = cartTotalPrice.add(order.getShippingFee());
-        BigDecimal saved = totalBeforeDiscount.subtract(order.getTotalPaid());
         String discountMessage = (order.getTotalPaid().compareTo(discountService.getDiscountThreshold()) >= 0)
                 ? "You’ve been granted a discount code!"
                 : "Add more to obtain a discount code.";
+
+        BigDecimal giftCardAmount = (order.getGiftCard() != null) ? order.getGiftCard().getGiftAmount().getAmount() : BigDecimal.ZERO;
 
         return new OrderResponse(
                 order.getOrderId(),
@@ -80,8 +85,9 @@ OrderMapper {
                 totalBeforeDiscount,
                 order.getTotalDiscount(),
                 order.getBonusPointsUsed(),
+                giftCardAmount,
                 order.getTotalPaid(),
-                saved,
+                order.getTotalSaved(),
                 order.getNotes(),
                 orderItems,
                 order.getBonusWon(),
@@ -90,10 +96,15 @@ OrderMapper {
         );
     }
 
+
     public Order createOrderEntity(User user, OrderRequest orderRequest, PriceDetails priceDetails) {
         List<ShoppingCard> shoppingCards = user.getS_card();
         boolean isOrderReturnable = shoppingCards.stream()
                 .allMatch(shoppingCard -> shoppingCard.getProduct().isReturnable());
+
+        Optional<GiftCard> giftCardOptional = orderRequest.giftCardId() != null ?
+                giftCardRepository.findById(orderRequest.giftCardId()) :
+                Optional.empty();
 
         return Order.builder()
                 .user(user)
@@ -114,6 +125,9 @@ OrderMapper {
                 .isBonusPointUsed(priceDetails.bonusPointsUsed().compareTo(BigDecimal.ZERO) > 0)
                 .bonusPointsUsed(priceDetails.bonusPointsUsed())
                 .isOrderReturnable(isOrderReturnable)
+                .giftCard(giftCardOptional.orElse(null))
+                .totalSaved(priceDetails.totalSaved())
                 .build();
     }
+
 }

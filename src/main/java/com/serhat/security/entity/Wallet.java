@@ -39,7 +39,6 @@ public class Wallet {
 
     private String description;
 
-    private BigDecimal bonusPoints = BigDecimal.ZERO;
 
     private String walletPin;
 

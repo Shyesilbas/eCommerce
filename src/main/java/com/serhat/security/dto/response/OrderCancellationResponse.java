@@ -12,6 +12,7 @@ public record OrderCancellationResponse(
         Boolean isBonusPointsUsed,
         BigDecimal bonusPointsUsed,
         BigDecimal totalDiscount,
+        BigDecimal giftCardAmount,
         BigDecimal refundFee,
         List<OrderItemDetails> orderItems,
         OrderStatus status,

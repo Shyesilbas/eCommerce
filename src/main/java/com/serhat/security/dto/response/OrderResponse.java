@@ -23,6 +23,7 @@ public record OrderResponse(
 
         BigDecimal discountAmount,
         BigDecimal bonusPointsUsed,
+        BigDecimal giftCardAmount,
         BigDecimal totalPaid,
         BigDecimal saved,
 
