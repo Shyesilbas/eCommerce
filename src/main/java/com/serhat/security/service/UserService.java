@@ -1,6 +1,7 @@
 package com.serhat.security.service;
 
 import com.serhat.security.dto.object.AddressDto;
+import com.serhat.security.dto.object.PageDTO;
 import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.Address;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +36,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,8 +50,8 @@ public class UserService {
     private final AddressMapper addressMapper;
     private final TransactionService transactionService;
     private final UserMapper userMapper;
-    private final CacheManager cacheManager;
 
+    @Transactional(readOnly = true)
     public User getUserFromToken(HttpServletRequest request){
         return tokenInterface.getUserFromToken(request);
     }
@@ -97,6 +100,7 @@ public class UserService {
         );
     }
 
+    @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
     @Transactional
     public AddBonusResponse addBonus(HttpServletRequest request,AddBonusRequest bonusRequest){
         User user = tokenInterface.getUserFromToken(request);
@@ -116,6 +120,7 @@ public class UserService {
        return userMapper.toAddBonusResponse(user,bonusRequest.amount());
     }
 
+    @CacheEvict(value = "userInfoCache", key = "#servletRequest.userPrincipal.name")
     @Transactional
     public UpdateMembershipPlan updateMembershipPlan(HttpServletRequest servletRequest, UpdateMembershipRequest request) {
         User user = getUserFromToken(servletRequest);
@@ -143,6 +148,7 @@ public class UserService {
         }
     }
 
+    @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
     @Transactional
     public UpdatePhoneResponse updatePhone(HttpServletRequest request, UpdatePhoneRequest updatePhoneRequest) {
         User user = getUserFromToken(request);
@@ -158,6 +164,7 @@ public class UserService {
         return new UpdatePhoneResponse("Phone updated successfully.", user.getPhone(), LocalDateTime.now());
     }
 
+    @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
     @Transactional
     public UpdateEmailResponse updateEmail(HttpServletRequest request, UpdateEmailRequest updateEmailRequest) {
         User user = getUserFromToken(request);
@@ -216,12 +223,11 @@ public class UserService {
         log.info("User details fetched from DATABASE: userId={}, email={}, username={}, role={}, total orders={}",
                 user.getUserId(), user.getEmail(), user.getUsername(), user.getRole(), user.getTotalOrders());
 
-        Thread.sleep(5000L);
         return response;
     }
 
-    @Cacheable(value = "addressInfoCache", key = "#request.userPrincipal.name + #page + #size", unless = "#result == null")
-    public Page<AddressResponse> addressInfo(HttpServletRequest request, int page, int size) {
+    @Cacheable(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + #page + ':size' + #size", unless = "#result == null")
+    public PageDTO<AddressResponse> addressInfo(HttpServletRequest request, int page, int size) {
         User user = getUserFromToken(request);
         Pageable pageable = PageRequest.of(page, size);
         Page<Address> addresses = addressRepository.findByUser_Username(user.getUsername(), pageable);
@@ -230,10 +236,15 @@ public class UserService {
             throw new RuntimeException("No addresses found for user: " + user.getUsername());
         }
 
-        return addresses.map(addressMapper::toAddressResponse);
+        List<AddressResponse> addressResponses = addresses.stream()
+                .map(addressMapper::toAddressResponse)
+                .collect(Collectors.toList());
+
+        return new PageDTO<>(addressResponses, addresses.getNumber(), addresses.getSize(), (int) addresses.getTotalElements());
     }
 
     @Transactional
+    @CacheEvict(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + '0' + ':size' + '10'")
     public UpdateAddressResponse updateAddress(Long addressId, HttpServletRequest request, UpdateAddressRequest updateAddressRequest) {
         User user = getUserFromToken(request);
 
@@ -257,6 +268,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + '0' + ':size' + '10'")
     public AddAddressResponse addAddress(HttpServletRequest request, AddAddressRequest addAddressRequest) {
         User user = getUserFromToken(request);
         Address newAddress = addressMapper.toAddress(addAddressRequest, user);
@@ -272,8 +284,8 @@ public class UserService {
         );
     }
 
-
     @Transactional
+    @CacheEvict(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + '0' + ':size' + '10'")
     public DeleteAddressResponse deleteAddress(Long addressId, HttpServletRequest request) {
         User user = getUserFromToken(request);
         Address address = addressRepository.findById(addressId)

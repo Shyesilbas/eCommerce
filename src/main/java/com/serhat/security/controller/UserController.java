@@ -1,5 +1,6 @@
 package com.serhat.security.controller;
 
+import com.serhat.security.dto.object.PageDTO;
 import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.enums.MembershipPlan;
@@ -50,14 +51,13 @@ public class UserController {
     }
 
     @GetMapping("/addressInfo")
-    public ResponseEntity<Page<AddressResponse>> getAddressInfo(
+    public ResponseEntity<PageDTO<AddressResponse>> getAddressInfo(
             HttpServletRequest request,
             @RequestParam int page,
             @RequestParam int size) {
-        Page<AddressResponse> addressResponse = userService.addressInfo(request, page, size);
+        PageDTO<AddressResponse> addressResponse = userService.addressInfo(request, page, size);
         return ResponseEntity.ok(addressResponse);
     }
-
 
     @PutMapping("/update-address")
     public ResponseEntity<UpdateAddressResponse> updateAddress(

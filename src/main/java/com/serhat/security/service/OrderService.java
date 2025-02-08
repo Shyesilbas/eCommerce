@@ -11,6 +11,7 @@ import com.serhat.security.repository.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -48,6 +49,7 @@ public class OrderService {
     }
 
     @Transactional
+    @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
     public OrderResponse createOrder(HttpServletRequest request, OrderRequest orderRequest) {
         User user = validateAndGetUser(request, orderRequest);
         paymentService.findWalletForUser(user);
@@ -222,6 +224,7 @@ public class OrderService {
     }
 
     @Transactional
+    @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
     public OrderCancellationResponse cancelOrder(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         Order order = orderRepository.findById(orderId)

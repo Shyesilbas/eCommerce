@@ -13,7 +13,6 @@ public record UserResponse(
         String email,
         String username,
         String phone,
-        String password,
         Role role,
         int totalOrders,
         int cancelledOrders,

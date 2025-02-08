@@ -25,7 +25,6 @@ public class UserMapper {
                 .email(user.getEmail())
                 .username(user.getUsername())
                 .phone(user.getPhone())
-                .password(user.getPassword())
                 .totalOrders(user.getTotalOrders())
                 .cancelledOrders(user.getCancelledOrders())
                 .bonusPoints(user.getBonusPointsWon())
