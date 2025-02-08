@@ -17,6 +17,9 @@ import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +47,7 @@ public class UserService {
     private final AddressMapper addressMapper;
     private final TransactionService transactionService;
     private final UserMapper userMapper;
+    private final CacheManager cacheManager;
 
     public User getUserFromToken(HttpServletRequest request){
         return tokenInterface.getUserFromToken(request);
@@ -204,14 +208,19 @@ public class UserService {
         return new ForgotPasswordResponse("Password updated successfully.", LocalDateTime.now());
     }
 
-    public UserResponse userInfo(HttpServletRequest request) {
+    @Cacheable(value = "userInfoCache", key = "#request.userPrincipal.name", unless = "#result == null")
+    public UserResponse userInfo(HttpServletRequest request) throws InterruptedException {
         User user = getUserFromToken(request);
-        log.info("User details: userId={}, email={}, username={}, role={}, total orders={}",
+        UserResponse response = userMapper.toUserResponse(user);
+
+        log.info("User details fetched from DATABASE: userId={}, email={}, username={}, role={}, total orders={}",
                 user.getUserId(), user.getEmail(), user.getUsername(), user.getRole(), user.getTotalOrders());
 
-        return userMapper.toUserResponse(user);
+        Thread.sleep(5000L);
+        return response;
     }
 
+    @Cacheable(value = "addressInfoCache", key = "#request.userPrincipal.name + #page + #size", unless = "#result == null")
     public Page<AddressResponse> addressInfo(HttpServletRequest request, int page, int size) {
         User user = getUserFromToken(request);
         Pageable pageable = PageRequest.of(page, size);

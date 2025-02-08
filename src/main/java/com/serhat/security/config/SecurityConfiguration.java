@@ -54,6 +54,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/products/byCategory").permitAll()
                         .requestMatchers("/api/products/totalCount").permitAll()
                         .requestMatchers("/user/forgot-password").permitAll()
+                        .requestMatchers("/user/redisTest").permitAll()
                         .requestMatchers("/price-history/**").permitAll()
                         .requestMatchers("/api/products/totalCountByCategory").permitAll()
                         .requestMatchers("/api/products/byBrand").permitAll()

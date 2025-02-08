@@ -33,14 +33,20 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/myInfo")
-    public ResponseEntity<UserResponse> getUserInfo(HttpServletRequest request) {
+    public ResponseEntity<UserResponse> getUserInfo(HttpServletRequest request) throws InterruptedException{
         UserResponse userResponse = userService.userInfo(request);
         return ResponseEntity.ok(userResponse);
     }
 
     @GetMapping("/bonusInfo")
-    public ResponseEntity<BonusPointInformation> bonusPointInfo(HttpServletRequest request){
+    public ResponseEntity<BonusPointInformation> bonusPointInfo(HttpServletRequest request)throws InterruptedException{
         return ResponseEntity.ok(userService.bonusPointInformation(request));
+    }
+
+    @GetMapping("redisTest")
+    public String redisTest() throws InterruptedException{
+        Thread.sleep(5000L);
+        return "Should response after 5 seconds every time.";
     }
 
     @GetMapping("/addressInfo")
