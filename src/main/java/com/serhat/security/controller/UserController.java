@@ -8,7 +8,9 @@ import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.exception.AddBonusRequest;
 import com.serhat.security.exception.InvalidPasswordException;
 import com.serhat.security.exception.UserNotFoundException;
+import com.serhat.security.service.AddressService;
 import com.serhat.security.service.AuthService;
+import com.serhat.security.service.BonusService;
 import com.serhat.security.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,6 +34,8 @@ import java.util.List;
 @Slf4j
 public class UserController {
     private final UserService userService;
+    private final BonusService bonusService;
+    private final AddressService addressService;
 
     @GetMapping("/myInfo")
     public ResponseEntity<UserResponse> getUserInfo(HttpServletRequest request) throws InterruptedException{
@@ -41,7 +45,7 @@ public class UserController {
 
     @GetMapping("/bonusInfo")
     public ResponseEntity<BonusPointInformation> bonusPointInfo(HttpServletRequest request)throws InterruptedException{
-        return ResponseEntity.ok(userService.bonusPointInformation(request));
+        return ResponseEntity.ok(bonusService.bonusPointInformation(request));
     }
 
     @GetMapping("redisTest")
@@ -55,7 +59,7 @@ public class UserController {
             HttpServletRequest request,
             @RequestParam int page,
             @RequestParam int size) {
-        PageDTO<AddressResponse> addressResponse = userService.addressInfo(request, page, size);
+        PageDTO<AddressResponse> addressResponse = addressService.addressInfo(request, page, size);
         return ResponseEntity.ok(addressResponse);
     }
 
@@ -65,7 +69,7 @@ public class UserController {
             @RequestBody UpdateAddressRequest updateAddressRequest,
             HttpServletRequest request
     ) {
-        UpdateAddressResponse response = userService.updateAddress(addressId, request, updateAddressRequest);
+        UpdateAddressResponse response = addressService.updateAddress(addressId, request, updateAddressRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -128,17 +132,17 @@ public class UserController {
 
     @PostMapping("/add-address")
     public ResponseEntity<AddAddressResponse> addAddress(@RequestBody AddAddressRequest request , HttpServletRequest servletRequest){
-        return ResponseEntity.ok(userService.addAddress(servletRequest, request));
+        return ResponseEntity.ok(addressService.addAddress(servletRequest, request));
     }
 
     @PostMapping("/add-bonus")
     public ResponseEntity<AddBonusResponse> addAddress(@RequestBody AddBonusRequest addBonusRequest  , HttpServletRequest request){
-        return ResponseEntity.ok(userService.addBonus(request, addBonusRequest));
+        return ResponseEntity.ok(bonusService.addBonus(request, addBonusRequest));
     }
 
     @DeleteMapping("/delete-address")
     public ResponseEntity<DeleteAddressResponse> deleteAddress(@RequestParam Long addressId , HttpServletRequest request){
-        return ResponseEntity.ok(userService.deleteAddress(addressId, request));
+        return ResponseEntity.ok(addressService.deleteAddress(addressId, request));
     }
 
 }

@@ -15,7 +15,9 @@ import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.entity.enums.Role;
 import com.serhat.security.entity.enums.StockStatus;
 import com.serhat.security.exception.InvalidAmountException;
+import com.serhat.security.exception.InvalidQuantityException;
 import com.serhat.security.exception.ProductNotFoundException;
+import com.serhat.security.interfaces.ProductInterface;
 import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.mapper.ProductMapper;
 import com.serhat.security.repository.OrderRepository;
@@ -37,10 +39,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ProductService {
+public class ProductService implements ProductInterface {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
-    private final PriceHistoryRepository priceHistoryRepository;
     private final JwtUtil jwtUtil;
     private final ProductMapper productMapper;
     private final PriceHistoryService priceHistoryService;
@@ -51,7 +52,8 @@ public class ProductService {
             throw new RuntimeException("Only ADMIN users can perform this action.");
         }
     }
-    private Product getProductById(Long productId) {
+    @Override
+    public Product getProductById(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found for: " + productId));
     }
@@ -59,6 +61,7 @@ public class ProductService {
     public void manageStockAlerts(Long productId) {
         stockAlertService.handleStockAlert(productId);
     }
+    @Override
     public ProductQuantityUpdate updateProductQuantity(Long productId, int quantity, HttpServletRequest request) {
         validateAdminRole(request);
         Product product = getProductById(productId);
@@ -80,6 +83,24 @@ public class ProductService {
         return new ProductQuantityUpdate(product.getName(), product.getProductCode(), quantity);
     }
 
+    @Override
+    public void updateProductStock(Product product, int quantity) {
+        product.setQuantity(product.getQuantity() - quantity);
+        if (product.getQuantity() == 0) {
+            product.setStockStatus(StockStatus.OUT_OF_STOCKS);
+        }
+        if (product.getQuantity() < 0) {
+            throw new InvalidQuantityException("Quantity cannot be negative");
+        }
+    }
+    public void updateProductsAfterOrder(List<OrderItem> orderItems) {
+        productRepository.saveAll(orderItems.stream()
+                .map(OrderItem::getProduct)
+                .collect(Collectors.toList()));
+    }
+
+
+    @Override
     public ProductPriceUpdate updateProductPrice(Long productId, BigDecimal price, HttpServletRequest request) {
         validateAdminRole(request);
         Product product = getProductById(productId);
@@ -89,8 +110,8 @@ public class ProductService {
         }
 
         BigDecimal oldPrice = product.getPrice();
-        double changePercentage = calculateChangePercentage(oldPrice, price);
-        double totalChangePercentage = calculateTotalChangePercentage(product.getProductId(), price);
+        double changePercentage = priceHistoryService.calculateChangePercentage(oldPrice, price);
+        double totalChangePercentage = priceHistoryService.calculateTotalChangePercentage(product.getProductId(), price);
 
         priceHistoryService.createAndSavePriceHistory(product, oldPrice, price, changePercentage, totalChangePercentage);
 
@@ -101,36 +122,23 @@ public class ProductService {
         return new ProductPriceUpdate(product.getName(), product.getProductCode(), price);
     }
 
-    private double calculateChangePercentage(BigDecimal oldPrice, BigDecimal newPrice) {
-        if (oldPrice.compareTo(BigDecimal.ZERO) == 0) {
-            return 0.0;
-        }
-        return newPrice.subtract(oldPrice)
-                .divide(oldPrice, 4, RoundingMode.HALF_UP)
-                .multiply(BigDecimal.valueOf(100))
-                .doubleValue();
-    }
-
-    private double calculateTotalChangePercentage(Long productId, BigDecimal currentPrice) {
-        PriceHistory firstPriceHistory = priceHistoryRepository.findFirstByProduct_ProductIdOrderByChangeDateAsc(productId);
-        BigDecimal firstPrice = firstPriceHistory == null ? currentPrice : firstPriceHistory.getOldPrice();
-        return calculateChangePercentage(firstPrice, currentPrice);
-    }
-
+    @Override
     public long totalProductCountByCategory(Category category) {
         return productRepository.countByCategory(category);
     }
 
+    @Override
     public Page<ProductDto> getAllProducts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("productId"));
         Page<Product> products = productRepository.findAll(pageable);
         return products.map(productMapper::mapToProductDto);
     }
-
+    @Override
     public List<BestSellerProductDTO> bestSellersByCategory(Category category, int size) {
         return getBestSellers(size, category);
     }
 
+    @Override
     public List<BestSellerProductDTO> bestSellers(int size) {
         return getBestSellers(size, null);
     }
@@ -159,20 +167,19 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public long totalProductCount() {
         return productRepository.count();
     }
 
+    @Override
     public ProductDto productInfo(String productCode) {
         Product product = productRepository.findByProductCode(productCode)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found for: " + productCode));
         return productMapper.mapToProductDto(product);
     }
 
-    public ProductDto productInfoById(Long productId) {
-        return productMapper.mapToProductDto(getProductById(productId));
-    }
-
+    @Override
     public ProductResponse addProduct(ProductRequest productRequest, HttpServletRequest request) {
         validateAdminRole(request);
 
@@ -192,21 +199,25 @@ public class ProductService {
         return PageRequest.of(page, size);
     }
 
+    @Override
     public Page<ProductDto> getProductsByCategory(Category category, int page, int size) {
         Page<Product> products = productRepository.findByCategory(category, createPageable(page, size));
         return products.map(productMapper::mapToProductDto);
     }
 
+    @Override
     public Page<ProductDto> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, int page, int size) {
         Page<Product> products = productRepository.findByPriceBetween(minPrice,maxPrice,createPageable(page, size));
         return products.map(productMapper::mapToProductDto);
     }
 
+    @Override
     public Page<ProductDto> getProductsByPriceAndCategory(BigDecimal minPrice, BigDecimal maxPrice, Category category, int page, int size) {
         Page<Product> products = productRepository.findByPriceBetweenAndCategory(minPrice,maxPrice,category,createPageable(page, size));
         return products.map(productMapper::mapToProductDto);
     }
 
+    @Override
     public Page<ProductDto> getProductsByBrand(String brand, int page, int size) {
         Page<Product> products = productRepository.findByBrandIgnoreCase(brand,createPageable(page, size));
         return products.map(productMapper::mapToProductDto);

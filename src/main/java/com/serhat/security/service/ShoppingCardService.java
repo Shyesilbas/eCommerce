@@ -11,6 +11,7 @@ import com.serhat.security.exception.EmptyShoppingCardException;
 import com.serhat.security.exception.InvalidQuantityException;
 import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.exception.ProductNotFoundInCardException;
+import com.serhat.security.interfaces.ShoppingCardInterface;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.mapper.ShoppingCardMapper;
 import com.serhat.security.repository.ProductRepository;
@@ -29,14 +30,15 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ShoppingCardService {
+public class ShoppingCardService implements ShoppingCardInterface {
     private final ShoppingCardRepository shoppingCardRepository;
     private final TokenInterface tokenInterface;
     private final ProductRepository productRepository;
     private final ShoppingCardMapper shoppingCardMapper;
     private final DiscountCodeService discountService;
 
-    private List<ShoppingCard> findShoppingCard(User user) {
+    @Override
+    public List<ShoppingCard> findShoppingCard(User user) {
         List<ShoppingCard> shoppingCards = shoppingCardRepository.findByUser(user);
         if (shoppingCards.isEmpty()) {
             throw new EmptyShoppingCardException("Shopping Card is empty!");
@@ -44,16 +46,23 @@ public class ShoppingCardService {
         return shoppingCards;
     }
 
+    @Override
+    public BigDecimal calculateTotalPrice(List<ShoppingCard> shoppingCards) {
+        return shoppingCards.stream()
+                .map(sc -> sc.getProduct().getPrice().multiply(new BigDecimal(sc.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    @Override
     public List<CardProductDto> getItems(HttpServletRequest servletRequest) {
         User user = tokenInterface.getUserFromToken(servletRequest);
-
         List<ShoppingCard> shoppingCards = findShoppingCard(user);
-
         return shoppingCards.stream()
                 .map(shoppingCardMapper::convertToCardProductDto)
                 .collect(Collectors.toList());
     }
 
+    @Override
     public Product findById(Long productId) {
         return Optional.ofNullable(productId)
                 .flatMap(productRepository::findById)
@@ -62,11 +71,13 @@ public class ShoppingCardService {
                         : new ProductNotFoundException("Product Not Found"));
     }
 
-    private ShoppingCard checkProductInShoppingCard(User user, Product product) {
+    @Override
+    public ShoppingCard checkProductInShoppingCard(User user, Product product) {
         return shoppingCardRepository.findByUserAndProduct(user, product)
                 .orElseThrow(() -> new ProductNotFoundInCardException("Product not found in shopping card"));
     }
 
+    @Override
     @Transactional
     public AddedToCardResponse addToCard(HttpServletRequest servletRequest, Long productId) {
         User user = tokenInterface.getUserFromToken(servletRequest);
@@ -80,6 +91,7 @@ public class ShoppingCardService {
         return shoppingCardMapper.convertToAddedToCardResponse(product);
     }
 
+    @Override
     @Transactional
     public QuantityUpdateResponse handleQuantity(HttpServletRequest servletRequest, Long productId, int quantity) {
         if (quantity < 0) {
@@ -100,6 +112,7 @@ public class ShoppingCardService {
         return shoppingCardMapper.quantityUpdateResponse(product, quantity);
     }
 
+    @Override
     public BigDecimal totalPrice(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         List<ShoppingCard> shoppingCards = findShoppingCard(user);
@@ -109,12 +122,14 @@ public class ShoppingCardService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    @Override
     public long totalProduct(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         List<ShoppingCard> shoppingCards = findShoppingCard(user);
         return shoppingCards.size();
     }
 
+    @Override
     public long totalItems(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         List<ShoppingCard> shoppingCards = findShoppingCard(user);
@@ -124,6 +139,7 @@ public class ShoppingCardService {
                 .sum();
     }
 
+    @Override
     public ShoppingCardInfo getShoppingCardTotalInfo(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         List<ShoppingCard> shoppingCards = findShoppingCard(user);
@@ -148,6 +164,7 @@ public class ShoppingCardService {
         return new ShoppingCardInfo(totalPrice, totalItems, totalQuantity, message, shoppingCardItems);
     }
 
+    @Override
     @Transactional
     public void removeFromCard(HttpServletRequest servletRequest, Long productId) {
         User user = tokenInterface.getUserFromToken(servletRequest);
@@ -155,5 +172,10 @@ public class ShoppingCardService {
         ShoppingCard shoppingCard = checkProductInShoppingCard(user, product);
         shoppingCardRepository.delete(shoppingCard);
         log.info("Product {} removed from shopping card for user {}", productId, user.getUsername());
+    }
+
+    @Override
+    public void clearShoppingCart(List<ShoppingCard> shoppingCards) {
+        shoppingCardRepository.deleteAll(shoppingCards);
     }
 }

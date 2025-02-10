@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -56,6 +57,22 @@ public class PriceHistoryService {
 
         priceHistoryRepository.save(priceHistory);
         log.info("Price history saved for product: {}", product.getProductId());
+    }
+
+    public double calculateTotalChangePercentage(Long productId, BigDecimal currentPrice) {
+        PriceHistory firstPriceHistory = priceHistoryRepository.findFirstByProduct_ProductIdOrderByChangeDateAsc(productId);
+        BigDecimal firstPrice = firstPriceHistory == null ? currentPrice : firstPriceHistory.getOldPrice();
+        return calculateChangePercentage(firstPrice, currentPrice);
+    }
+
+    public double calculateChangePercentage(BigDecimal oldPrice, BigDecimal newPrice) {
+        if (oldPrice.compareTo(BigDecimal.ZERO) == 0) {
+            return 0.0;
+        }
+        return newPrice.subtract(oldPrice)
+                .divide(oldPrice, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .doubleValue();
     }
 
 

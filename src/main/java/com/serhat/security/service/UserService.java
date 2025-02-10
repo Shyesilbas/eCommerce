@@ -11,6 +11,7 @@ import com.serhat.security.entity.enums.NotificationTopic;
 import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
+import com.serhat.security.interfaces.UserInterface;
 import com.serhat.security.mapper.AddressMapper;
 import com.serhat.security.mapper.UserMapper;
 import com.serhat.security.repository.AddressRepository;
@@ -41,26 +42,26 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserService {
+public class UserService implements UserInterface {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AddressRepository addressRepository;
     private final NotificationService notificationService;
     private final TokenInterface tokenInterface;
-    private final AddressMapper addressMapper;
     private final TransactionService transactionService;
     private final UserMapper userMapper;
 
-    @Transactional(readOnly = true)
+    @Override
     public User getUserFromToken(HttpServletRequest request){
         return tokenInterface.getUserFromToken(request);
     }
+
+
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
         validateUserRegistration(request);
 
         User user = userMapper.toUser(request);
-        saveRawPassword("Register", user.getUsername(), request.password());
+        saveRawPassword("Register ", user.getUsername(), request.password());
         userRepository.save(user);
 
         return new RegisterResponse(
@@ -92,36 +93,10 @@ public class UserService {
         });
     }
 
-    public BonusPointInformation bonusPointInformation(HttpServletRequest request){
-        User user = getUserFromToken(request);
-        return new BonusPointInformation(
-                user.getBonusPointsWon(),
-                user.getCurrentBonusPoints()
-        );
-    }
 
-    @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
+   // @CacheEvict(value = "userInfoCache", key = "#servletRequest.userPrincipal.name")
     @Transactional
-    public AddBonusResponse addBonus(HttpServletRequest request,AddBonusRequest bonusRequest){
-        User user = tokenInterface.getUserFromToken(request);
-
-        BonusPointInformation bonusInfo = bonusPointInformation(request);
-        BigDecimal currentBonus = bonusInfo.currentBonusPoints();
-        BigDecimal totalBonusWon = bonusInfo.totalBonusWon();
-
-       if(bonusRequest.amount().compareTo(BigDecimal.ZERO)<=0){
-           throw new InvalidAmountException("Amount must be positive!");
-       }
-       user.setBonusPointsWon(totalBonusWon.add(bonusRequest.amount()));
-       user.setCurrentBonusPoints(currentBonus.add(bonusRequest.amount()));
-       userRepository.save(user);
-
-
-       return userMapper.toAddBonusResponse(user,bonusRequest.amount());
-    }
-
-    @CacheEvict(value = "userInfoCache", key = "#servletRequest.userPrincipal.name")
-    @Transactional
+    @Override
     public UpdateMembershipPlan updateMembershipPlan(HttpServletRequest servletRequest, UpdateMembershipRequest request) {
         User user = getUserFromToken(servletRequest);
         if (user.getMembershipPlan().equals(request.membershipPlan())) {
@@ -148,8 +123,9 @@ public class UserService {
         }
     }
 
-    @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
+  //  @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
     @Transactional
+    @Override
     public UpdatePhoneResponse updatePhone(HttpServletRequest request, UpdatePhoneRequest updatePhoneRequest) {
         User user = getUserFromToken(request);
 
@@ -164,8 +140,9 @@ public class UserService {
         return new UpdatePhoneResponse("Phone updated successfully.", user.getPhone(), LocalDateTime.now());
     }
 
-    @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
+   // @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
     @Transactional
+    @Override
     public UpdateEmailResponse updateEmail(HttpServletRequest request, UpdateEmailRequest updateEmailRequest) {
         User user = getUserFromToken(request);
 
@@ -181,6 +158,7 @@ public class UserService {
     }
 
     @Transactional
+    @Override
     public UpdatePasswordResponse updatePassword(HttpServletRequest request, UpdatePasswordRequest updatePasswordRequest) {
         User user = getUserFromToken(request);
 
@@ -215,8 +193,9 @@ public class UserService {
         return new ForgotPasswordResponse("Password updated successfully.", LocalDateTime.now());
     }
 
-    @Cacheable(value = "userInfoCache", key = "#request.userPrincipal.name", unless = "#result == null")
-    public UserResponse userInfo(HttpServletRequest request) throws InterruptedException {
+  //  @Cacheable(value = "userInfoCache", key = "#request.userPrincipal.name", unless = "#result == null")
+    @Override
+    public UserResponse userInfo(HttpServletRequest request) {
         User user = getUserFromToken(request);
         UserResponse response = userMapper.toUserResponse(user);
 
@@ -226,82 +205,4 @@ public class UserService {
         return response;
     }
 
-    @Cacheable(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + #page + ':size' + #size", unless = "#result == null")
-    public PageDTO<AddressResponse> addressInfo(HttpServletRequest request, int page, int size) {
-        User user = getUserFromToken(request);
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Address> addresses = addressRepository.findByUser_Username(user.getUsername(), pageable);
-
-        if (addresses.isEmpty()) {
-            throw new RuntimeException("No addresses found for user: " + user.getUsername());
-        }
-
-        List<AddressResponse> addressResponses = addresses.stream()
-                .map(addressMapper::toAddressResponse)
-                .collect(Collectors.toList());
-
-        return new PageDTO<>(addressResponses, addresses.getNumber(), addresses.getSize(), (int) addresses.getTotalElements());
-    }
-
-    @Transactional
-    @CacheEvict(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + '0' + ':size' + '10'")
-    public UpdateAddressResponse updateAddress(Long addressId, HttpServletRequest request, UpdateAddressRequest updateAddressRequest) {
-        User user = getUserFromToken(request);
-
-        Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new AddressNotFoundException("Address not found with ID: " + addressId));
-
-        if (!address.getUser().getUsername().equals(user.getUsername())) {
-            throw new UnauthorizedAccessException("Address does not belong to the user: " + user.getUsername());
-        }
-
-        addressMapper.updateAddressFromDto(address, updateAddressRequest);
-        addressRepository.save(address);
-        notificationService.addNotification(request, NotificationTopic.ADDRESS_UPDATED);
-
-        return new UpdateAddressResponse(
-                "Address updated successfully",
-                address.getAddressId(),
-                LocalDateTime.now(),
-                address.getDescription()
-        );
-    }
-
-    @Transactional
-    @CacheEvict(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + '0' + ':size' + '10'")
-    public AddAddressResponse addAddress(HttpServletRequest request, AddAddressRequest addAddressRequest) {
-        User user = getUserFromToken(request);
-        Address newAddress = addressMapper.toAddress(addAddressRequest, user);
-
-        addressRepository.save(newAddress);
-        notificationService.addNotification(request, NotificationTopic.ADDRESS_ADDED);
-
-        return new AddAddressResponse(
-                "Address added successfully",
-                newAddress.getAddressId(),
-                LocalDateTime.now(),
-                newAddress.getDescription()
-        );
-    }
-
-    @Transactional
-    @CacheEvict(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + '0' + ':size' + '10'")
-    public DeleteAddressResponse deleteAddress(Long addressId, HttpServletRequest request) {
-        User user = getUserFromToken(request);
-        Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new AddressNotFoundException("Address not found with ID: " + addressId));
-
-        if (!address.getUser().getUsername().equals(user.getUsername())) {
-            throw new UnauthorizedAccessException("Address does not belong to the user: " + user.getUsername());
-        }
-
-        addressRepository.delete(address);
-        notificationService.addNotification(request, NotificationTopic.ADDRESS_DELETED);
-
-        return new DeleteAddressResponse(
-                addressId,
-                "Address Deleted Successfully",
-                LocalDateTime.now()
-        );
-    }
 }

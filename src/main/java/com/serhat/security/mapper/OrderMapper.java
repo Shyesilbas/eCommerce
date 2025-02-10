@@ -130,4 +130,17 @@ OrderMapper {
                 .build();
     }
 
+    public List<OrderItem> convertShoppingCartToOrderItems(Order order, List<ShoppingCard> shoppingCards) {
+        return shoppingCards.stream()
+                .map(sc -> OrderItem.builder()
+                        .order(order)
+                        .product(sc.getProduct())
+                        .quantity(sc.getQuantity())
+                        .price(sc.getProduct().getPrice())
+                        .isReturnable(sc.getProduct().isReturnable())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+
 }

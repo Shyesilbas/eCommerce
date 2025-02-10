@@ -83,6 +83,17 @@ public class GlobalExceptionHandler{
         );
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(OrderAlreadyCanceledException.class)
+    public ResponseEntity<ErrorResponse> handleOrderAlreadyCanceledException(OrderAlreadyCanceledException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                "Already canceled!",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
 
     @ExceptionHandler(GiftCardNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleGiftCardNotFoundException(GiftCardNotFoundException e){

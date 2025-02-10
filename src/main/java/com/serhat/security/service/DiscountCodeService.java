@@ -1,17 +1,23 @@
 package com.serhat.security.service;
 
+import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.AvailableDiscountResponse;
+import com.serhat.security.dto.response.DiscountDetails;
 import com.serhat.security.dto.response.ExpiredDiscountResponse;
 import com.serhat.security.dto.response.UsedDiscountResponse;
 import com.serhat.security.entity.DiscountCode;
+import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.entity.enums.DiscountRate;
+import com.serhat.security.exception.CouponAlreadyUsedException;
+import com.serhat.security.exception.DiscountCodeExpiredException;
 import com.serhat.security.exception.DiscountCodeNotFoundException;
+import com.serhat.security.exception.InvalidDiscountCodeException;
+import com.serhat.security.interfaces.DiscountInterface;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.mapper.DiscountMapper;
 import com.serhat.security.repository.DiscountCodeRepository;
-import com.serhat.security.repository.OrderRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +39,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 @Getter
-public class DiscountCodeService {
+public class DiscountCodeService implements DiscountInterface {
 
     private final DiscountCodeRepository discountCodeRepository;
     private final TokenInterface tokenInterface;
@@ -42,7 +48,6 @@ public class DiscountCodeService {
     @Value("${discount.code.threshold}")
     private BigDecimal discountThreshold;
 
-    @Transactional
     public DiscountCode generateDiscountCode(HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
 
@@ -92,7 +97,10 @@ public class DiscountCodeService {
         return expiredCodes.map(discountResponseMapper::toExpiredDiscountResponse);
     }
 
-
+    private BigDecimal calculateDiscountAmount(BigDecimal originalPrice, DiscountCode discountCode) {
+        return originalPrice
+                .multiply(BigDecimal.valueOf(discountCode.getDiscountRate().getPercentage() / 100.0));
+    }
     private DiscountRate determineDiscountRate() {
         double random = Math.random();
         if (random < 0.5) {
@@ -106,6 +114,7 @@ public class DiscountCodeService {
 
     @Scheduled(cron = "0 0 * * * ?")
     @Transactional
+    @Override
     public void markExpiredDiscountCodes() {
         Pageable pageable = PageRequest.of(0, 20);
         boolean hasMorePages = true;
@@ -127,5 +136,43 @@ public class DiscountCodeService {
         }
     }
 
+    @Override
+    public DiscountDetails applyDiscount(OrderRequest orderRequest, BigDecimal originalPrice, User user) {
+        if (orderRequest.discountId() == null) {
+            return new DiscountDetails(BigDecimal.ZERO, null);
+        }
+
+        DiscountCode discountCode = discountCodeRepository.findById(orderRequest.discountId())
+                .orElseThrow(() -> new InvalidDiscountCodeException("Invalid discount code"));
+
+        validateDiscountCode(discountCode, user);
+        BigDecimal discountAmount = calculateDiscountAmount(originalPrice, discountCode);
+        return new DiscountDetails(discountAmount, discountCode);
+    }
+
+    @Override
+    public void validateDiscountCode(DiscountCode discountCode, User user) {
+        if (discountCode.getUser() != null && !discountCode.getUser().getUserId().equals(user.getUserId())) {
+            throw new InvalidDiscountCodeException("This discount code is not valid for the current user!");
+        }
+
+        if (discountCode.getStatus().equals(CouponStatus.EXPIRED)) {
+            throw new DiscountCodeExpiredException("This coupon has expired!");
+        }
+
+        if (discountCode.getStatus().equals(CouponStatus.USED)) {
+            throw new CouponAlreadyUsedException("The coupon you entered is already used");
+        }
+    }
+
+    @Override
+    public void handleDiscountCode(Order order, DiscountCode discountCode, HttpServletRequest request) {
+        if (order != null && order.getTotalPrice().compareTo(getDiscountThreshold()) >= 0) {
+            generateDiscountCode(request);
+        }
+        if (discountCode != null) {
+            discountCode.setStatus(CouponStatus.USED);
+        }
+    }
 }
 

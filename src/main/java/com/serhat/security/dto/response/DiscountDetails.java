@@ -5,6 +5,7 @@ import com.serhat.security.entity.DiscountCode;
 import java.math.BigDecimal;
 
 public record DiscountDetails(
-        BigDecimal discountAmount, DiscountCode discountCode
+        BigDecimal discountAmount,
+        DiscountCode discountCode
 ) {
 }

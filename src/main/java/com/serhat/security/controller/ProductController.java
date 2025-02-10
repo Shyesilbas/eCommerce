@@ -41,11 +41,6 @@ public class ProductController {
         return ResponseEntity.ok(productService.productInfo(productCode));
     }
 
-    @GetMapping("/info/id/{productId}")
-    public ResponseEntity<ProductDto> productInfoById(@PathVariable Long productId) {
-        return ResponseEntity.ok(productService.productInfoById(productId));
-    }
-
     @GetMapping("/categories")
     public List<String> getCategories() {
         return Arrays.stream(Category.values())

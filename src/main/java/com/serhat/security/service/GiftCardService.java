@@ -1,12 +1,16 @@
 package com.serhat.security.service;
 
 import com.serhat.security.dto.object.GiftCardDto;
+import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.GiftCardResponse;
 import com.serhat.security.entity.GiftCard;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.entity.enums.GiftAmount;
 import com.serhat.security.exception.GiftCardNotFoundException;
+import com.serhat.security.exception.InvalidGiftCardException;
+import com.serhat.security.exception.UsedGiftCardException;
+import com.serhat.security.interfaces.GiftCardInterface;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.mapper.GiftCardMapper;
 import com.serhat.security.repository.GiftCardRepository;
@@ -18,17 +22,48 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.math.BigDecimal;
+
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GiftCardService {
+public class GiftCardService implements GiftCardInterface {
     private final GiftCardRepository repository;
     private final TokenInterface tokenInterface;
     private final GiftCardMapper giftCardMapper;
     private final TransactionService transactionService;
+
+    @Override
+    @Transactional
+    public GiftCard applyGiftCard(OrderRequest orderRequest, BigDecimal totalPrice) {
+        if (orderRequest.giftCardId() == null) {
+            return null;
+        }
+
+        GiftCard giftCard = repository.findById(orderRequest.giftCardId())
+                .orElseThrow(() -> new GiftCardNotFoundException("Invalid gift card"));
+
+        validateGiftCard(giftCard);
+        if (giftCard.getGiftAmount().getAmount().compareTo(totalPrice) > 0) {
+            throw new InvalidGiftCardException("Gift card balance exceeds the total price.");
+        }
+
+        giftCard.setStatus(CouponStatus.USED);
+        repository.save(giftCard);
+        return giftCard;
+    }
+
+    @Override
+    public void validateGiftCard(GiftCard giftCard) {
+        if (giftCard.getStatus().equals(CouponStatus.USED)) {
+            throw new UsedGiftCardException("Gift card is used!");
+        }
+
+        if (giftCard.getGiftAmount().getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidGiftCardException("This gift card has no balance!");
+        }
+    }
 
     public void createGiftCardTransaction(User user , GiftAmount requestedAmount){
         transactionService.createGiftCardTransaction(user,requestedAmount.getAmount());
