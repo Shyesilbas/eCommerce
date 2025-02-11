@@ -1,17 +1,15 @@
-package com.serhat.security.service.order;
+package com.serhat.security.service.payment;
 
 import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.BonusUsageResult;
 import com.serhat.security.dto.response.DiscountDetails;
 import com.serhat.security.dto.response.PriceDetails;
 import com.serhat.security.entity.*;
-import com.serhat.security.exception.*;
-import com.serhat.security.interfaces.BonusInterface;
-import com.serhat.security.interfaces.PaymentServiceInterface;
-import com.serhat.security.interfaces.ShippingInterface;
+import com.serhat.security.interfaces.*;
+import com.serhat.security.service.BonusService;
+import com.serhat.security.service.ShippingService;
 import com.serhat.security.service.ShoppingCardService;
 import com.serhat.security.service.TransactionService;
-import com.serhat.security.service.discountService.DiscountCodeService;
 import com.serhat.security.service.giftCard.GiftCardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,44 +22,53 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentService implements PaymentServiceInterface {
 
-    private final DiscountCodeService discountService;
+    private final DiscountInterface discountInterface;
     private final GiftCardService giftCardService;
     private final TransactionService transactionService;
-    private final ShippingInterface shippingInterface;
-    private final BonusInterface bonusInterface;
+    private final ShippingService shippingService;
+    private final BonusService bonusService;
     private final ShoppingCardService shoppingCardService;
+    private final PaymentRulesService paymentRulesService;
+
 
     public BigDecimal calculateShippingFee(User user , BigDecimal totalPrice){
-        return shippingInterface.calculateShippingFee(user,totalPrice);
+        return shippingService.calculateShippingFee(user,totalPrice);
     }
     public void updateUserBonusPoints(User user,BigDecimal bonusPoints){
-        bonusInterface.updateUserBonusPoints(user, bonusPoints);
+        bonusService.updateUserBonusPoints(user, bonusPoints);
     }
     public BigDecimal calculateBonusPoints(User user , BigDecimal totalPrice){
-        return bonusInterface.calculateBonusPoints(user, totalPrice);
+        return bonusService.calculateBonusPoints(user, totalPrice);
     }
     public BonusUsageResult applyBonus(User user , OrderRequest request , BigDecimal totalPrice){
-        return bonusInterface.applyBonus(user, request, totalPrice);
+        return bonusService.applyBonus(user, request, totalPrice);
+    }
+    public BigDecimal applyGiftCard(OrderRequest orderRequest , BigDecimal totalPrice){
+       return giftCardService.applyGiftCard(orderRequest, totalPrice);
+    }
+    public DiscountDetails applyDiscountCode(OrderRequest orderRequest , BigDecimal originalPrice,User user){
+       return discountInterface.applyDiscount(orderRequest, originalPrice, user);
+    }
+    public  BigDecimal calculateTotalPrice(List<ShoppingCard> shoppingCards){
+       return shoppingCardService.calculateTotalPrice(shoppingCards);
+    }
+    public void checkIfBothDiscountCodeAndGiftCardIsNotUsed(OrderRequest orderRequest){
+        paymentRulesService.checkIfBothDiscountCodeAndGiftCardIsNotUsed(orderRequest);
     }
 
     @Override
     public PriceDetails calculatePriceDetails(List<ShoppingCard> shoppingCards, User user, OrderRequest orderRequest) {
-        BigDecimal totalPrice = shoppingCardService.calculateTotalPrice(shoppingCards);
+        BigDecimal totalPrice = calculateTotalPrice(shoppingCards);
         BigDecimal originalTotalPrice = totalPrice;
         BigDecimal shippingFee = calculateShippingFee(user, totalPrice);
         BigDecimal bonusPoints = calculateBonusPoints(user, totalPrice);
 
-        if (orderRequest.discountId() != null && orderRequest.giftCardId() != null) {
-            throw new InvalidOrderException("Cannot use both discount code and gift card in the same order.");
-        }
+        checkIfBothDiscountCodeAndGiftCardIsNotUsed(orderRequest);
 
-        DiscountDetails discountDetails = discountService.applyDiscount(orderRequest, originalTotalPrice, user);
+        DiscountDetails discountDetails = applyDiscountCode(orderRequest, totalPrice, user);
         totalPrice = totalPrice.subtract(discountDetails.discountAmount());
 
-        GiftCard giftCard = giftCardService.applyGiftCard(orderRequest, totalPrice);
-        if (giftCard != null) {
-            totalPrice = totalPrice.subtract(giftCard.getGiftAmount().getAmount());
-        }
+        totalPrice = applyGiftCard(orderRequest, totalPrice);
 
         BonusUsageResult bonusUsageResult = applyBonus(user, orderRequest, totalPrice);
         totalPrice = bonusUsageResult.updatedTotalPrice();
@@ -69,7 +76,6 @@ public class PaymentService implements PaymentServiceInterface {
         updateUserBonusPoints(user, bonusPoints);
 
         BigDecimal finalPrice = totalPrice.add(shippingFee);
-
         BigDecimal totalSaved = discountDetails.discountAmount().add(bonusPointsUsed);
 
         return new PriceDetails(

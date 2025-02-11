@@ -1,4 +1,4 @@
-package com.serhat.security.interfaces;
+package com.serhat.security.interfaces.bonus;
 
 import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.AddBonusResponse;
@@ -14,16 +14,10 @@ import java.util.Map;
 
 public interface BonusInterface {
     BonusUsageResult applyBonus(User user, OrderRequest orderRequest, BigDecimal totalPrice);
-    BigDecimal calculateBonusPoints(User user, BigDecimal totalPrice);
     BonusPointInformation bonusPointInformation(HttpServletRequest request);
      AddBonusResponse addBonus(HttpServletRequest request, AddBonusRequest bonusRequest);
     default  void updateUserBonusPoints(User user, BigDecimal bonusPoints){
         user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
         user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(bonusPoints));
     }
-    Map<MembershipPlan, BigDecimal> bonusRates = Map.of(
-            MembershipPlan.VIP, BigDecimal.valueOf(0.05),
-            MembershipPlan.PREMIUM, BigDecimal.valueOf(0.03),
-            MembershipPlan.BASIC, BigDecimal.valueOf(0.01)
-    );
 }

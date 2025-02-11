@@ -5,22 +5,21 @@ import com.serhat.security.dto.response.AddBonusResponse;
 import com.serhat.security.dto.response.BonusPointInformation;
 import com.serhat.security.dto.response.BonusUsageResult;
 import com.serhat.security.entity.User;
-import com.serhat.security.entity.enums.MembershipPlan;
 import com.serhat.security.exception.AddBonusRequest;
 import com.serhat.security.exception.InvalidAmountException;
 import com.serhat.security.exception.NoBonusPointsException;
-import com.serhat.security.interfaces.BonusInterface;
+import com.serhat.security.interfaces.bonus.BonusInterface;
 import com.serhat.security.interfaces.TokenInterface;
+import com.serhat.security.interfaces.bonus.BonusStrategy;
 import com.serhat.security.mapper.UserMapper;
 import com.serhat.security.repository.UserRepository;
+import com.serhat.security.service.bonusStrategy.BonusStrategyFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +27,8 @@ public class BonusService implements BonusInterface {
     private final TokenInterface tokenInterface;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final BonusStrategyFactory bonusStrategyFactory;
+
 
     @Override
     public BonusUsageResult applyBonus(User user, OrderRequest orderRequest, BigDecimal totalPrice) {
@@ -45,7 +46,6 @@ public class BonusService implements BonusInterface {
                 throw new NoBonusPointsException("No bonus points found");
             }
         }
-
         return new BonusUsageResult(totalPrice, bonusPointsUsed);
     }
 
@@ -54,9 +54,9 @@ public class BonusService implements BonusInterface {
         BonusInterface.super.updateUserBonusPoints(user, bonusPoints);
     }
 
-    @Override
     public BigDecimal calculateBonusPoints(User user, BigDecimal totalPrice) {
-        return totalPrice.multiply(bonusRates.get(user.getMembershipPlan()));
+        BonusStrategy strategy = bonusStrategyFactory.getBonusStrategy(user);
+        return strategy.calculateBonusPoints(user, totalPrice);
     }
 
     @Override

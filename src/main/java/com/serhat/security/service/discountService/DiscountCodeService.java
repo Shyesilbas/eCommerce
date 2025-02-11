@@ -11,7 +11,6 @@ import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.entity.enums.DiscountRate;
 import com.serhat.security.exception.DiscountCodeNotFoundException;
-import com.serhat.security.exception.InvalidDiscountCodeException;
 import com.serhat.security.interfaces.DiscountInterface;
 import com.serhat.security.interfaces.DiscountValidationInterface;
 import com.serhat.security.interfaces.UserInterface;
@@ -122,6 +121,7 @@ public class DiscountCodeService implements DiscountInterface {
         BigDecimal discountAmount = calculateDiscountAmount(originalPrice, discountCode);
         return new DiscountDetails(discountAmount, discountCode);
     }
+
 
     public void generateDiscountCodeIfOrderThresholdExceeded(Order order , HttpServletRequest request){
         if (order != null && order.getTotalPrice().compareTo(getDiscountThreshold()) >= 0) {
