@@ -1,4 +1,4 @@
-package com.serhat.security.service;
+package com.serhat.security.service.auth;
 
 import org.springframework.stereotype.Service;
 

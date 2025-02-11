@@ -2,8 +2,8 @@ package com.serhat.security.jwt;
 
 import com.serhat.security.entity.User;
 import com.serhat.security.exception.InvalidTokenException;
-import com.serhat.security.service.TokenBlacklistService;
-import com.serhat.security.service.UserDetailsServiceImpl;
+import com.serhat.security.service.auth.TokenBlacklistService;
+import com.serhat.security.service.auth.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

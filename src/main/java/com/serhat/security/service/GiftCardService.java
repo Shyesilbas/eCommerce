@@ -14,6 +14,7 @@ import com.serhat.security.interfaces.GiftCardInterface;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.mapper.GiftCardMapper;
 import com.serhat.security.repository.GiftCardRepository;
+import com.serhat.security.service.TransactionService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

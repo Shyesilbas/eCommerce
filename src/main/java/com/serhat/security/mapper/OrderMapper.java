@@ -12,7 +12,6 @@ import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.repository.GiftCardRepository;
 import com.serhat.security.service.DiscountCodeService;
-import com.serhat.security.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

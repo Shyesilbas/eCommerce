@@ -3,13 +3,8 @@ package com.serhat.security.controller;
 import com.serhat.security.dto.object.PageDTO;
 import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
-import com.serhat.security.entity.enums.MembershipPlan;
-import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.exception.AddBonusRequest;
-import com.serhat.security.exception.InvalidPasswordException;
-import com.serhat.security.exception.UserNotFoundException;
 import com.serhat.security.service.AddressService;
-import com.serhat.security.service.AuthService;
 import com.serhat.security.service.BonusService;
 import com.serhat.security.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,16 +12,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.security.Principal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,7 +34,7 @@ public class UserController {
     }
 
     @GetMapping("/bonusInfo")
-    public ResponseEntity<BonusPointInformation> bonusPointInfo(HttpServletRequest request)throws InterruptedException{
+    public ResponseEntity<BonusPointInformation> bonusPointInfo(HttpServletRequest request){
         return ResponseEntity.ok(bonusService.bonusPointInformation(request));
     }
 

@@ -1,19 +1,17 @@
-package com.serhat.security.service;
+package com.serhat.security.service.auth;
 
 import com.serhat.security.dto.request.LoginRequest;
 import com.serhat.security.dto.response.AuthResponse;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.Role;
 import com.serhat.security.exception.InvalidCredentialsException;
-import com.serhat.security.exception.TokenNotFoundException;
 import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.mapper.AuthMapper;
 import com.serhat.security.repository.UserRepository;
+import com.serhat.security.service.auth.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,5 +1,6 @@
 package com.serhat.security.service;
 
+import com.serhat.security.dto.response.PriceChangeInfo;
 import com.serhat.security.dto.response.PriceHistoryResponse;
 import com.serhat.security.entity.PriceHistory;
 import com.serhat.security.entity.Product;
@@ -73,6 +74,12 @@ public class PriceHistoryService {
                 .divide(oldPrice, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
                 .doubleValue();
+    }
+
+    public PriceChangeInfo calculatePriceChanges(Long productId, BigDecimal oldPrice, BigDecimal newPrice) {
+        double changePercentage = calculateChangePercentage(oldPrice, newPrice);
+        double totalChangePercentage = calculateTotalChangePercentage(productId, newPrice);
+        return new PriceChangeInfo(changePercentage, totalChangePercentage);
     }
 
 

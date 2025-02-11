@@ -1,4 +1,4 @@
-package com.serhat.security.service;
+package com.serhat.security.service.auth;
 
 import com.serhat.security.entity.User;
 import com.serhat.security.repository.UserRepository;

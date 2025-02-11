@@ -3,12 +3,12 @@ package com.serhat.security.service;
 import com.serhat.security.dto.object.BestSellerProductDTO;
 import com.serhat.security.dto.object.ProductDto;
 import com.serhat.security.dto.request.ProductRequest;
+import com.serhat.security.dto.response.PriceChangeInfo;
 import com.serhat.security.dto.response.ProductPriceUpdate;
 import com.serhat.security.dto.response.ProductQuantityUpdate;
 import com.serhat.security.dto.response.ProductResponse;
 import com.serhat.security.entity.Order;
 import com.serhat.security.entity.OrderItem;
-import com.serhat.security.entity.PriceHistory;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.enums.Category;
 import com.serhat.security.entity.enums.OrderStatus;
@@ -21,20 +21,20 @@ import com.serhat.security.interfaces.ProductInterface;
 import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.mapper.ProductMapper;
 import com.serhat.security.repository.OrderRepository;
-import com.serhat.security.repository.PriceHistoryRepository;
 import com.serhat.security.repository.ProductRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -47,11 +47,13 @@ public class ProductService implements ProductInterface {
     private final PriceHistoryService priceHistoryService;
     private final StockAlertService stockAlertService;
 
-    private void validateAdminRole(HttpServletRequest request) {
-        if (jwtUtil.extractRole(jwtUtil.getTokenFromAuthorizationHeader(request)) != Role.ADMIN) {
-            throw new RuntimeException("Only ADMIN users can perform this action.");
+    private void validateRole(HttpServletRequest request, Role... allowedRoles) {
+        Role userRole = jwtUtil.extractRole(jwtUtil.getTokenFromAuthorizationHeader(request));
+        if (Stream.of(allowedRoles).noneMatch(role -> role == userRole)) {
+            throw new RuntimeException("Unauthorized action. Required role: " + List.of(allowedRoles));
         }
     }
+
     @Override
     public Product getProductById(Long productId) {
         return productRepository.findById(productId)
@@ -63,7 +65,7 @@ public class ProductService implements ProductInterface {
     }
     @Override
     public ProductQuantityUpdate updateProductQuantity(Long productId, int quantity, HttpServletRequest request) {
-        validateAdminRole(request);
+        validateRole(request, Role.ADMIN, Role.MANAGER);
         Product product = getProductById(productId);
 
         if (quantity < 0) {
@@ -85,14 +87,14 @@ public class ProductService implements ProductInterface {
 
     @Override
     public void updateProductStock(Product product, int quantity) {
-        product.setQuantity(product.getQuantity() - quantity);
-        if (product.getQuantity() == 0) {
-            product.setStockStatus(StockStatus.OUT_OF_STOCKS);
-        }
-        if (product.getQuantity() < 0) {
+        int newQuantity = product.getQuantity() - quantity;
+        if (newQuantity < 0) {
             throw new InvalidQuantityException("Quantity cannot be negative");
         }
+        product.setQuantity(newQuantity);
+        product.setStockStatus(newQuantity == 0 ? StockStatus.OUT_OF_STOCKS : StockStatus.AVAILABLE);
     }
+
     public void updateProductsAfterOrder(List<OrderItem> orderItems) {
         productRepository.saveAll(orderItems.stream()
                 .map(OrderItem::getProduct)
@@ -102,7 +104,7 @@ public class ProductService implements ProductInterface {
 
     @Override
     public ProductPriceUpdate updateProductPrice(Long productId, BigDecimal price, HttpServletRequest request) {
-        validateAdminRole(request);
+        validateRole(request, Role.ADMIN, Role.MANAGER);
         Product product = getProductById(productId);
 
         if (price.compareTo(BigDecimal.ZERO) < 0) {
@@ -110,10 +112,10 @@ public class ProductService implements ProductInterface {
         }
 
         BigDecimal oldPrice = product.getPrice();
-        double changePercentage = priceHistoryService.calculateChangePercentage(oldPrice, price);
-        double totalChangePercentage = priceHistoryService.calculateTotalChangePercentage(product.getProductId(), price);
+        PriceChangeInfo priceChangeInfo = priceHistoryService.calculatePriceChanges(product.getProductId(), oldPrice, price);
 
-        priceHistoryService.createAndSavePriceHistory(product, oldPrice, price, changePercentage, totalChangePercentage);
+        priceHistoryService.createAndSavePriceHistory(product, oldPrice, price,
+                priceChangeInfo.changePercentage(), priceChangeInfo.totalChangePercentage());
 
         product.setPrice(price);
         productRepository.save(product);
@@ -121,6 +123,7 @@ public class ProductService implements ProductInterface {
 
         return new ProductPriceUpdate(product.getName(), product.getProductCode(), price);
     }
+
 
     @Override
     public long totalProductCountByCategory(Category category) {
@@ -145,24 +148,17 @@ public class ProductService implements ProductInterface {
 
     private List<BestSellerProductDTO> getBestSellers(int size, Category category) {
         List<Order> deliveredOrders = orderRepository.findByStatusNot(OrderStatus.REFUNDED);
-        List<Long> productIds = deliveredOrders.stream()
+
+        Map<Long, Long> productSalesCount = deliveredOrders.stream()
                 .flatMap(order -> order.getOrderItems().stream())
                 .map(OrderItem::getProduct)
                 .filter(product -> category == null || product.getCategory() == category)
-                .map(Product::getProductId)
-                .toList();
+                .collect(Collectors.groupingBy(Product::getProductId, Collectors.counting()));
 
-        Map<Long, Long> productSalesCount = productIds.stream()
-                .collect(Collectors.groupingBy(productId -> productId, Collectors.counting()));
-
-        List<Long> sortedProductIds = productSalesCount.entrySet().stream()
-                .sorted((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()))
-                .map(Map.Entry::getKey)
+        return productSalesCount.entrySet().stream()
+                .sorted(Map.Entry.<Long, Long>comparingByValue().reversed())
                 .limit(size)
-                .collect(Collectors.toList());
-
-        List<Product> bestSellingProducts = productRepository.findAllById(sortedProductIds);
-        return bestSellingProducts.stream()
+                .map(entry -> productRepository.findById(entry.getKey()).orElseThrow())
                 .map(productMapper::mapToBestSeller)
                 .collect(Collectors.toList());
     }
@@ -181,7 +177,7 @@ public class ProductService implements ProductInterface {
 
     @Override
     public ProductResponse addProduct(ProductRequest productRequest, HttpServletRequest request) {
-        validateAdminRole(request);
+        validateRole(request);
 
         Product product = productMapper.mapToProduct(productRequest);
         Product savedProduct = productRepository.save(product);
@@ -195,32 +191,13 @@ public class ProductService implements ProductInterface {
                 .build();
     }
 
-    private Pageable createPageable(int page, int size) {
-        return PageRequest.of(page, size);
-    }
-
     @Override
-    public Page<ProductDto> getProductsByCategory(Category category, int page, int size) {
-        Page<Product> products = productRepository.findByCategory(category, createPageable(page, size));
+    public Page<ProductDto> getFilteredProducts(BigDecimal minPrice, BigDecimal maxPrice, Category category, String brand, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Specification<Product> spec = ProductSpecification.filterBy(minPrice, maxPrice, category, brand);
+        Page<Product> products = productRepository.findAll(spec, pageable);
         return products.map(productMapper::mapToProductDto);
     }
 
-    @Override
-    public Page<ProductDto> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, int page, int size) {
-        Page<Product> products = productRepository.findByPriceBetween(minPrice,maxPrice,createPageable(page, size));
-        return products.map(productMapper::mapToProductDto);
-    }
-
-    @Override
-    public Page<ProductDto> getProductsByPriceAndCategory(BigDecimal minPrice, BigDecimal maxPrice, Category category, int page, int size) {
-        Page<Product> products = productRepository.findByPriceBetweenAndCategory(minPrice,maxPrice,category,createPageable(page, size));
-        return products.map(productMapper::mapToProductDto);
-    }
-
-    @Override
-    public Page<ProductDto> getProductsByBrand(String brand, int page, int size) {
-        Page<Product> products = productRepository.findByBrandIgnoreCase(brand,createPageable(page, size));
-        return products.map(productMapper::mapToProductDto);
-    }
 
 }

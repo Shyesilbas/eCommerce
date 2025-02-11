@@ -26,8 +26,6 @@ public interface ProductInterface {
      Product getProductById(Long productId);
      ProductDto productInfo(String productCode);
      ProductResponse addProduct(ProductRequest productRequest, HttpServletRequest request);
-     Page<ProductDto> getProductsByCategory(Category category, int page, int size);
-     Page<ProductDto> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, int page, int size);
-     Page<ProductDto> getProductsByPriceAndCategory(BigDecimal minPrice, BigDecimal maxPrice, Category category, int page, int size);
-     Page<ProductDto> getProductsByBrand(String brand, int page, int size);
+     Page<ProductDto> getFilteredProducts(BigDecimal minPrice, BigDecimal maxPrice, Category category, String brand, int page, int size);
+
 }

@@ -2,7 +2,7 @@ package com.serhat.security.config;
 
 import com.serhat.security.component.CustomAccessDeniedHandler;
 import com.serhat.security.jwt.JwtAuthenticationFilter;
-import com.serhat.security.service.UserDetailsServiceImpl;
+import com.serhat.security.service.auth.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

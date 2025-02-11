@@ -2,10 +2,9 @@ package com.serhat.security.component;
 
 import com.serhat.security.entity.Token;
 import com.serhat.security.entity.enums.TokenStatus;
-import com.serhat.security.service.TokenService;
+import com.serhat.security.service.auth.TokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
