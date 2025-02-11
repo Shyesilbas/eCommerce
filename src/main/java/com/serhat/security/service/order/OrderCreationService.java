@@ -9,7 +9,7 @@ import com.serhat.security.mapper.OrderMapper;
 import com.serhat.security.repository.*;
 import com.serhat.security.service.*;
 import com.serhat.security.service.ProductService;
-import com.serhat.security.service.DiscountCodeService;
+import com.serhat.security.service.discountService.DiscountCodeService;
 import com.serhat.security.interfaces.OrderCreationInterface;
 import com.serhat.security.interfaces.WalletInterface;
 import jakarta.servlet.http.HttpServletRequest;
@@ -95,15 +95,15 @@ public class OrderCreationService implements OrderCreationInterface {
         saveOrderAndUpdateUserSendNotification(order, user);
         clearShoppingCart(shoppingCards);
         saveUpdatedProducts(order.getOrderItems());
-        handleDiscountCode(order,request,order.getDiscountCode());
+        handleDiscountCode(request, order ,order.getDiscountCode());
     }
 
     public void addOrderNotification(User user , Order order ){
         notificationInterface.addOrderCreationNotification(user, order);
     }
 
-    private void handleDiscountCode(Order order, HttpServletRequest request,DiscountCode discountCode) {
-        discountService.handleDiscountCode(order,discountCode,request);
+    private void handleDiscountCode( HttpServletRequest request ,Order order,DiscountCode discountCode) {
+        discountService.handleDiscountCode(request,order,discountCode);
     }
 
     public void saveOrderAndUpdateUserSendNotification(Order order, User user) {

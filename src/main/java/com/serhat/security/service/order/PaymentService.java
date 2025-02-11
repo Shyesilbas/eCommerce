@@ -11,7 +11,7 @@ import com.serhat.security.interfaces.PaymentServiceInterface;
 import com.serhat.security.interfaces.ShippingInterface;
 import com.serhat.security.service.ShoppingCardService;
 import com.serhat.security.service.TransactionService;
-import com.serhat.security.service.DiscountCodeService;
+import com.serhat.security.service.discountService.DiscountCodeService;
 import com.serhat.security.service.giftCard.GiftCardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

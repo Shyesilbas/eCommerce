@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 
 public interface DiscountInterface {
     DiscountDetails applyDiscount(OrderRequest orderRequest, BigDecimal originalPrice, User user);
-    void validateDiscountCode(DiscountCode discountCode, User user);
-    void handleDiscountCode(Order order, DiscountCode discountCode, HttpServletRequest request);
-    void markExpiredDiscountCodes();
+
+    void handleDiscountCode(HttpServletRequest request, Order order, DiscountCode discountCode);
+
 }

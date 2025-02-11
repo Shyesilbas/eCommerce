@@ -4,7 +4,7 @@ import com.serhat.security.dto.response.AvailableDiscountResponse;
 import com.serhat.security.dto.response.ExpiredDiscountResponse;
 import com.serhat.security.dto.response.UsedDiscountResponse;
 import com.serhat.security.entity.DiscountCode;
-import com.serhat.security.service.DiscountCodeService;
+import com.serhat.security.service.discountService.DiscountCodeService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
