@@ -7,5 +7,5 @@ import java.math.BigDecimal;
 
 public interface GiftCardInterface {
     GiftCard applyGiftCard(OrderRequest orderRequest, BigDecimal totalPrice);
-    void validateGiftCard(GiftCard giftCard);
+
 }

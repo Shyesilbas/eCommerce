@@ -3,7 +3,8 @@ package com.serhat.security.controller;
 import com.serhat.security.dto.object.GiftCardDto;
 import com.serhat.security.dto.request.GenerateGiftCardRequest;
 import com.serhat.security.dto.response.GiftCardResponse;
-import com.serhat.security.service.GiftCardService;
+import com.serhat.security.entity.enums.CouponStatus;
+import com.serhat.security.service.giftCard.GiftCardService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,18 +23,11 @@ public class GiftCardController {
     public GiftCardDto generateGiftCard(HttpServletRequest request, @RequestBody GenerateGiftCardRequest requestBody) {
         return giftCardService.generateGiftCard(request, requestBody.amount());
     }
-    @GetMapping("/available")
+    @GetMapping("/getByStatus")
     public ResponseEntity<Page<GiftCardResponse>> getAvailableGiftCards(
-            HttpServletRequest request, Pageable pageable) {
-        Page<GiftCardResponse> availableGiftCards = giftCardService.getAvailableGiftCards(request, pageable);
+            HttpServletRequest request, Pageable pageable , @RequestParam CouponStatus couponStatus) {
+        Page<GiftCardResponse> availableGiftCards = giftCardService.getGiftCardsByStatus(request, couponStatus ,pageable);
         return ResponseEntity.ok(availableGiftCards);
-    }
-
-    @GetMapping("/used")
-    public ResponseEntity<Page<GiftCardResponse>> getUsedGiftCards(
-            HttpServletRequest request, Pageable pageable) {
-        Page<GiftCardResponse> usedGiftCards = giftCardService.getUsedGiftCards(request, pageable);
-        return ResponseEntity.ok(usedGiftCards);
     }
 
 }

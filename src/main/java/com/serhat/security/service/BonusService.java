@@ -50,6 +50,11 @@ public class BonusService implements BonusInterface {
     }
 
     @Override
+    public void updateUserBonusPoints(User user, BigDecimal bonusPoints) {
+        BonusInterface.super.updateUserBonusPoints(user, bonusPoints);
+    }
+
+    @Override
     public BigDecimal calculateBonusPoints(User user, BigDecimal totalPrice) {
         return totalPrice.multiply(bonusRates.get(user.getMembershipPlan()));
     }
@@ -68,19 +73,11 @@ public class BonusService implements BonusInterface {
     @Override
     public AddBonusResponse addBonus(HttpServletRequest request, AddBonusRequest bonusRequest){
         User user = tokenInterface.getUserFromToken(request);
-
-        BonusPointInformation bonusInfo = bonusPointInformation(request);
-        BigDecimal currentBonus = bonusInfo.currentBonusPoints();
-        BigDecimal totalBonusWon = bonusInfo.totalBonusWon();
-
         if(bonusRequest.amount().compareTo(BigDecimal.ZERO)<=0){
             throw new InvalidAmountException("Amount must be positive!");
         }
-        user.setBonusPointsWon(totalBonusWon.add(bonusRequest.amount()));
-        user.setCurrentBonusPoints(currentBonus.add(bonusRequest.amount()));
+        updateUserBonusPoints(user,bonusRequest.amount());
         userRepository.save(user);
-
-
         return userMapper.toAddBonusResponse(user,bonusRequest.amount());
     }
 }

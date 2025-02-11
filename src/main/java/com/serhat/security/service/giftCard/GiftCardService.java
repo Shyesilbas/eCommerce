@@ -1,4 +1,4 @@
-package com.serhat.security.service;
+package com.serhat.security.service.giftCard;
 
 import com.serhat.security.dto.object.GiftCardDto;
 import com.serhat.security.dto.request.OrderRequest;
@@ -8,10 +8,9 @@ import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.entity.enums.GiftAmount;
 import com.serhat.security.exception.GiftCardNotFoundException;
-import com.serhat.security.exception.InvalidGiftCardException;
-import com.serhat.security.exception.UsedGiftCardException;
 import com.serhat.security.interfaces.GiftCardInterface;
-import com.serhat.security.interfaces.TokenInterface;
+import com.serhat.security.interfaces.GiftCardValidationInterface;
+import com.serhat.security.interfaces.UserInterface;
 import com.serhat.security.mapper.GiftCardMapper;
 import com.serhat.security.repository.GiftCardRepository;
 import com.serhat.security.service.TransactionService;
@@ -31,9 +30,26 @@ import java.math.BigDecimal;
 @Slf4j
 public class GiftCardService implements GiftCardInterface {
     private final GiftCardRepository repository;
-    private final TokenInterface tokenInterface;
+    private final UserInterface userInterface;
     private final GiftCardMapper giftCardMapper;
     private final TransactionService transactionService;
+    private final GiftCardValidationInterface giftCardValidationInterface;
+
+    public User getUserFromToken(HttpServletRequest request){
+        return userInterface.getUserFromToken(request);
+    }
+
+    public void validateGiftCardStatusAndAmount(GiftCard giftCard){
+        giftCardValidationInterface.validateGiftCardStatusAndAmount(giftCard);
+    }
+
+    public GiftCard findGiftCardById(Long id){
+        return giftCardValidationInterface.findGiftCardById(id);
+    }
+
+    public void compareGiftCardAmountWithOrderPrice(GiftCard giftCard, BigDecimal totalPrice){
+        giftCardValidationInterface.compareGiftCardAmountWithOrderPrice(giftCard, totalPrice);
+    }
 
     @Override
     @Transactional
@@ -41,30 +57,15 @@ public class GiftCardService implements GiftCardInterface {
         if (orderRequest.giftCardId() == null) {
             return null;
         }
-
-        GiftCard giftCard = repository.findById(orderRequest.giftCardId())
-                .orElseThrow(() -> new GiftCardNotFoundException("Invalid gift card"));
-
-        validateGiftCard(giftCard);
-        if (giftCard.getGiftAmount().getAmount().compareTo(totalPrice) > 0) {
-            throw new InvalidGiftCardException("Gift card balance exceeds the total price.");
-        }
+        GiftCard giftCard = findGiftCardById(orderRequest.giftCardId());
+        validateGiftCardStatusAndAmount(giftCard);
+        compareGiftCardAmountWithOrderPrice( giftCard, totalPrice);
 
         giftCard.setStatus(CouponStatus.USED);
         repository.save(giftCard);
         return giftCard;
     }
 
-    @Override
-    public void validateGiftCard(GiftCard giftCard) {
-        if (giftCard.getStatus().equals(CouponStatus.USED)) {
-            throw new UsedGiftCardException("Gift card is used!");
-        }
-
-        if (giftCard.getGiftAmount().getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidGiftCardException("This gift card has no balance!");
-        }
-    }
 
     public void createGiftCardTransaction(User user , GiftAmount requestedAmount){
         transactionService.createGiftCardTransaction(user,requestedAmount.getAmount());
@@ -72,7 +73,7 @@ public class GiftCardService implements GiftCardInterface {
 
     @Transactional
     public GiftCardDto generateGiftCard(HttpServletRequest request, GiftAmount requestedAmount) {
-        User user = tokenInterface.getUserFromToken(request);
+        User user = getUserFromToken(request);
         GiftCard giftCard = giftCardMapper.toGiftCard(user, requestedAmount);
         createGiftCardTransaction(user,requestedAmount); // wallet existence and balance update will be handled
         repository.save(giftCard);
@@ -80,26 +81,15 @@ public class GiftCardService implements GiftCardInterface {
     }
 
 
-    public Page<GiftCardResponse> getAvailableGiftCards(HttpServletRequest request, Pageable pageable) {
-        User user = tokenInterface.getUserFromToken(request);
-        Page<GiftCard> availableGiftCards = repository.findByUserAndStatus(user, CouponStatus.NOT_USED, pageable);
+    public Page<GiftCardResponse> getGiftCardsByStatus(HttpServletRequest request, CouponStatus status, Pageable pageable) {
+        User user = getUserFromToken(request);
+        Page<GiftCard> giftCards = repository.findByUserAndStatus(user, status, pageable);
 
-        if (availableGiftCards.isEmpty()) {
-            throw new GiftCardNotFoundException("No available gift cards found.");
+        if (giftCards.isEmpty()) {
+            throw new GiftCardNotFoundException("No " + status.toString().toLowerCase() + " gift cards found.");
         }
 
-        return availableGiftCards.map(giftCardMapper::toGiftCardResponse);
-    }
-
-    public Page<GiftCardResponse> getUsedGiftCards(HttpServletRequest request, Pageable pageable) {
-        User user = tokenInterface.getUserFromToken(request);
-        Page<GiftCard> usedGiftCards = repository.findByUserAndStatus(user, CouponStatus.USED, pageable);
-
-        if (usedGiftCards.isEmpty()) {
-            throw new GiftCardNotFoundException("No used gift cards found.");
-        }
-
-        return usedGiftCards.map(giftCardMapper::toGiftCardResponse);
+        return giftCards.map(giftCardMapper::toGiftCardResponse);
     }
 
 }

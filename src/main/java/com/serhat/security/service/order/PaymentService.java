@@ -6,14 +6,13 @@ import com.serhat.security.dto.response.DiscountDetails;
 import com.serhat.security.dto.response.PriceDetails;
 import com.serhat.security.entity.*;
 import com.serhat.security.exception.*;
+import com.serhat.security.interfaces.BonusInterface;
 import com.serhat.security.interfaces.PaymentServiceInterface;
-import com.serhat.security.repository.WalletRepository;
-import com.serhat.security.service.ShippingService;
+import com.serhat.security.interfaces.ShippingInterface;
 import com.serhat.security.service.ShoppingCardService;
 import com.serhat.security.service.TransactionService;
-import com.serhat.security.service.BonusService;
 import com.serhat.security.service.DiscountCodeService;
-import com.serhat.security.service.GiftCardService;
+import com.serhat.security.service.giftCard.GiftCardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,20 +24,32 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentService implements PaymentServiceInterface {
 
-    private final WalletRepository walletRepository;
     private final DiscountCodeService discountService;
     private final GiftCardService giftCardService;
     private final TransactionService transactionService;
-    private final ShippingService shippingService;
-    private final BonusService bonusService;
+    private final ShippingInterface shippingInterface;
+    private final BonusInterface bonusInterface;
     private final ShoppingCardService shoppingCardService;
+
+    public BigDecimal calculateShippingFee(User user , BigDecimal totalPrice){
+        return shippingInterface.calculateShippingFee(user,totalPrice);
+    }
+    public void updateUserBonusPoints(User user,BigDecimal bonusPoints){
+        bonusInterface.updateUserBonusPoints(user, bonusPoints);
+    }
+    public BigDecimal calculateBonusPoints(User user , BigDecimal totalPrice){
+        return bonusInterface.calculateBonusPoints(user, totalPrice);
+    }
+    public BonusUsageResult applyBonus(User user , OrderRequest request , BigDecimal totalPrice){
+        return bonusInterface.applyBonus(user, request, totalPrice);
+    }
 
     @Override
     public PriceDetails calculatePriceDetails(List<ShoppingCard> shoppingCards, User user, OrderRequest orderRequest) {
         BigDecimal totalPrice = shoppingCardService.calculateTotalPrice(shoppingCards);
         BigDecimal originalTotalPrice = totalPrice;
-        BigDecimal shippingFee = shippingService.calculateShippingFee(user, totalPrice);
-        BigDecimal bonusPoints = bonusService.calculateBonusPoints(user, totalPrice);
+        BigDecimal shippingFee = calculateShippingFee(user, totalPrice);
+        BigDecimal bonusPoints = calculateBonusPoints(user, totalPrice);
 
         if (orderRequest.discountId() != null && orderRequest.giftCardId() != null) {
             throw new InvalidOrderException("Cannot use both discount code and gift card in the same order.");
@@ -52,7 +63,7 @@ public class PaymentService implements PaymentServiceInterface {
             totalPrice = totalPrice.subtract(giftCard.getGiftAmount().getAmount());
         }
 
-        BonusUsageResult bonusUsageResult = bonusService.applyBonus(user, orderRequest, totalPrice);
+        BonusUsageResult bonusUsageResult = applyBonus(user, orderRequest, totalPrice);
         totalPrice = bonusUsageResult.updatedTotalPrice();
         BigDecimal bonusPointsUsed = bonusUsageResult.bonusPointsUsed();
         updateUserBonusPoints(user, bonusPoints);
@@ -79,10 +90,6 @@ public class PaymentService implements PaymentServiceInterface {
     public List<Transaction> createOrderTransactions(Order order) {
         return transactionService.createTransactions(
                 order, order.getUser(), order.getTotalPaid(), order.getBonusWon(), order.getShippingFee());
-    }
-    @Override
-    public void updateUserBonusPoints(User user, BigDecimal bonusPoints) {
-        PaymentServiceInterface.super.updateUserBonusPoints(user, bonusPoints);
     }
 }
 

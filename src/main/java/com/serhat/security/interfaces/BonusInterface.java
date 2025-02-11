@@ -17,7 +17,10 @@ public interface BonusInterface {
     BigDecimal calculateBonusPoints(User user, BigDecimal totalPrice);
     BonusPointInformation bonusPointInformation(HttpServletRequest request);
      AddBonusResponse addBonus(HttpServletRequest request, AddBonusRequest bonusRequest);
-
+    default  void updateUserBonusPoints(User user, BigDecimal bonusPoints){
+        user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
+        user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(bonusPoints));
+    }
     Map<MembershipPlan, BigDecimal> bonusRates = Map.of(
             MembershipPlan.VIP, BigDecimal.valueOf(0.05),
             MembershipPlan.PREMIUM, BigDecimal.valueOf(0.03),
