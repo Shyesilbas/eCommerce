@@ -18,6 +18,7 @@ import com.serhat.security.exception.InvalidAmountException;
 import com.serhat.security.exception.InvalidQuantityException;
 import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.interfaces.ProductInterface;
+import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.mapper.ProductMapper;
 import com.serhat.security.repository.OrderRepository;
@@ -42,16 +43,13 @@ import java.util.stream.Stream;
 public class ProductService implements ProductInterface {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
-    private final JwtUtil jwtUtil;
+    private final TokenInterface tokenInterface;
     private final ProductMapper productMapper;
     private final PriceHistoryService priceHistoryService;
     private final StockAlertService stockAlertService;
 
     private void validateRole(HttpServletRequest request, Role... allowedRoles) {
-        Role userRole = jwtUtil.extractRole(jwtUtil.getTokenFromAuthorizationHeader(request));
-        if (Stream.of(allowedRoles).noneMatch(role -> role == userRole)) {
-            throw new RuntimeException("Unauthorized action. Required role: " + List.of(allowedRoles));
-        }
+       tokenInterface.validateRole(request, allowedRoles);
     }
 
     @Override
@@ -124,18 +122,11 @@ public class ProductService implements ProductInterface {
         return new ProductPriceUpdate(product.getName(), product.getProductCode(), price);
     }
 
-
     @Override
     public long totalProductCountByCategory(Category category) {
         return productRepository.countByCategory(category);
     }
 
-    @Override
-    public Page<ProductDto> getAllProducts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("productId"));
-        Page<Product> products = productRepository.findAll(pageable);
-        return products.map(productMapper::mapToProductDto);
-    }
     @Override
     public List<BestSellerProductDTO> bestSellersByCategory(Category category, int size) {
         return getBestSellers(size, category);

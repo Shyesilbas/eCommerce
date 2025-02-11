@@ -3,7 +3,6 @@ package com.serhat.security.service.order;
 import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.*;
-import com.serhat.security.entity.enums.*;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.*;
 import com.serhat.security.mapper.OrderMapper;
@@ -11,6 +10,8 @@ import com.serhat.security.repository.*;
 import com.serhat.security.service.*;
 import com.serhat.security.service.ProductService;
 import com.serhat.security.service.DiscountCodeService;
+import com.serhat.security.interfaces.OrderCreationInterface;
+import com.serhat.security.interfaces.WalletInterface;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +30,14 @@ public class OrderCreationService implements OrderCreationInterface {
 
     private final OrderRepository orderRepository;
     private final ProductService productService;
-    private final PaymentService paymentService;
+    private final PaymentServiceInterface paymentServiceInterface;
     private final OrderMapper orderMapper;
     private final DiscountCodeService discountService;
-    private final NotificationService notificationService;
-    private final StockService stockService;
+    private final NotificationInterface notificationInterface;
+    private final StockInterface stockInterface;
     private final ShoppingCardService shoppingCardService;
     private final OrderCreationValidation orderCreationValidation;
+    private final WalletInterface walletInterface;
 
     public User validateAndGetUser(HttpServletRequest request, OrderRequest orderRequest) {
         return orderCreationValidation.validateAndGetUser(request, orderRequest);
@@ -52,19 +54,23 @@ public class OrderCreationService implements OrderCreationInterface {
     }
 
     public void updateProductStock(Product product, int quantity) {
-        stockService.validateAndUpdateProductStock(product, quantity);
+        stockInterface.validateAndUpdateProductStock(product, quantity);
     }
 
     @Override
     public PriceDetails calculatePriceDetails(List<ShoppingCard> shoppingCards , User user , OrderRequest orderRequest){
-        return paymentService.calculatePriceDetails(shoppingCards, user, orderRequest);
+        return paymentServiceInterface.calculatePriceDetails(shoppingCards, user, orderRequest);
+    }
+
+    public Wallet getUsersWallet(User user){
+        return walletInterface.getWalletByUser(user);
     }
 
     @Transactional
     @Override
     public OrderResponse createOrder(HttpServletRequest request, OrderRequest orderRequest) {
         User user = validateAndGetUser(request, orderRequest);
-        paymentService.findWalletForUser(user);
+        getUsersWallet(user);
         List<ShoppingCard> shoppingCards = shoppingCardService.findShoppingCard(user);
 
         PriceDetails priceDetails = calculatePriceDetails(shoppingCards, user, orderRequest);
@@ -78,7 +84,7 @@ public class OrderCreationService implements OrderCreationInterface {
 
     private void initializeOrderItemsAndTransactions(Order order, List<ShoppingCard> shoppingCards) {
         List<OrderItem> orderItems = orderMapper.convertShoppingCartToOrderItems(order, shoppingCards);
-        List<Transaction> transactions = paymentService.createOrderTransactions(order);
+        List<Transaction> transactions = paymentServiceInterface.createOrderTransactions(order);
 
         order.setOrderItems(orderItems);
         order.setTransactions(transactions);
@@ -86,21 +92,25 @@ public class OrderCreationService implements OrderCreationInterface {
     }
 
     private void finalizeOrder(Order order, User user, List<ShoppingCard> shoppingCards, HttpServletRequest request) {
-        saveOrderAndUpdateUser(order, user);
+        saveOrderAndUpdateUserSendNotification(order, user);
         clearShoppingCart(shoppingCards);
         saveUpdatedProducts(order.getOrderItems());
         handleDiscountCode(order,request,order.getDiscountCode());
-        notificationService.addOrderNotification(user, order, NotificationTopic.ORDER_PLACED);
+    }
+
+    public void addOrderNotification(User user , Order order ){
+        notificationInterface.addOrderCreationNotification(user, order);
     }
 
     private void handleDiscountCode(Order order, HttpServletRequest request,DiscountCode discountCode) {
         discountService.handleDiscountCode(order,discountCode,request);
     }
 
-    public void saveOrderAndUpdateUser(Order order, User user) {
+    public void saveOrderAndUpdateUserSendNotification(Order order, User user) {
         orderRepository.save(order);
         updateUserTotalFees(user);
         user.setTotalOrders(user.getTotalOrders() + 1);
+        addOrderNotification(user,order);
     }
     @Override
     public void updateUserTotalFees(User user) {

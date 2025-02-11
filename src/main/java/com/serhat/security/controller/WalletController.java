@@ -2,8 +2,7 @@ package com.serhat.security.controller;
 
 import com.serhat.security.dto.request.WalletRequest;
 import com.serhat.security.dto.response.*;
-import com.serhat.security.entity.Transaction;
-import com.serhat.security.service.WalletService;
+import com.serhat.security.service.wallet.WalletService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor

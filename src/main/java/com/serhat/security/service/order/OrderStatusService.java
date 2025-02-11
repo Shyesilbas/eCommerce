@@ -1,10 +1,10 @@
 package com.serhat.security.service.order;
 
 import com.serhat.security.entity.Order;
-import com.serhat.security.entity.enums.NotificationTopic;
+import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.OrderStatus;
+import com.serhat.security.interfaces.NotificationInterface;
 import com.serhat.security.repository.OrderRepository;
-import com.serhat.security.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -22,23 +22,39 @@ import java.util.List;
 @EnableScheduling
 public class OrderStatusService {
     private final OrderRepository orderRepository;
-    private final NotificationService notificationService;
+    private final NotificationInterface notificationInterface;
     @Scheduled(fixedRate = 60000)
     @Transactional
     public void updateOrderStatuses() {
-        List<Order> orders = orderRepository.findByStatusIn(List.of(OrderStatus.APPROVED, OrderStatus.SHIPPED));
+        List<Order> orders = orderRepository.findByStatusInAndOrderDateBefore(
+                List.of(OrderStatus.APPROVED, OrderStatus.SHIPPED),
+                LocalDateTime.now().minusMinutes(60));
+
         for (Order order : orders) {
             long minutesSinceOrder = Duration.between(order.getOrderDate(), LocalDateTime.now()).toMinutes();
+
             if (order.getStatus() == OrderStatus.APPROVED && minutesSinceOrder >= 60) {
                 order.setStatus(OrderStatus.SHIPPED);
-                notificationService.addOrderNotification(order.getUser(), order, NotificationTopic.ORDER_SHIPPED);
+                addOrderShippedNotification(order, order.getUser());
                 log.info("Order {} status updated to SHIPPED", order.getOrderId());
             } else if (order.getStatus() == OrderStatus.SHIPPED && minutesSinceOrder >= 180) {
                 order.setStatus(OrderStatus.DELIVERED);
-                notificationService.addOrderNotification(order.getUser(), order, NotificationTopic.ORDER_DELIVERED);
+                addOrderDeliveredNotification(order, order.getUser());
                 log.info("Order {} status updated to DELIVERED", order.getOrderId());
             }
         }
-        orderRepository.saveAll(orders);
+        if (!orders.isEmpty()) {
+            orderRepository.saveAll(orders);
+        }
     }
+
+
+    public void addOrderShippedNotification(Order order , User user){
+        notificationInterface.addOrderShippedNotification(user, order);
+    }
+    public void addOrderDeliveredNotification(Order order , User user){
+        notificationInterface.addOrderDeliveredNotification(user, order);
+    }
+
+
 }

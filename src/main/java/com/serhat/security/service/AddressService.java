@@ -37,7 +37,6 @@ public class AddressService implements AddressInterface {
     private final TokenInterface tokenInterface;
     private final AddressRepository addressRepository;
     private final AddressMapper addressMapper;
-    private final NotificationService notificationService;
 
     @Override
     public boolean isAddressBelongsToUser(Long addressId, Long userId) {
@@ -77,8 +76,6 @@ public class AddressService implements AddressInterface {
 
         addressMapper.updateAddressFromDto(address, updateAddressRequest);
         addressRepository.save(address);
-        notificationService.addNotification(request, NotificationTopic.ADDRESS_UPDATED);
-
         return new UpdateAddressResponse(
                 "Address updated successfully",
                 address.getAddressId(),
@@ -95,8 +92,6 @@ public class AddressService implements AddressInterface {
         Address newAddress = addressMapper.toAddress(addAddressRequest, user);
 
         addressRepository.save(newAddress);
-        notificationService.addNotification(request, NotificationTopic.ADDRESS_ADDED);
-
         return new AddAddressResponse(
                 "Address added successfully",
                 newAddress.getAddressId(),
@@ -118,7 +113,6 @@ public class AddressService implements AddressInterface {
         }
 
         addressRepository.delete(address);
-        notificationService.addNotification(request, NotificationTopic.ADDRESS_DELETED);
 
         return new DeleteAddressResponse(
                 addressId,

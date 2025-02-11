@@ -34,11 +34,6 @@ public class PaymentService implements PaymentServiceInterface {
     private final ShoppingCardService shoppingCardService;
 
     @Override
-    public Wallet findWalletForUser(User user) {
-        return walletRepository.findByUser_UserId(user.getUserId())
-                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user"));
-    }
-    @Override
     public PriceDetails calculatePriceDetails(List<ShoppingCard> shoppingCards, User user, OrderRequest orderRequest) {
         BigDecimal totalPrice = shoppingCardService.calculateTotalPrice(shoppingCards);
         BigDecimal originalTotalPrice = totalPrice;
@@ -77,11 +72,6 @@ public class PaymentService implements PaymentServiceInterface {
                 bonusPointsUsed,
                 totalSaved
         );
-    }
-
-    public void applyGiftCard(OrderRequest orderRequest , BigDecimal totalPrice){
-        GiftCard giftCard = giftCardService.applyGiftCard(orderRequest, totalPrice);
-        totalPrice = totalPrice.subtract(giftCard.getGiftAmount().getAmount());
     }
 
     @Override

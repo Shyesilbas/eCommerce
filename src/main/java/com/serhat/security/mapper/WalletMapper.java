@@ -17,16 +17,14 @@ import java.time.LocalDateTime;
 @Component
 @RequiredArgsConstructor
 public class WalletMapper {
-    private final WalletRepository walletRepository;
 
-    public Wallet toWalletAndSave(WalletRequest walletRequest) {
+    public Wallet toWallet(WalletRequest walletRequest) {
         Wallet wallet = new Wallet();
         wallet.setWalletName(walletRequest.walletName());
         wallet.setDescription(walletRequest.description());
         wallet.setWalletLimit(walletRequest.limit());
         wallet.setWalletPin(walletRequest.walletPin());
         wallet.setBalance(BigDecimal.ZERO);
-        walletRepository.save(wallet);
         return wallet;
     }
 

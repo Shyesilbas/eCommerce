@@ -5,7 +5,6 @@ import com.serhat.security.dto.request.UpdateMembershipRequest;
 import com.serhat.security.dto.request.UpdatePasswordRequest;
 import com.serhat.security.dto.request.UpdatePhoneRequest;
 import com.serhat.security.dto.response.*;
-import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 

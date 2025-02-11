@@ -8,23 +8,16 @@ import com.serhat.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.format.DateTimeFormatter;
-
-import static com.serhat.security.entity.enums.NotificationTopic.ADDRESS_ADDED;
-
 @Component
 @RequiredArgsConstructor
 public class NotificationMapper {
     private final UserRepository userRepository;
-
     public NotificationDTO toDTO(Notification notification) {
-        String message = generateNotificationMessage(notification);
-
         return NotificationDTO.builder()
                 .notificationId(notification.getNotificationId())
                 .at(notification.getAt())
                 .notificationTopic(notification.getNotificationTopic())
-                .message(message)
+                .message(generateNotificationMessage(notification))
                 .userId(notification.getUser().getUserId())
                 .build();
     }
@@ -41,9 +34,8 @@ public class NotificationMapper {
                 .user(user)
                 .build();
     }
-
     public String generateNotificationMessage(Notification notification) {
-        return String.format("%s", getNotificationDescription(notification.getNotificationTopic()) + " successfully!");
+        return getNotificationDescription(notification.getNotificationTopic()) + " successfully!";
     }
     private String getNotificationDescription(NotificationTopic topic) {
         return switch (topic) {
@@ -57,5 +49,4 @@ public class NotificationMapper {
             default -> "Notification Received.";
         };
     }
-
 }

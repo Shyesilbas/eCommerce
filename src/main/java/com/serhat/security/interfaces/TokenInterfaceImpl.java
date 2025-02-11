@@ -1,6 +1,7 @@
 package com.serhat.security.interfaces;
 
 import com.serhat.security.entity.User;
+import com.serhat.security.entity.enums.Role;
 import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
@@ -10,7 +11,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -44,4 +47,12 @@ public class TokenInterfaceImpl implements TokenInterface {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
     }
-}
+
+    @Override
+    public void validateRole(HttpServletRequest request, Role... allowedRoles) {
+            Role userRole = jwtUtil.extractRole(jwtUtil.getTokenFromAuthorizationHeader(request));
+            if (Stream.of(allowedRoles).noneMatch(role -> role == userRole)) {
+                throw new RuntimeException("Unauthorized action. Required role: " + List.of(allowedRoles));
+            }
+        }
+    }

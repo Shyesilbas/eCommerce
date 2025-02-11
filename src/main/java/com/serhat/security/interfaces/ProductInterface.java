@@ -19,7 +19,6 @@ public interface ProductInterface {
      void updateProductStock(Product product, int quantity);
      ProductPriceUpdate updateProductPrice(Long productId, BigDecimal price, HttpServletRequest request);
      long totalProductCountByCategory(Category category);
-     Page<ProductDto> getAllProducts(int page, int size);
      List<BestSellerProductDTO> bestSellersByCategory(Category category, int size);
      List<BestSellerProductDTO> bestSellers(int size);
      long totalProductCount();
