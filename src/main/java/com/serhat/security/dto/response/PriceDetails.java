@@ -1,12 +1,14 @@
 package com.serhat.security.dto.response;
 
 import com.serhat.security.entity.DiscountCode;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 
+@Builder
 public record PriceDetails(
         BigDecimal totalPrice,
-        BigDecimal originalTotalPrice,
+        BigDecimal originalPrice,
         BigDecimal shippingFee,
         BigDecimal bonusPoints,
         BigDecimal discountAmount,

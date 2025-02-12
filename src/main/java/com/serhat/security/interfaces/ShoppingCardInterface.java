@@ -15,7 +15,7 @@ import java.util.List;
 public interface ShoppingCardInterface {
     List<ShoppingCard> findShoppingCard(User user);
 
-    BigDecimal calculateTotalPrice(List<ShoppingCard> shoppingCards);
+    BigDecimal cardTotal(List<ShoppingCard> shoppingCards);
 
     List<CardProductDto> getItems(HttpServletRequest servletRequest);
 

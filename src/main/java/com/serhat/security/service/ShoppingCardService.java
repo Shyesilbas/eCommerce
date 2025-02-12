@@ -48,7 +48,7 @@ public class ShoppingCardService implements ShoppingCardInterface {
     }
 
     @Override
-    public BigDecimal calculateTotalPrice(List<ShoppingCard> shoppingCards) {
+    public BigDecimal cardTotal(List<ShoppingCard> shoppingCards) {
         return shoppingCards.stream()
                 .map(sc -> sc.getProduct().getPrice().multiply(new BigDecimal(sc.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

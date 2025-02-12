@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 public class PaymentRulesService implements PaymentRuleServiceInterface {
 
     @Override
-    public void checkIfBothDiscountCodeAndGiftCardIsNotUsed(OrderRequest orderRequest){
+    public void validateDiscountRules(OrderRequest orderRequest){
         if (orderRequest.discountId() != null && orderRequest.giftCardId() != null) {
             throw new InvalidOrderException("Cannot use both discount code and gift card in the same order.");
         }

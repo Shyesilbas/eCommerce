@@ -30,6 +30,7 @@ public class BonusService implements BonusInterface {
     private final BonusStrategyFactory bonusStrategyFactory;
 
 
+    @Transactional
     @Override
     public BonusUsageResult applyBonus(User user, OrderRequest orderRequest, BigDecimal totalPrice) {
         BigDecimal bonusPointsUsed = BigDecimal.ZERO;
@@ -47,6 +48,7 @@ public class BonusService implements BonusInterface {
         return new BonusUsageResult(totalPrice, bonusPointsUsed);
     }
 
+    @Transactional
     @Override
     public void updateUserBonusPoints(User user, BigDecimal bonusPoints) {
         BonusInterface.super.updateUserBonusPoints(user, bonusPoints);

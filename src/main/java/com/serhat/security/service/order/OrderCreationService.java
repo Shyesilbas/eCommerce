@@ -28,15 +28,14 @@ import java.util.List;
 public class OrderCreationService implements OrderCreationInterface {
 
     private final OrderRepository orderRepository;
-    private final ProductService productService;
     private final PaymentServiceInterface paymentServiceInterface;
     private final OrderMapper orderMapper;
-    private final DiscountCodeService discountService;
-    private final NotificationInterface notificationInterface;
     private final StockInterface stockInterface;
     private final ShoppingCardService shoppingCardService;
     private final OrderCreationValidation orderCreationValidation;
     private final WalletInterface walletInterface;
+    private final OrderFinalizationService finalizeOrder;
+    private final OrderPriceCalculationService orderPriceCalculationService;
 
     public User validateAndGetUser(HttpServletRequest request, OrderRequest orderRequest) {
         return orderCreationValidation.validateAndGetUser(request, orderRequest);
@@ -54,11 +53,11 @@ public class OrderCreationService implements OrderCreationInterface {
 
     @Override
     public PriceDetails calculatePriceDetails(List<ShoppingCard> shoppingCards , User user , OrderRequest orderRequest){
-        return paymentServiceInterface.calculatePriceDetails(shoppingCards, user, orderRequest);
+        return orderPriceCalculationService.calculateOrderPrice(shoppingCards, user, orderRequest);
     }
 
-    public Wallet getUsersWallet(User user){
-        return walletInterface.getWalletByUser(user);
+    public void getUsersWallet(User user){
+         walletInterface.getWalletByUser(user);
     }
 
     @Transactional
@@ -71,54 +70,27 @@ public class OrderCreationService implements OrderCreationInterface {
         PriceDetails priceDetails = calculatePriceDetails(shoppingCards, user, orderRequest);
         Order order = orderMapper.createOrderEntity(user, orderRequest, priceDetails);
         order = orderRepository.save(order);
-        initializeOrderItemsAndTransactions(order, shoppingCards);
+        initializeOrderItems(order, shoppingCards);
+        initializeTransactions(order);
 
         finalizeOrder(order, user, shoppingCards, request);
         return orderMapper.toOrderResponse(order);
     }
 
-    private void initializeOrderItemsAndTransactions(Order order, List<ShoppingCard> shoppingCards) {
+    private void initializeOrderItems(Order order, List<ShoppingCard> shoppingCards) {
         List<OrderItem> orderItems = orderMapper.convertShoppingCartToOrderItems(order, shoppingCards);
-        List<Transaction> transactions = paymentServiceInterface.createOrderTransactions(order);
-
         order.setOrderItems(orderItems);
-        order.setTransactions(transactions);
         orderItems.forEach(item -> updateProductStock(item.getProduct(), item.getQuantity()));
     }
 
+    private void initializeTransactions(Order order) {
+        List<Transaction> transactions = paymentServiceInterface.createOrderTransactions(order);
+        order.setTransactions(transactions);
+    }
+
     private void finalizeOrder(Order order, User user, List<ShoppingCard> shoppingCards, HttpServletRequest request) {
-        saveOrderAndUpdateUserSendNotification(order, user);
-        clearShoppingCart(shoppingCards);
-        saveUpdatedProducts(order.getOrderItems());
-        handleDiscountCode(request, order ,order.getDiscountCode());
+        finalizeOrder.finalizeOrder(order,user,shoppingCards,request);
     }
 
-    public void addOrderNotification(User user , Order order ){
-        notificationInterface.addOrderCreationNotification(user, order);
-    }
-
-    private void handleDiscountCode( HttpServletRequest request ,Order order,DiscountCode discountCode) {
-        discountService.handleDiscountCode(request,order,discountCode);
-    }
-
-    public void saveOrderAndUpdateUserSendNotification(Order order, User user) {
-        orderRepository.save(order);
-        updateUserTotalFees(user);
-        user.setTotalOrders(user.getTotalOrders() + 1);
-        addOrderNotification(user,order);
-    }
-
-    @Override
-    public void updateUserTotalFees(User user) {
-        OrderCreationInterface.super.updateUserTotalFees(user);
-    }
-
-    private void clearShoppingCart(List<ShoppingCard> shoppingCards) {
-        shoppingCardService.clearShoppingCart(shoppingCards);
-    }
-
-    private void saveUpdatedProducts(List<OrderItem> orderItems) {
-        productService.updateProductsAfterOrder(orderItems);
-    }
 
 }

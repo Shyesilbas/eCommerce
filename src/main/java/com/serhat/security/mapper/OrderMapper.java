@@ -108,7 +108,7 @@ OrderMapper {
         return Order.builder()
                 .user(user)
                 .orderDate(LocalDateTime.now())
-                .totalPrice(priceDetails.originalTotalPrice())
+                .totalPrice(priceDetails.totalPrice())
                 .status(OrderStatus.APPROVED)
                 .shippingAddressId(orderRequest.shippingAddressId())
                 .paymentMethod(PaymentMethod.E_WALLET)
