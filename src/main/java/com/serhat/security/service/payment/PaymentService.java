@@ -43,7 +43,7 @@ public class PaymentService implements PaymentServiceInterface {
     public BonusUsageResult applyBonus(User user , OrderRequest request , BigDecimal totalPrice){
         return bonusService.applyBonus(user, request, totalPrice);
     }
-    public BigDecimal applyGiftCard(OrderRequest orderRequest , BigDecimal totalPrice){
+    public GiftCard applyGiftCard(OrderRequest orderRequest , BigDecimal totalPrice){
        return giftCardService.applyGiftCard(orderRequest, totalPrice);
     }
     public DiscountDetails applyDiscountCode(OrderRequest orderRequest , BigDecimal originalPrice,User user){
@@ -68,7 +68,10 @@ public class PaymentService implements PaymentServiceInterface {
         DiscountDetails discountDetails = applyDiscountCode(orderRequest, totalPrice, user);
         totalPrice = totalPrice.subtract(discountDetails.discountAmount());
 
-        totalPrice = applyGiftCard(orderRequest, totalPrice);
+        GiftCard giftCard = applyGiftCard(orderRequest, totalPrice);
+        if (giftCard != null) {
+            totalPrice = totalPrice.subtract(giftCard.getGiftAmount().getAmount());
+        }
 
         BonusUsageResult bonusUsageResult = applyBonus(user, orderRequest, totalPrice);
         totalPrice = bonusUsageResult.updatedTotalPrice();

@@ -39,8 +39,6 @@ public class BonusService implements BonusInterface {
 
             if (availableBonusPoints.compareTo(BigDecimal.ZERO) > 0) {
                 bonusPointsUsed = availableBonusPoints.min(totalPrice);
-                totalPrice = totalPrice.subtract(bonusPointsUsed);
-
                 user.setCurrentBonusPoints(availableBonusPoints.subtract(bonusPointsUsed));
             } else {
                 throw new NoBonusPointsException("No bonus points found");

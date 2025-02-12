@@ -53,20 +53,21 @@ public class GiftCardService implements GiftCardInterface {
 
     @Override
     @Transactional
-    public BigDecimal applyGiftCard(OrderRequest orderRequest, BigDecimal totalPrice) {
+    public GiftCard applyGiftCard(OrderRequest orderRequest, BigDecimal totalPrice) {
         if (orderRequest.giftCardId() == null) {
             return null;
         }
-
-        GiftCard giftCard = findGiftCardById(orderRequest.giftCardId());
-        if(giftCard != null) {
+        try {
+            GiftCard giftCard = findGiftCardById(orderRequest.giftCardId());
             validateGiftCardStatusAndAmount(giftCard);
             compareGiftCardAmountWithOrderPrice(giftCard, totalPrice);
-            totalPrice = totalPrice.subtract(giftCard.getGiftAmount().getAmount());
             giftCard.setStatus(CouponStatus.USED);
             repository.save(giftCard);
+            return giftCard;
+        } catch (GiftCardNotFoundException e) {
+            log.warn("Gift card not found: {}", orderRequest.giftCardId());
+            return null;
         }
-        return totalPrice;
     }
 
 

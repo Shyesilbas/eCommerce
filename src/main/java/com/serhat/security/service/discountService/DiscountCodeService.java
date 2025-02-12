@@ -116,10 +116,15 @@ public class DiscountCodeService implements DiscountInterface {
         if (orderRequest.discountId() == null) {
             return new DiscountDetails(BigDecimal.ZERO, null);
         }
-        DiscountCode discountCode = findById(orderRequest.discountId());
-        validateDiscountCode(discountCode, user);
-        BigDecimal discountAmount = calculateDiscountAmount(originalPrice, discountCode);
-        return new DiscountDetails(discountAmount, discountCode);
+        try {
+            DiscountCode discountCode = findById(orderRequest.discountId());
+            validateDiscountCode(discountCode, user);
+            BigDecimal discountAmount = calculateDiscountAmount(originalPrice, discountCode);
+            return new DiscountDetails(discountAmount, discountCode);
+        } catch (DiscountCodeNotFoundException e) {
+            log.warn("Discount code not found: {}", orderRequest.discountId());
+            return new DiscountDetails(BigDecimal.ZERO, null);
+        }
     }
 
 

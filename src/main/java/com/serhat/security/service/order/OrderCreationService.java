@@ -19,7 +19,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -43,10 +42,6 @@ public class OrderCreationService implements OrderCreationInterface {
         return orderCreationValidation.validateAndGetUser(request, orderRequest);
     }
 
-    @Override
-    public void updateUserBonusPoints(User user, BigDecimal bonusPoints) {
-        OrderCreationInterface.super.updateUserBonusPoints(user, bonusPoints);
-    }
     @Override
     public Order findOrderById(Long orderId) {
         return orderRepository.findById(orderId)
@@ -112,6 +107,7 @@ public class OrderCreationService implements OrderCreationInterface {
         user.setTotalOrders(user.getTotalOrders() + 1);
         addOrderNotification(user,order);
     }
+
     @Override
     public void updateUserTotalFees(User user) {
         OrderCreationInterface.super.updateUserTotalFees(user);
