@@ -19,11 +19,10 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@EnableScheduling
 public class OrderStatusService {
     private final OrderRepository orderRepository;
     private final NotificationInterface notificationInterface;
-    @Scheduled(fixedRate = 60000)
+
     @Transactional
     public void updateOrderStatuses() {
         List<Order> orders = orderRepository.findByStatusInAndOrderDateBefore(

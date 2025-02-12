@@ -13,6 +13,7 @@ import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -178,7 +179,7 @@ public class UserService implements UserInterface {
         return new ForgotPasswordResponse("Password updated successfully.", LocalDateTime.now());
     }
 
-  //  @Cacheable(value = "userInfoCache", key = "#request.userPrincipal.name", unless = "#result == null")
+    @Cacheable(value = "userInfoCache", key = "#request.userPrincipal.name", unless = "#result == null")
     @Override
     public UserResponse userInfo(HttpServletRequest request) {
         User user = getUserFromToken(request);

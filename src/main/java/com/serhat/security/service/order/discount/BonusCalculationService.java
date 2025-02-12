@@ -19,9 +19,6 @@ public class BonusCalculationService {
         BigDecimal bonusPointsEarned = bonusService.calculateBonusPoints(user, priceAfterDiscounts);
         BonusUsageResult bonusUsage = bonusService.applyBonus(user, request, priceAfterDiscounts);
 
-        bonusService.updateUserBonusPoints(user, bonusUsage.bonusPointsUsed());
-
-
         return new BonusCalculationResult(
                 bonusUsage.updatedTotalPrice(),
                 bonusPointsEarned,
