@@ -119,6 +119,19 @@ public class GlobalExceptionHandler{
         );
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(InvalidPaymentMethodException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPaymentMethodException(InvalidPaymentMethodException e){
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                "Invalid Payment Method ",
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(UsedGiftCardException.class)
     public ResponseEntity<ErrorResponse> handleUsedGiftCardException(UsedGiftCardException e){
 

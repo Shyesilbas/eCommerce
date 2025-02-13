@@ -6,17 +6,16 @@ import com.serhat.security.entity.OrderItem;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.entity.enums.PaymentMethod;
-import com.serhat.security.interfaces.NotificationInterface;
-import com.serhat.security.interfaces.OrderCancellationInterface;
-import com.serhat.security.interfaces.OrderCreationInterface;
-import com.serhat.security.interfaces.TokenInterface;
+import com.serhat.security.interfaces.*;
 import com.serhat.security.mapper.OrderMapper;
 import com.serhat.security.repository.OrderRepository;
 import com.serhat.security.repository.ProductRepository;
-import com.serhat.security.service.TransactionService;
+import com.serhat.security.service.payment.PaymentProcessingService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,31 +29,29 @@ import java.time.LocalDateTime;
 @EnableScheduling
 public class OrderCancellationService implements OrderCancellationInterface {
     private final OrderRepository orderRepository;
-    private final OrderCreationInterface orderInterface;
+    private final OrderDetailsInterface orderDetailsInterface;
     private final TokenInterface tokenInterface;
     private final ProductRepository productRepository;
-    private final TransactionService transactionService;
     private final NotificationInterface notificationInterface;
     private final OrderMapper orderMapper;
     private final OrderCancellationValidationService orderCancellationValidationService;
+    private final PaymentProcessingService paymentProcessingService;
 
-    @Override
-    public void updateProductStockAfterCancellation(Order order) {
-        OrderCancellationInterface.super.updateProductStockAfterCancellation(order);
-    }
+
     public Order findOrderById(Long orderId) {
-     return orderInterface.findOrderById(orderId);
+     return orderDetailsInterface.findOrderById(orderId);
     }
+
     public void checkIsOrderCancellable(Order order , User user){
         orderCancellationValidationService.checkIsOrderCancellable(order, user);
     }
 
     @Transactional
     @Override
+    @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
     public OrderCancellationResponse cancelOrder(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
         Order order = findOrderById(orderId);
-        checkIsOrderCancellable(order,user);
         finalizeCancellation(order, user);
         return orderMapper.toOrderCancellationResponse(order, order.getTotalPaid());
     }
@@ -63,20 +60,32 @@ public class OrderCancellationService implements OrderCancellationInterface {
     public void finalizeCancellation(Order order, User user) {
         BigDecimal shippingFee = order.getShippingFee();
         BigDecimal totalPaid = order.getTotalPaid();
-        if (order.getPaymentMethod().equals(PaymentMethod.E_WALLET)) {
-            transactionService.createRefundTransaction(order, user, totalPaid, shippingFee);
-        }
-        updateProductStockAfterCancellation(order);
+        checkIsOrderCancellable(order,user);
+        processRefundPayment(order,order.getPaymentMethod());
         updateUserAfterOrderCancel(user, order, shippingFee, totalPaid);
-
-        order.setStatus(OrderStatus.REFUNDED);
-        order.setUpdatedAt(LocalDateTime.now());
-        orderRepository.save(order);
-        productRepository.saveAll(order.getOrderItems().stream().map(OrderItem::getProduct).toList());
+        updateOrderAfterCancellation(order);
+        updateProductsAfterCancellation(order);
         addOrderCancellationNotification(user,order);
     }
 
     public void addOrderCancellationNotification(User user , Order order){
         notificationInterface.addOrderCancellationNotification(user, order);
+    }
+
+    @Override
+    public void processRefundPayment(Order order, PaymentMethod paymentMethod) {
+        paymentProcessingService.processPayment(order, paymentMethod);
+    }
+
+    private void updateProductsAfterCancellation(Order order){
+        productRepository.saveAll(order.getOrderItems().stream().map(OrderItem::getProduct).toList());
+        updateProductStockAfterCancellation(order);
+    }
+
+    @Override
+    public void updateOrderAfterCancellation(Order order){
+        order.setStatus(OrderStatus.REFUNDED);
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
     }
 }

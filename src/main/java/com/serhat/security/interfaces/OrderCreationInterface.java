@@ -6,11 +6,9 @@ import com.serhat.security.dto.response.PriceDetails;
 import com.serhat.security.entity.*;
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface OrderCreationInterface {
-    Order findOrderById(Long orderId);
     OrderResponse createOrder(HttpServletRequest request, OrderRequest orderRequest);
     PriceDetails calculatePriceDetails(List<ShoppingCard> shoppingCards , User user , OrderRequest orderRequest);
 }

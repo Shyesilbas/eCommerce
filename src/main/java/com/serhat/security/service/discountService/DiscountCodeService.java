@@ -13,6 +13,7 @@ import com.serhat.security.entity.enums.DiscountRate;
 import com.serhat.security.exception.DiscountCodeNotFoundException;
 import com.serhat.security.interfaces.DiscountInterface;
 import com.serhat.security.interfaces.DiscountValidationInterface;
+import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.interfaces.UserInterface;
 import com.serhat.security.mapper.DiscountMapper;
 import com.serhat.security.repository.DiscountCodeRepository;
@@ -36,7 +37,7 @@ import java.time.LocalDateTime;
 public class DiscountCodeService implements DiscountInterface {
 
     private final DiscountCodeRepository discountCodeRepository;
-    private final UserInterface userInterface;
+    private final TokenInterface tokenInterface;
     private final DiscountMapper discountMapper;
     private final DiscountValidationInterface discountValidationInterface;
 
@@ -44,7 +45,7 @@ public class DiscountCodeService implements DiscountInterface {
     private BigDecimal discountThreshold;
 
     public User getUserFromToken(HttpServletRequest request){
-        return userInterface.getUserFromToken(request);
+        return tokenInterface.getUserFromToken(request);
     }
 
     public DiscountCode generateDiscountCode(HttpServletRequest request) {

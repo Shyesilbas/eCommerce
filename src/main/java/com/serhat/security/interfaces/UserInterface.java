@@ -12,7 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 public interface UserInterface {
 
-    User getUserFromToken(HttpServletRequest request);
     UserResponse userInfo(HttpServletRequest request);
 
     UpdatePhoneResponse updatePhone(HttpServletRequest request, UpdatePhoneRequest updatePhoneRequest);

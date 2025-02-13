@@ -1,9 +1,13 @@
 package com.serhat.security.service.order;
 
 import com.serhat.security.dto.request.OrderRequest;
+import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
+import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.exception.AddressNotBelongToUserException;
+import com.serhat.security.exception.OrderCancellationException;
 import com.serhat.security.interfaces.AddressInterface;
+import com.serhat.security.interfaces.CheckPaymentMethodInterface;
 import com.serhat.security.interfaces.TokenInterface;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class OrderCreationValidation {
+public class OrderCreationValidation implements CheckPaymentMethodInterface {
     private final AddressInterface addressInterface;
     private final TokenInterface tokenInterface;
 
@@ -25,7 +29,5 @@ public class OrderCreationValidation {
         isAddressBelongsToUser(orderRequest.shippingAddressId(), user.getUserId());
         return user;
     }
-
-
 
 }

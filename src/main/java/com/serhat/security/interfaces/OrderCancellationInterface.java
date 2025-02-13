@@ -5,6 +5,7 @@ import com.serhat.security.entity.Order;
 import com.serhat.security.entity.OrderItem;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.User;
+import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.entity.enums.StockStatus;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -29,6 +30,9 @@ public interface OrderCancellationInterface {
             }
         }
     }
+    void checkIsOrderCancellable(Order order , User user);
     OrderCancellationResponse cancelOrder(Long orderId, HttpServletRequest request);
     void finalizeCancellation(Order order, User user);
+    void updateOrderAfterCancellation(Order order);
+    void processRefundPayment(Order order, PaymentMethod paymentMethod);
 }

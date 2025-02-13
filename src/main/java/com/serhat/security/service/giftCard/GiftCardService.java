@@ -10,6 +10,7 @@ import com.serhat.security.entity.enums.GiftAmount;
 import com.serhat.security.exception.GiftCardNotFoundException;
 import com.serhat.security.interfaces.GiftCardInterface;
 import com.serhat.security.interfaces.GiftCardValidationInterface;
+import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.interfaces.UserInterface;
 import com.serhat.security.mapper.GiftCardMapper;
 import com.serhat.security.repository.GiftCardRepository;
@@ -30,13 +31,13 @@ import java.math.BigDecimal;
 @Slf4j
 public class GiftCardService implements GiftCardInterface {
     private final GiftCardRepository repository;
-    private final UserInterface userInterface;
+    private final TokenInterface tokenInterface;
     private final GiftCardMapper giftCardMapper;
     private final TransactionService transactionService;
     private final GiftCardValidationInterface giftCardValidationInterface;
 
     public User getUserFromToken(HttpServletRequest request){
-        return userInterface.getUserFromToken(request);
+        return tokenInterface.getUserFromToken(request);
     }
 
     public void validateGiftCardStatusAndAmount(GiftCard giftCard){

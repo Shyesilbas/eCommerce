@@ -5,6 +5,7 @@ import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.entity.enums.PaymentMethod;
 import lombok.Builder;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +33,6 @@ public record OrderResponse(
         BigDecimal bonusWon,
         String discountMessage,
         boolean isOrderReturnable
-) {
+) implements Serializable {
 }
 

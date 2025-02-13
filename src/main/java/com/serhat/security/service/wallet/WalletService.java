@@ -6,6 +6,7 @@ import com.serhat.security.entity.Transaction;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.Wallet;
 import com.serhat.security.exception.*;
+import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.interfaces.UserInterface;
 import com.serhat.security.interfaces.WalletInterface;
 import com.serhat.security.interfaces.WalletValidationInterface;
@@ -33,7 +34,7 @@ public class WalletService implements WalletInterface {
     private final WalletMapper walletMapper;
     private final TransactionMapper transactionMapper;
     private final TransactionRepository transactionRepository;
-    private final UserInterface userInterface;
+    private final TokenInterface tokenInterface;
     private final WalletValidationInterface walletValidation;
     @Override
     public Wallet getWalletByUser(User user){
@@ -41,7 +42,7 @@ public class WalletService implements WalletInterface {
                 .orElseThrow(()-> new WalletNotFoundException("Wallet not found"));
     }
     public User getUser(HttpServletRequest request){
-       return userInterface.getUserFromToken(request);
+       return tokenInterface.getUserFromToken(request);
     }
     public Wallet getUserAndTheirWallet(HttpServletRequest request) {
         User user = getUser(request);

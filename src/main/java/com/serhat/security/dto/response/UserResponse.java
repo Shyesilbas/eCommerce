@@ -5,6 +5,7 @@ import com.serhat.security.entity.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Builder
@@ -21,5 +22,5 @@ public record UserResponse(
         BigDecimal totalOrderFeePaid,
         BigDecimal totalShippingFeePaid,
         BigDecimal totalSaved
-) {
+) implements Serializable {
 }

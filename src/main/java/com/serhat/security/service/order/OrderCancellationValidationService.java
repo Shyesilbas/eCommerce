@@ -6,6 +6,7 @@ import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.exception.OrderAlreadyCanceledException;
 import com.serhat.security.exception.OrderCancellationException;
 import com.serhat.security.exception.WrongOrderIdException;
+import com.serhat.security.interfaces.CheckPaymentMethodInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class OrderCancellationValidationService {
+public class OrderCancellationValidationService implements CheckPaymentMethodInterface {
     public void isItemsReturnable(Order order){
         boolean isItemsReturnable = order.getOrderItems().stream()
                 .allMatch(orderItem -> orderItem.getProduct().isReturnable());
@@ -37,9 +38,14 @@ public class OrderCancellationValidationService {
         }
     }
 
+    private void validatePaymentMethod(Order order){
+        checkPaymentMethod(order);
+    }
+
     public void checkIsOrderCancellable(Order order , User user){
         isItemsReturnable(order);
         checkOrderStatus(order);
+        validatePaymentMethod(order);
         checkOrderBelongsToUser(order,user);
     }
 }

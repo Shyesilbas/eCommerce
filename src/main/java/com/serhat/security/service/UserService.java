@@ -8,11 +8,14 @@ import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.interfaces.UserInterface;
+import com.serhat.security.interfaces.UserValidationInterface;
 import com.serhat.security.mapper.UserMapper;
 import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,19 +35,18 @@ public class UserService implements UserInterface {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
-    private final TokenInterface tokenInterface;
     private final TransactionService transactionService;
     private final UserMapper userMapper;
+    private final UserValidationInterface userValidationInterface;
+    private final TokenInterface tokenInterface;
 
-    @Override
     public User getUserFromToken(HttpServletRequest request){
         return tokenInterface.getUserFromToken(request);
     }
 
-
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-        validateUserRegistration(request);
+        userValidationInterface.validateUserRegistration(request);
 
         User user = userMapper.toUser(request);
         saveRawPassword("Register ", user.getUsername(), request.password());
@@ -59,28 +61,8 @@ public class UserService implements UserInterface {
         );
     }
 
-    private void validateUserRegistration(RegisterRequest request) {
-        Optional<User> existingUser = userRepository.findByEmailOrUsernameOrPhone(
-                request.email(),
-                request.username(),
-                request.phone()
-        );
 
-        existingUser.ifPresent(user -> {
-            if (user.getEmail().equals(request.email())) {
-                throw new EmailAlreadyExistException("Email already exists!");
-            }
-            if (user.getUsername().equals(request.username())) {
-                throw new UsernameAlreadyExists("Username already exists!");
-            }
-            if (user.getPhone().equals(request.phone())) {
-                throw new PhoneAlreadyExistsException("Phone number already exists!");
-            }
-        });
-    }
-
-
-   // @CacheEvict(value = "userInfoCache", key = "#servletRequest.userPrincipal.name")
+    @CachePut(value = "userInfoCache", key = "#servletRequest.userPrincipal.name")
     @Transactional
     @Override
     public UpdateMembershipPlan updateMembershipPlan(HttpServletRequest servletRequest, UpdateMembershipRequest request) {
@@ -109,7 +91,7 @@ public class UserService implements UserInterface {
         }
     }
 
-  //  @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
+    @CachePut(value = "userInfoCache", key = "#request.userPrincipal.name")
     @Transactional
     @Override
     public UpdatePhoneResponse updatePhone(HttpServletRequest request, UpdatePhoneRequest updatePhoneRequest) {
@@ -126,7 +108,7 @@ public class UserService implements UserInterface {
         return new UpdatePhoneResponse("Phone updated successfully.", user.getPhone(), LocalDateTime.now());
     }
 
-   // @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
+    @CachePut(value = "userInfoCache", key = "#request.userPrincipal.name")
     @Transactional
     @Override
     public UpdateEmailResponse updateEmail(HttpServletRequest request, UpdateEmailRequest updateEmailRequest) {
@@ -145,6 +127,7 @@ public class UserService implements UserInterface {
 
     @Transactional
     @Override
+    @CachePut(value = "userInfoCache", key = "#request.userPrincipal.name")
     public UpdatePasswordResponse updatePassword(HttpServletRequest request, UpdatePasswordRequest updatePasswordRequest) {
         User user = getUserFromToken(request);
 

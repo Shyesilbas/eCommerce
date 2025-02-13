@@ -111,7 +111,7 @@ OrderMapper {
                 .totalPrice(priceDetails.totalPrice())
                 .status(OrderStatus.APPROVED)
                 .shippingAddressId(orderRequest.shippingAddressId())
-                .paymentMethod(PaymentMethod.E_WALLET)
+                .paymentMethod(orderRequest.paymentMethod())
                 .notes(orderRequest.notes())
                 .updatedAt(LocalDateTime.now())
                 .shippingFee(priceDetails.shippingFee())
