@@ -22,8 +22,8 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: security
     networks:
       - jwt_network
@@ -34,9 +34,9 @@ services:
     environment:
       - SPRING_REDIS_HOST=redis
       - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/security
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=1234
+      - SPRING_DATASOURCE_URL=${DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
     ports:
       - "8080:8080"
     depends_on:
