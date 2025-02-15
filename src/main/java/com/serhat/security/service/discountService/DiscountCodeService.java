@@ -11,12 +11,11 @@ import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.entity.enums.DiscountRate;
 import com.serhat.security.exception.DiscountCodeNotFoundException;
-import com.serhat.security.interfaces.DiscountInterface;
-import com.serhat.security.interfaces.DiscountValidationInterface;
-import com.serhat.security.interfaces.TokenInterface;
-import com.serhat.security.interfaces.UserInterface;
+import com.serhat.security.interfaces.*;
+import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.mapper.DiscountMapper;
 import com.serhat.security.repository.DiscountCodeRepository;
+import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -31,21 +30,26 @@ import java.time.LocalDateTime;
 
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Getter
-public class DiscountCodeService implements DiscountInterface {
+public class DiscountCodeService extends TokenInterfaceImpl implements DiscountInterface {
 
     private final DiscountCodeRepository discountCodeRepository;
-    private final TokenInterface tokenInterface;
     private final DiscountMapper discountMapper;
     private final DiscountValidationInterface discountValidationInterface;
+
+    public DiscountCodeService(JwtUtil jwtUtil, UserRepository userRepository, DiscountCodeRepository discountCodeRepository, DiscountMapper discountMapper, DiscountValidationInterface discountValidationInterface) {
+        super(jwtUtil, userRepository);
+        this.discountCodeRepository = discountCodeRepository;
+        this.discountMapper = discountMapper;
+        this.discountValidationInterface = discountValidationInterface;
+    }
 
     @Value("${discount.code.threshold}")
     private BigDecimal discountThreshold;
 
-    public User getUserFromToken(HttpServletRequest request){
-        return tokenInterface.getUserFromToken(request);
+    public User getUser(HttpServletRequest request){
+        return getUserFromToken(request);
     }
 
     public DiscountCode generateDiscountCode(HttpServletRequest request) {

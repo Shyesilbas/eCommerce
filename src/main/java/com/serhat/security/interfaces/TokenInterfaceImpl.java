@@ -8,18 +8,15 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-@Service
 @RequiredArgsConstructor
-public class TokenInterfaceImpl implements TokenInterface {
-    private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
+public abstract class TokenInterfaceImpl implements TokenInterface {
+    protected final JwtUtil jwtUtil;
+    protected final UserRepository userRepository;
 
     @Override
     public String extractTokenFromRequest(HttpServletRequest request) {
@@ -50,9 +47,10 @@ public class TokenInterfaceImpl implements TokenInterface {
 
     @Override
     public void validateRole(HttpServletRequest request, Role... allowedRoles) {
-            Role userRole = jwtUtil.extractRole(jwtUtil.getTokenFromAuthorizationHeader(request));
-            if (Stream.of(allowedRoles).noneMatch(role -> role == userRole)) {
-                throw new RuntimeException("Unauthorized action. Required role: " + List.of(allowedRoles));
-            }
+        String token = extractTokenFromRequest(request);
+        Role userRole = jwtUtil.extractRole(token);
+        if (Stream.of(allowedRoles).noneMatch(role -> role == userRole)) {
+            throw new RuntimeException("Unauthorized action. Required role: " + List.of(allowedRoles));
         }
     }
+}

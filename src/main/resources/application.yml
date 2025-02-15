@@ -1,18 +1,19 @@
 security:
   jwt:
-    secret-key: ${SECRET_KEY}
-    expiration-time: ${EXPIRATION_TIME}
+    secret-key: "2aa0711d2b653303df3c4132413c5efbc08f67a8ced78e75f179f62195855636a215176dfb97ad9dfb16a15f15245775ba132d1034fcc5299a8ffe3c332d204c1b2ad23727bc6a9abf22e8c543760d5c5e8d33f3d80fa0d46841e47940c8059d7b15a89db7524e10ecc23ba6a4f049b094cb3b38b1088c09d9f3a69f7384f12016938c478fc3116003b404752d9432fc3157678570486279560c159f36283e5bfcfbb52a6f5e971c81755b0bbe4b3b55a911312cc4c8f3fa395c617e4031209a0e3dc9c4f99bfe1224f2ae9adc2c480b39935e3d160cbeb4419f87043ea228ad6b1e0c0a43f9aa2b2e556d05897fe9aeac4d0721cdb6c8ae99e26a9ce24b4710"
+    expiration-time: 99972800000
 
 discount:
   code:
     threshold: 800.00
+
 spring:
   application:
     name: security
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/security
+    username: postgres
+    password: 1234
   jpa:
     hibernate:
       ddl-auto: update
@@ -20,7 +21,7 @@ spring:
     type: redis
   data:
     redis:
-      host: redis
+      host: localhost
       port: 6379
       timeout: 2000ms
 
@@ -30,7 +31,4 @@ management:
     sampling:
       probability: 1.0
   zipkin:
-    base-url: http://zipkin:9411
-
-
-
+    base-url: ${LOCAL_ZIPKIN}
