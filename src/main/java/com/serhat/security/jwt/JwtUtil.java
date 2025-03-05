@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -40,33 +42,51 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(User user, Role role) {
-       // log.info("Generating token for user: {}", user.getUsername());
+
+    public String generateToken(UserDetails userDetails) {
+        log.info("Generating token for user: {}", userDetails.getUsername());
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role.name());
+
+        String role = userDetails.getAuthorities().stream()
+                .findFirst()
+                .map(GrantedAuthority::getAuthority)
+                .orElse("ROLE_USER");
+        claims.put("role", role);
 
         String token = Jwts.builder()
                 .setClaims(claims)
-                .setSubject(user.getUsername())
+                .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
 
-        log.info("Token generated successfully for user: {}", user.getUsername());
+        log.info("Token generated successfully for user: {}", userDetails.getUsername());
         return token;
     }
 
     public String extractUsername(String token) {
-        log.debug("Extracting username from token");
-        return extractClaim(token, Claims::getSubject);
+        try {
+            log.debug("Extracting username from token");
+            return extractClaim(token, Claims::getSubject);
+        } catch (Exception e) {
+            log.error("Error extracting username from token", e);
+            throw new InvalidTokenException("Unable to extract username from token");
+        }
     }
 
     public Role extractRole(String token) {
-        log.debug("Extracting role from token");
-
-        String roleName = extractClaim(token, claims -> claims.get("role", String.class));
-        return Role.valueOf(roleName);
+        try {
+            log.debug("Extracting role from token");
+            String roleName = extractClaim(token, claims -> claims.get("role", String.class));
+            return Role.valueOf(roleName);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid role in token", e);
+            throw new InvalidTokenException("Invalid role in token");
+        } catch (Exception e) {
+            log.error("Error extracting role from token", e);
+            throw new InvalidTokenException("Unable to extract role from token");
+        }
     }
 
     public Date extractExpiration(String token) {
@@ -74,19 +94,32 @@ public class JwtUtil {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public boolean isTokenInvalid(String token) {
+    public boolean isTokenExpired(String token) {
         try {
             final Date expiration = extractExpiration(token);
+            boolean isExpired = expiration.before(new Date());
+            log.debug("Token expiration check - Is Expired: {}", isExpired);
+            return isExpired;
+        } catch (ExpiredJwtException e) {
+            log.debug("Token is already expired");
+            return true;
+        } catch (Exception e) {
+            log.error("Error checking token expiration", e);
+            throw new InvalidTokenException("Error checking token expiration");
+        }
+    }
+    public boolean isTokenInvalid(String token) {
+        try {
+            boolean isExpiredByDate = isTokenExpired(token);
+
             Token storedToken = tokenRepository.findByToken(token)
                     .orElseThrow(() -> new InvalidTokenException("Token not found in database"));
 
-            boolean isExpiredByDate = expiration.before(new Date());
             boolean isExpiredByStatus = storedToken.getTokenStatus() != TokenStatus.ACTIVE;
-
             boolean isInvalid = isExpiredByDate || isExpiredByStatus;
 
-            log.info("Token invalidity check - Is Invalid: {}", isInvalid);
-            log.info("Invalidity details - By Date: {}, By Status: {}", isExpiredByDate, isExpiredByStatus);
+            log.debug("Token invalidity check - Is Invalid: {}", isInvalid);
+            log.debug("Invalidity details - By Date: {}, By Status: {}", isExpiredByDate, isExpiredByStatus);
 
             return isInvalid;
         } catch (Exception e) {
@@ -95,23 +128,40 @@ public class JwtUtil {
         }
     }
 
-    public boolean validateToken(String token, User user) {
-        log.info("Validating token for user: {}", user.getUsername());
+    public boolean validateToken(String token, UserDetails userDetails) {
+        log.info("Validating token for user: {}", userDetails.getUsername());
         try {
             final String username = extractUsername(token);
-            Token storedToken = tokenRepository.findByToken(token)
+
+            // Verify token exists in database
+            tokenRepository.findByToken(token)
                     .orElseThrow(() -> new InvalidTokenException("Token not found in database"));
 
-            boolean isValid = username.equals(user.getUsername()) && !isTokenInvalid(token);
-
-            log.info("Token validation result: {}", isValid);
-
+            // Check username matches and token is valid
+            boolean isValid = username.equals(userDetails.getUsername()) && !isTokenInvalid(token);
+            log.debug("Token validation result: {}", isValid);
             return isValid;
+        } catch (ExpiredJwtException e) {
+            log.warn("Token expired for user: {}", userDetails.getUsername());
+            throw new InvalidTokenException("Token has expired");
+        } catch (SignatureException e) {
+            log.error("Invalid JWT signature");
+            throw new InvalidTokenException("Invalid JWT signature");
+        } catch (MalformedJwtException e) {
+            log.error("Invalid JWT token");
+            throw new InvalidTokenException("Invalid JWT token");
+        } catch (UnsupportedJwtException e) {
+            log.error("Unsupported JWT token");
+            throw new InvalidTokenException("Unsupported JWT token");
+        } catch (IllegalArgumentException e) {
+            log.error("JWT claims string is empty");
+            throw new InvalidTokenException("JWT claims string is empty");
         } catch (Exception e) {
             log.error("Error validating token", e);
-            throw new InvalidTokenException("Token validation failed");
+            throw new InvalidTokenException("Token validation failed: " + e.getMessage());
         }
     }
+
 
     public String getTokenFromAuthorizationHeader(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
@@ -122,16 +172,21 @@ public class JwtUtil {
     }
 
     public void invalidateToken(String jwtToken) {
-        Token token = tokenRepository.findByToken(jwtToken)
-                .orElseThrow(() -> new TokenNotFoundException("Token not found"));
+        try {
+            Token token = tokenRepository.findByToken(jwtToken)
+                    .orElseThrow(() -> new TokenNotFoundException("Token not found"));
 
-        token.setTokenStatus(TokenStatus.LOGGED_OUT);
-        token.setExpired_at(new Date());
-        tokenRepository.save(token);
-        log.debug("Token invalidated: {}", jwtToken);
+            token.setTokenStatus(TokenStatus.LOGGED_OUT);
+            token.setExpired_at(new Date());
+            tokenRepository.save(token);
+            log.info("Token invalidated: {}", jwtToken.substring(0, 10) + "...");
+        } catch (Exception e) {
+            log.error("Error invalidating token", e);
+            throw new InvalidTokenException("Error invalidating token: " + e.getMessage());
+        }
     }
 
-    public void saveUserToken(User user, String token) {
+    public void saveUserToken(UserDetails user, String token) {
         Token newToken = Token.builder()
                 .username(user.getUsername())
                 .token(token)

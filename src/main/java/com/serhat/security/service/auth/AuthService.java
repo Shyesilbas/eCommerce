@@ -12,6 +12,7 @@ import com.serhat.security.service.auth.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,22 +23,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenBlacklistService blacklistService;
     private final AuthMapper authMapper;
+    private final UserDetailsServiceImpl userDetailsService;
     @Transactional
     public AuthResponse login(LoginRequest request) {
         log.info("Attempting login for user: {}", request.username());
 
-        User user = findUserByUsername(request.username());
+        UserDetails user = userDetailsService.loadUserByUsername(request.username());
         validatePassword(request.password(), user.getPassword());
 
-        String token = jwtUtil.generateToken(user, user.getRole());
-        jwtUtil.saveUserToken(user, token);
+        String accessToken = jwtUtil.generateToken(user);
+        jwtUtil.saveUserToken(user,accessToken);
 
         log.info("Login successful for user: {}", request.username());
-        return authMapper.createAuthResponse(token, user.getUsername(), user.getRole(), "Login Successful!");
+        return authMapper.createAuthResponse(accessToken,
+                user.getUsername(),
+                Role.valueOf(user.getAuthorities().iterator().next().getAuthority()),
+                "Login Successful!");
     }
 
     @Transactional
@@ -48,7 +52,6 @@ public class AuthService {
         jwtUtil.invalidateToken(jwtToken);
         blacklistService.blacklistToken(jwtToken);
 
-        request.getSession().invalidate();
 
         String username = jwtUtil.extractUsername(jwtToken);
         Role role = jwtUtil.extractRole(jwtToken);
@@ -56,11 +59,6 @@ public class AuthService {
         log.info("Session Invalidated After logout request from: {}", username);
 
         return authMapper.createAuthResponse(jwtToken, username, role, "Logout successful");
-    }
-
-    private User findUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
     }
 
     private void validatePassword(String rawPassword, String encodedPassword) {
