@@ -2,7 +2,7 @@ package com.serhat.security.controller;
 
 import com.serhat.security.dto.request.WalletRequest;
 import com.serhat.security.dto.response.*;
-import com.serhat.security.service.wallet.WalletService;
+import com.serhat.security.interfaces.WalletService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

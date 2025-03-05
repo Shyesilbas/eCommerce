@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -34,6 +35,11 @@ public class Token {
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date expired_at;
+
+    @PrePersist
+    private void initToken(){
+        this.createdAt=Date.from(Instant.now());
+    }
 
 
 }

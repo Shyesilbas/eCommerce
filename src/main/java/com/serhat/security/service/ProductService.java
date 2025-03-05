@@ -19,7 +19,6 @@ import com.serhat.security.exception.InvalidQuantityException;
 import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.interfaces.ProductInterface;
 import com.serhat.security.interfaces.TokenInterface;
-import com.serhat.security.jwt.JwtUtil;
 import com.serhat.security.mapper.ProductMapper;
 import com.serhat.security.repository.OrderRepository;
 import com.serhat.security.repository.ProductRepository;

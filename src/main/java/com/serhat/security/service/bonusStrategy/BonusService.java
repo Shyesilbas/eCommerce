@@ -1,4 +1,4 @@
-package com.serhat.security.service;
+package com.serhat.security.service.bonusStrategy;
 
 import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.AddBonusResponse;

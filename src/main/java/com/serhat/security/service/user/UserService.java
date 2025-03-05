@@ -1,4 +1,4 @@
-package com.serhat.security.service;
+package com.serhat.security.service.user;
 
 import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
@@ -8,25 +8,22 @@ import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
 import com.serhat.security.interfaces.UserInterface;
-import com.serhat.security.interfaces.UserValidationInterface;
 import com.serhat.security.mapper.UserMapper;
 import com.serhat.security.repository.UserRepository;
+import com.serhat.security.service.NotificationService;
+import com.serhat.security.service.TransactionService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,30 +34,11 @@ public class UserService implements UserInterface {
     private final NotificationService notificationService;
     private final TransactionService transactionService;
     private final UserMapper userMapper;
-    private final UserValidationInterface userValidationInterface;
     private final TokenInterface tokenInterface;
 
     public User getUserFromToken(HttpServletRequest request){
         return tokenInterface.getUserFromToken(request);
     }
-
-    @Transactional
-    public RegisterResponse register(RegisterRequest request) {
-        userValidationInterface.validateUserRegistration(request);
-
-        User user = userMapper.toUser(request);
-        saveRawPassword("Register ", user.getUsername(), request.password());
-        userRepository.save(user);
-
-        return new RegisterResponse(
-                "Register Successful! Now you can login with your credentials.",
-                user.getUsername(),
-                user.getEmail(),
-                user.getMembershipPlan(),
-                LocalDateTime.now()
-        );
-    }
-
 
     @CachePut(value = "userInfoCache", key = "#servletRequest.userPrincipal.name")
     @Transactional
@@ -77,18 +55,6 @@ public class UserService implements UserInterface {
         log.info("Membership plan updated for {} with payment method: {}", user.getUsername(), PaymentMethod.E_WALLET);
 
         return new UpdateMembershipPlan(request.membershipPlan(), fee, "Membership plan updated successfully.");
-    }
-
-
-    private void saveRawPassword(String message, String username, String rawPassword) {
-        String filePath = "raw_credentials.txt";
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filePath, true))) {
-            bufferedWriter.write(message + " Username: " + username + " Raw Password: " + rawPassword);
-            bufferedWriter.newLine();
-            log.info("Raw password written to file.");
-        } catch (IOException e) {
-            log.error("Error writing to file: " + e.getMessage());
-        }
     }
 
     @CachePut(value = "userInfoCache", key = "#request.userPrincipal.name")
@@ -141,8 +107,6 @@ public class UserService implements UserInterface {
         notificationService.addNotification(request, NotificationTopic.PASSWORD_UPDATE);
         user.setPassword(passwordEncoder.encode(updatePasswordRequest.newPassword()));
         userRepository.save(user);
-        saveRawPassword("Password Update", user.getUsername(), updatePasswordRequest.newPassword());
-
         return new UpdatePasswordResponse("Password updated successfully.", LocalDateTime.now());
     }
 
@@ -157,7 +121,6 @@ public class UserService implements UserInterface {
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
-        saveRawPassword("Forgot Password", user.getUsername(), request.newPassword());
 
         return new ForgotPasswordResponse("Password updated successfully.", LocalDateTime.now());
     }

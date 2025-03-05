@@ -12,14 +12,14 @@ import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.entity.enums.DiscountRate;
 import com.serhat.security.exception.DiscountCodeNotFoundException;
 import com.serhat.security.interfaces.*;
-import com.serhat.security.jwt.JwtUtil;
+import com.serhat.security.jwt.JwtOperations;
 import com.serhat.security.mapper.DiscountMapper;
 import com.serhat.security.repository.DiscountCodeRepository;
 import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,8 +38,8 @@ public class DiscountCodeService extends TokenInterfaceImpl implements DiscountI
     private final DiscountMapper discountMapper;
     private final DiscountValidationInterface discountValidationInterface;
 
-    public DiscountCodeService(JwtUtil jwtUtil, UserRepository userRepository, DiscountCodeRepository discountCodeRepository, DiscountMapper discountMapper, DiscountValidationInterface discountValidationInterface) {
-        super(jwtUtil, userRepository);
+    public DiscountCodeService(@Qualifier("jwtValidator") JwtOperations jwtOperations, UserRepository userRepository, DiscountCodeRepository discountCodeRepository, DiscountMapper discountMapper, DiscountValidationInterface discountValidationInterface) {
+        super(jwtOperations, userRepository);
         this.discountCodeRepository = discountCodeRepository;
         this.discountMapper = discountMapper;
         this.discountValidationInterface = discountValidationInterface;

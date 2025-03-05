@@ -4,8 +4,8 @@ import com.serhat.security.dto.request.LoginRequest;
 import com.serhat.security.dto.request.RegisterRequest;
 import com.serhat.security.dto.response.AuthResponse;
 import com.serhat.security.dto.response.RegisterResponse;
-import com.serhat.security.service.auth.AuthService;
-import com.serhat.security.service.UserService;
+import com.serhat.security.interfaces.AuthService;
+import com.serhat.security.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class AuthController {
     private final AuthService authService;
-    private final UserService userService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
@@ -29,14 +28,14 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<AuthResponse> logout(HttpServletRequest request) {
+    public ResponseEntity<String> logout(HttpServletRequest request) {
         return ResponseEntity.ok(authService.logout(request));
     }
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@RequestBody @Valid RegisterRequest request){
         log.debug("Received Register Request ");
-        return ResponseEntity.ok(userService.register(request));
+        return ResponseEntity.ok(authService.register(request));
     }
 
     @PreAuthorize("hasRole('CUSTOMER')")

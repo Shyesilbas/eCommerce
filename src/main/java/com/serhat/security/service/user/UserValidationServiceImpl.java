@@ -5,7 +5,7 @@ import com.serhat.security.entity.User;
 import com.serhat.security.exception.EmailAlreadyExistException;
 import com.serhat.security.exception.PhoneAlreadyExistsException;
 import com.serhat.security.exception.UsernameAlreadyExists;
-import com.serhat.security.interfaces.UserValidationInterface;
+import com.serhat.security.interfaces.UserValidationService;
 import com.serhat.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class ValidateUserRegistration implements UserValidationInterface {
+public class UserValidationServiceImpl implements UserValidationService {
     private final UserRepository userRepository;
 
     @Override

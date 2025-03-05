@@ -2,7 +2,7 @@ package com.serhat.security.interfaces;
 
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.Role;
-import com.serhat.security.jwt.JwtUtil;
+import com.serhat.security.jwt.JwtOperations;
 import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 public abstract class TokenInterfaceImpl implements TokenInterface {
-    protected final JwtUtil jwtUtil;
+    protected final JwtOperations jwtOperations;
     protected final UserRepository userRepository;
 
     @Override
@@ -40,7 +40,7 @@ public abstract class TokenInterfaceImpl implements TokenInterface {
             throw new RuntimeException("Token not found in request");
         }
 
-        String username = jwtUtil.extractUsername(token);
+        String username = jwtOperations.extractUsername(token);
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
     }
@@ -48,7 +48,7 @@ public abstract class TokenInterfaceImpl implements TokenInterface {
     @Override
     public void validateRole(HttpServletRequest request, Role... allowedRoles) {
         String token = extractTokenFromRequest(request);
-        Role userRole = jwtUtil.extractRole(token);
+        Role userRole = Role.valueOf(jwtOperations.extractRole(token));
         if (Stream.of(allowedRoles).noneMatch(role -> role == userRole)) {
             throw new RuntimeException("Unauthorized action. Required role: " + List.of(allowedRoles));
         }

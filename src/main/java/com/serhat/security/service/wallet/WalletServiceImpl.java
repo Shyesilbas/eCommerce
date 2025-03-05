@@ -7,8 +7,7 @@ import com.serhat.security.entity.User;
 import com.serhat.security.entity.Wallet;
 import com.serhat.security.exception.*;
 import com.serhat.security.interfaces.TokenInterface;
-import com.serhat.security.interfaces.UserInterface;
-import com.serhat.security.interfaces.WalletInterface;
+import com.serhat.security.interfaces.WalletService;
 import com.serhat.security.interfaces.WalletValidationInterface;
 import com.serhat.security.mapper.TransactionMapper;
 import com.serhat.security.mapper.WalletMapper;
@@ -28,7 +27,7 @@ import java.math.BigDecimal;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class WalletService implements WalletInterface {
+public class WalletServiceImpl implements WalletService {
     private final WalletRepository walletRepository;
     private final TransactionService transactionService;
     private final WalletMapper walletMapper;
@@ -49,6 +48,7 @@ public class WalletService implements WalletInterface {
         return getWalletByUser(user);
     }
 
+    @Override
     @Transactional
     public WalletCreatedResponse createWallet(HttpServletRequest request, WalletRequest walletRequest) {
         User user = getUser(request);
@@ -59,6 +59,7 @@ public class WalletService implements WalletInterface {
          return walletMapper.toWalletCreatedResponse(wallet);
     }
 
+    @Override
     @Transactional
     public WalletLimitUpdateResponse limitUpdate(HttpServletRequest servletRequest , BigDecimal newLimit){
         Wallet wallet = getUserAndTheirWallet(servletRequest);
@@ -68,6 +69,7 @@ public class WalletService implements WalletInterface {
         return walletMapper.toWalletLimitUpdateResponse(wallet,newLimit);
     }
 
+    @Override
     @Transactional
     public DepositSuccessfulResponse depositMoney(HttpServletRequest request, BigDecimal amount) {
         Wallet wallet = getUserAndTheirWallet(request);
@@ -83,6 +85,7 @@ public class WalletService implements WalletInterface {
         return walletMapper.toDepositSuccessfulResponse(amount,wallet);
     }
 
+    @Override
     public Page<TransactionResponse> getTransactionHistory(HttpServletRequest request, Pageable pageable) {
         Wallet wallet = getUserAndTheirWallet(request);
         Page<Transaction> transactionPage = transactionRepository.findByWallet(wallet, pageable);

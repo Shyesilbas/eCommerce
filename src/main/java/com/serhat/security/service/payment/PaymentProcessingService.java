@@ -3,7 +3,7 @@ package com.serhat.security.service.payment;
 import com.serhat.security.entity.Order;
 import com.serhat.security.entity.Transaction;
 import com.serhat.security.entity.enums.PaymentMethod;
-import com.serhat.security.interfaces.WalletInterface;
+import com.serhat.security.interfaces.WalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,7 +16,7 @@ import java.util.List;
 public class PaymentProcessingService {
 
     private final PaymentFactory paymentFactory;
-    private final WalletInterface walletInterface;
+    private final WalletService walletService;
 
     public void processPayment(Order order, PaymentMethod paymentMethod) {
         PaymentService<?> paymentService = paymentFactory.getPaymentService(paymentMethod);
@@ -25,7 +25,7 @@ public class PaymentProcessingService {
         }
 
         if (paymentService instanceof EWalletPaymentService eWalletService) {
-            walletInterface.getWalletByUser(order.getUser());
+            walletService.getWalletByUser(order.getUser());
             List<Transaction> transactions = eWalletService.processPayment(order);
             order.setTransactions(transactions);
         } else if (paymentService instanceof OnlinePaymentService onlinePaymentService) {

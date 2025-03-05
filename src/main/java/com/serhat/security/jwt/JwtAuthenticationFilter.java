@@ -1,7 +1,6 @@
 package com.serhat.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.serhat.security.entity.User;
 import com.serhat.security.exception.InvalidTokenException;
 import com.serhat.security.service.auth.TokenBlacklistService;
 import com.serhat.security.service.auth.UserDetailsServiceImpl;
@@ -31,7 +30,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtUtil jwtUtil;
+    private final JwtValidator jwtValidator; // Explicitly use JwtValidator
     private final UserDetailsServiceImpl userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -61,14 +60,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String requestId = request.getHeader("X-Request-ID");
             if (requestId == null) {
-                requestId = java.util.UUID.randomUUID().toString();
+                requestId = UUID.randomUUID().toString();
             }
             org.slf4j.MDC.put("requestId", requestId);
             response.setHeader("X-Request-ID", requestId);
 
             log.debug("Processing request: {} {}", request.getMethod(), request.getRequestURI());
 
-            String jwt = jwtUtil.getTokenFromAuthorizationHeader(request);
+            String jwt = jwtValidator.getTokenFromAuthorizationHeader(request);
             if (jwt == null) {
                 Cookie[] cookies = request.getCookies();
                 if (cookies != null) {
@@ -115,7 +114,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt
     ) throws IOException, ServletException {
         try {
-            String username = jwtUtil.extractUsername(jwt);
+            String username = jwtValidator.extractUsername(jwt);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 log.debug("Processing token for username: {}", username);
@@ -129,7 +128,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                if (!jwtUtil.validateToken(jwt, userDetails)) {
+                if (!jwtValidator.validateToken(jwt, userDetails)) {
                     log.warn("Invalid or expired token for user: {}", username);
                     sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED,
                             "Invalid or expired token. Please log in again.");
@@ -157,7 +156,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void setAuthentication(HttpServletRequest request, UserDetails userDetails, String jwt) {
         try {
-            String role = jwtUtil.extractRole(jwt).name();
+            String role = jwtValidator.extractRole(jwt);
             log.debug("Valid token found for user: {} with role from token: {}",
                     userDetails.getUsername(), role);
             SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);

@@ -1,4 +1,4 @@
-package com.serhat.security.service;
+package com.serhat.security.service.user;
 
 import com.serhat.security.dto.object.PageDTO;
 import com.serhat.security.dto.request.AddAddressRequest;
