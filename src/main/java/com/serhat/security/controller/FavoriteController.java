@@ -2,7 +2,6 @@ package com.serhat.security.controller;
 
 import com.serhat.security.dto.object.FavoriteProductDto;
 import com.serhat.security.service.favorites.FavoritesService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -20,22 +19,22 @@ public class FavoriteController {
     private final FavoritesService favoritesService;
 
     @GetMapping("/get-favorites")
-    public ResponseEntity<Page<FavoriteProductDto>> getFavoritesByUser(HttpServletRequest request , Pageable pageable) {
-        Page<FavoriteProductDto> favorites = favoritesService.getFavoritesByUser(request,pageable);
+    public ResponseEntity<Page<FavoriteProductDto>> getFavoritesByUser(Pageable pageable) {
+        Page<FavoriteProductDto> favorites = favoritesService.getFavoritesByUser(pageable);
         return ResponseEntity.ok(favorites);
     }
 
     @PostMapping("/add-favorite")
-    public ResponseEntity<String> addFavorite(HttpServletRequest request, @RequestBody Map<String, Long> requestBody) {
+    public ResponseEntity<String> addFavorite(@RequestBody Map<String, Long> requestBody) {
         Long productId = requestBody.get("productId");
-        favoritesService.addFavorite(request, productId);
+        favoritesService.addFavorite(productId);
         return ResponseEntity.ok("Product added to favorites successfully");
     }
 
     @DeleteMapping("/remove-favorite")
-    public ResponseEntity<?> removeFavorite(HttpServletRequest request, @RequestParam Long productId) {
+    public ResponseEntity<?> removeFavorite(@RequestParam Long productId) {
         try {
-            favoritesService.removeFavorite(request, productId);
+            favoritesService.removeFavorite(productId);
             return ResponseEntity.ok("Product removed from favorites successfully");
         } catch (Exception e) {
             log.error("Error removing favorite", e);

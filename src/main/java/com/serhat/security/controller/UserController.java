@@ -6,7 +6,6 @@ import com.serhat.security.dto.request.AddBonusRequest;
 import com.serhat.security.service.bonusStrategy.BonusService;
 import com.serhat.security.service.auth.password.PasswordService;
 import com.serhat.security.service.user.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,14 +25,14 @@ public class UserController {
     private final BonusService bonusService;
 
     @GetMapping("/myInfo")
-    public ResponseEntity<UserResponse> getUserInfo(HttpServletRequest request){
-        UserResponse userResponse = userService.userInfo(request);
+    public ResponseEntity<UserResponse> getUserInfo(){
+        UserResponse userResponse = userService.userInfo();
         return ResponseEntity.ok(userResponse);
     }
 
     @GetMapping("/bonusInfo")
-    public ResponseEntity<BonusPointInformation> bonusPointInfo(HttpServletRequest request){
-        return ResponseEntity.ok(bonusService.bonusPointInformation(request));
+    public ResponseEntity<BonusPointInformation> bonusPointInfo(){
+        return ResponseEntity.ok(bonusService.bonusPointInformation());
     }
 
     @GetMapping("redisTest")
@@ -44,11 +43,10 @@ public class UserController {
 
     @PostMapping("/update-password")
     public ResponseEntity<UpdatePasswordResponse> updatePassword(
-            HttpServletRequest servletRequest,
             @RequestBody UpdatePasswordRequest request) {
 
         try {
-            UpdatePasswordResponse updatePasswordResponse = passwordService.updatePassword(servletRequest,  request);
+            UpdatePasswordResponse updatePasswordResponse = passwordService.updatePassword(request);
             return ResponseEntity.ok(updatePasswordResponse);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -70,12 +68,11 @@ public class UserController {
     }
 
     @PostMapping("/update-Email")
-    public ResponseEntity<UpdateEmailResponse> updatePassword(
-            HttpServletRequest servletRequest,
+    public ResponseEntity<UpdateEmailResponse> updateEmail(
             @RequestBody UpdateEmailRequest request) {
 
         try {
-            UpdateEmailResponse updateEmailResponse = userService.updateEmail(servletRequest,  request);
+            UpdateEmailResponse updateEmailResponse = userService.updateEmail(request);
             return ResponseEntity.ok(updateEmailResponse);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -85,20 +82,18 @@ public class UserController {
     }
 
     @PutMapping("/update-phone")
-    public ResponseEntity<UpdatePhoneResponse> updatePhone(@Valid @RequestBody UpdatePhoneRequest phoneRequest ,
-                                                           HttpServletRequest servletRequest ){
-        return ResponseEntity.ok(userService.updatePhone(servletRequest,phoneRequest));
+    public ResponseEntity<UpdatePhoneResponse> updatePhone(@Valid @RequestBody UpdatePhoneRequest phoneRequest){
+        return ResponseEntity.ok(userService.updatePhone(phoneRequest));
     }
 
     @PutMapping("/update-membership")
-    public ResponseEntity<UpdateMembershipPlan> updateMembership(@RequestBody UpdateMembershipRequest request,
-                                                           HttpServletRequest servletRequest ){
-        return ResponseEntity.ok(userService.updateMembershipPlan(servletRequest,request));
+    public ResponseEntity<UpdateMembershipPlan> updateMembership(@RequestBody UpdateMembershipRequest request){
+        return ResponseEntity.ok(userService.updateMembershipPlan(request));
     }
 
     @PostMapping("/add-bonus")
-    public ResponseEntity<AddBonusResponse> addAddress(@RequestBody AddBonusRequest addBonusRequest  , HttpServletRequest request){
-        return ResponseEntity.ok(bonusService.addBonus(request, addBonusRequest));
+    public ResponseEntity<AddBonusResponse> addAddress(@RequestBody AddBonusRequest addBonusRequest){
+        return ResponseEntity.ok(bonusService.addBonus(addBonusRequest));
     }
 
 }

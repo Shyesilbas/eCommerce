@@ -3,7 +3,6 @@ package com.serhat.security.controller;
 import com.serhat.security.dto.request.WalletRequest;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.service.wallet.WalletService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,34 +20,31 @@ public class WalletController {
     private final WalletService walletService;
 
     @PostMapping("/create")
-    public ResponseEntity<WalletCreatedResponse> createWallet(HttpServletRequest request, @RequestBody WalletRequest walletRequest) {
-        WalletCreatedResponse response = walletService.createWallet(request, walletRequest);
+    public ResponseEntity<WalletCreatedResponse> createWallet(@RequestBody WalletRequest walletRequest) {
+        WalletCreatedResponse response = walletService.createWallet(walletRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/deposit")
-    public ResponseEntity<DepositSuccessfulResponse> depositMoney(HttpServletRequest request, @RequestParam BigDecimal amount) {
-        DepositSuccessfulResponse response = walletService.depositMoney(request, amount);
+    public ResponseEntity<DepositSuccessfulResponse> depositMoney(@RequestParam BigDecimal amount) {
+        DepositSuccessfulResponse response = walletService.depositMoney(amount);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PutMapping("/update-limit")
-    public ResponseEntity<WalletLimitUpdateResponse> walletLimitUpdate(HttpServletRequest request , @RequestParam BigDecimal newLimit){
-        return ResponseEntity.ok(walletService.limitUpdate(request, newLimit));
+    public ResponseEntity<WalletLimitUpdateResponse> walletLimitUpdate(@RequestParam BigDecimal newLimit){
+        return ResponseEntity.ok(walletService.limitUpdate(newLimit));
     }
 
     @GetMapping("/info")
-    public ResponseEntity<WalletInfoResponse> getWalletInfo(HttpServletRequest request) {
-        WalletInfoResponse walletInfo = walletService.walletInfo(request);
+    public ResponseEntity<WalletInfoResponse> getWalletInfo() {
+        WalletInfoResponse walletInfo = walletService.walletInfo();
         return ResponseEntity.ok(walletInfo);
     }
 
     @GetMapping("/transactions")
-    public ResponseEntity<Page<TransactionResponse>> getTransactionHistory(
-            HttpServletRequest request,
-             Pageable pageable) {
-
-        Page<TransactionResponse> transactions = walletService.getTransactionHistory(request, pageable);
+    public ResponseEntity<Page<TransactionResponse>> getTransactionHistory(Pageable pageable) {
+        Page<TransactionResponse> transactions = walletService.getTransactionHistory(pageable);
         return ResponseEntity.ok(transactions);
     }
 

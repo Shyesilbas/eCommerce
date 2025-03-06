@@ -8,11 +8,10 @@ import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.entity.enums.GiftAmount;
 import com.serhat.security.exception.GiftCardNotFoundException;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.GiftCardMapper;
 import com.serhat.security.repository.GiftCardRepository;
 import com.serhat.security.service.payment.TransactionService;
-import jakarta.servlet.http.HttpServletRequest;
+import com.serhat.security.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,14 +27,11 @@ import java.math.BigDecimal;
 @Slf4j
 public class GiftCardServiceImpl implements GiftCardService {
     private final GiftCardRepository repository;
-    private final TokenInterface tokenInterface;
+    private final UserService userService;
     private final GiftCardMapper giftCardMapper;
     private final TransactionService transactionService;
     private final GiftCardValidationService giftCardValidationService;
 
-    public User getUserFromToken(HttpServletRequest request){
-        return tokenInterface.getUserFromToken(request);
-    }
 
     public void validateGiftCardStatusAndAmount(GiftCard giftCard){
         giftCardValidationService.validateGiftCardStatusAndAmount(giftCard);
@@ -74,8 +70,8 @@ public class GiftCardServiceImpl implements GiftCardService {
 
     @Override
     @Transactional
-    public GiftCardDto generateGiftCard(HttpServletRequest request, GiftAmount requestedAmount) {
-        User user = getUserFromToken(request);
+    public GiftCardDto generateGiftCard(GiftAmount requestedAmount) {
+        User user = userService.getAuthenticatedUser();
         GiftCard giftCard = giftCardMapper.toGiftCard(user, requestedAmount);
         createGiftCardTransaction(user,requestedAmount); // wallet existence and balance update will be handled
         repository.save(giftCard);
@@ -84,8 +80,8 @@ public class GiftCardServiceImpl implements GiftCardService {
 
 
     @Override
-    public Page<GiftCardResponse> getGiftCardsByStatus(HttpServletRequest request, CouponStatus status, Pageable pageable) {
-        User user = getUserFromToken(request);
+    public Page<GiftCardResponse> getGiftCardsByStatus(CouponStatus status, Pageable pageable) {
+        User user = userService.getAuthenticatedUser();
         Page<GiftCard> giftCards = repository.findByUserAndStatus(user, status, pageable);
 
         if (giftCards.isEmpty()) {

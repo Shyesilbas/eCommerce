@@ -6,7 +6,6 @@ import com.serhat.security.dto.response.OrderResponse;
 import com.serhat.security.service.order.cancellation.OrderCancellationService;
 import com.serhat.security.service.order.creation.OrderCreationService;
 import com.serhat.security.service.order.details.OrderDetailsService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,23 +22,23 @@ public class OrderController {
     private final OrderDetailsService orderDetailsService;
 
     @PostMapping("/placeOrder")
-    public ResponseEntity<OrderResponse> placeOrder(@RequestBody OrderRequest orderRequest , HttpServletRequest request){
-        return ResponseEntity.ok(orderCreationService.createOrder(request, orderRequest));
+    public ResponseEntity<OrderResponse> placeOrder(@RequestBody OrderRequest orderRequest){
+        return ResponseEntity.ok(orderCreationService.createOrder(orderRequest));
     }
 
     @GetMapping("/list-order")
-    public ResponseEntity<Page<OrderResponse>>getOrdersByUser(HttpServletRequest request, Pageable pageable) {
-        return ResponseEntity.ok(orderDetailsService.getOrdersByUser(request, pageable));
+    public ResponseEntity<Page<OrderResponse>>getOrdersByUser( Pageable pageable) {
+        return ResponseEntity.ok(orderDetailsService.getOrdersByUser( pageable));
     }
 
     @GetMapping("/order-detail")
-    public ResponseEntity<OrderResponse> orderDetail(@RequestParam Long orderId,HttpServletRequest request){
-        return ResponseEntity.ok(orderDetailsService.getOrderDetails(orderId,request));
+    public ResponseEntity<OrderResponse> orderDetail(@RequestParam Long orderId){
+        return ResponseEntity.ok(orderDetailsService.getOrderDetails(orderId));
     }
 
     @PostMapping("/cancel-order")
-    public ResponseEntity<OrderCancellationResponse> cancelOrder(HttpServletRequest request , @RequestParam Long orderId){
-        return ResponseEntity.ok(orderCancellationService.cancelOrder(orderId, request));
+    public ResponseEntity<OrderCancellationResponse> cancelOrder(@RequestParam Long orderId){
+        return ResponseEntity.ok(orderCancellationService.cancelOrder(orderId));
     }
 
 }

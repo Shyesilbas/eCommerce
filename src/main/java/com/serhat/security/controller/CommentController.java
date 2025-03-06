@@ -5,7 +5,6 @@ import com.serhat.security.dto.response.AverageBrandRatingResponse;
 import com.serhat.security.dto.response.AverageRatingResponse;
 import com.serhat.security.dto.response.CommentResponse;
 import com.serhat.security.service.comment.CommentService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +18,8 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping("/post-comment")
-    public ResponseEntity<CommentResponse> postComment(@RequestBody CommentRequest commentRequest , HttpServletRequest request){
-        return ResponseEntity.ok(commentService.createComment(request, commentRequest));
+    public ResponseEntity<CommentResponse> postComment(@RequestBody CommentRequest commentRequest){
+        return ResponseEntity.ok(commentService.createComment(commentRequest));
     }
 
     @GetMapping("/comments-by-product")
@@ -29,8 +28,8 @@ public class CommentController {
     }
 
     @GetMapping("/comments-by-user")
-    public ResponseEntity<List<CommentResponse>> commentsMadeByUser(HttpServletRequest request){
-        return ResponseEntity.ok(commentService.getCommentsByUser(request));
+    public ResponseEntity<List<CommentResponse>> commentsMadeByUser(){
+        return ResponseEntity.ok(commentService.getCommentsByUser());
     }
 
     @GetMapping("/products/average-rating")
@@ -44,8 +43,8 @@ public class CommentController {
     }
 
     @DeleteMapping("/delete-comment")
-    public void deleteComment(@RequestParam Long commentId , HttpServletRequest request){
-        commentService.deleteComment(commentId, request);
+    public void deleteComment(@RequestParam Long commentId ){
+        commentService.deleteComment(commentId);
     }
 
 }

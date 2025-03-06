@@ -11,10 +11,9 @@ import com.serhat.security.entity.Address;
 import com.serhat.security.entity.User;
 import com.serhat.security.exception.AddressNotFoundException;
 import com.serhat.security.exception.UnauthorizedAccessException;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.AddressMapper;
 import com.serhat.security.repository.AddressRepository;
-import jakarta.servlet.http.HttpServletRequest;
+import com.serhat.security.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -32,9 +31,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class AddressServiceImpl implements AddressService {
-    private final TokenInterface tokenInterface;
     private final AddressRepository addressRepository;
     private final AddressMapper addressMapper;
+    private final UserService userService;
 
     @Override
     public boolean isAddressBelongsToUser(Long addressId, Long userId) {
@@ -43,8 +42,8 @@ public class AddressServiceImpl implements AddressService {
 
     // @Cacheable(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + #page + ':size' + #size", unless = "#result == null")
     @Override
-    public PageDTO<AddressResponse> addressInfo(HttpServletRequest request, int page, int size) {
-        User user = tokenInterface.getUserFromToken(request);
+    public PageDTO<AddressResponse> addressInfo(int page, int size) {
+        User user = userService.getAuthenticatedUser();
         Pageable pageable = PageRequest.of(page, size);
         Page<Address> addresses = addressRepository.findByUser_Username(user.getUsername(), pageable);
 
@@ -61,9 +60,9 @@ public class AddressServiceImpl implements AddressService {
 
     @Transactional
     @Override
-    // @CacheEvict(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + '0' + ':size' + '10'")
-    public UpdateAddressResponse updateAddress(Long addressId, HttpServletRequest request, UpdateAddressRequest updateAddressRequest) {
-        User user = tokenInterface.getUserFromToken(request);
+    //@CacheEvict(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + '0' + ':size' + '10'")
+    public UpdateAddressResponse updateAddress(Long addressId, UpdateAddressRequest updateAddressRequest) {
+        User user = userService.getAuthenticatedUser();
 
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new AddressNotFoundException("Address not found with ID: " + addressId));
@@ -85,8 +84,8 @@ public class AddressServiceImpl implements AddressService {
     @Transactional
     @Override
     // @CacheEvict(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + '0' + ':size' + '10'")
-    public AddAddressResponse addAddress(HttpServletRequest request, AddAddressRequest addAddressRequest) {
-        User user = tokenInterface.getUserFromToken(request);
+    public AddAddressResponse addAddress(AddAddressRequest addAddressRequest) {
+        User user = userService.getAuthenticatedUser();
         Address newAddress = addressMapper.toAddress(addAddressRequest, user);
 
         addressRepository.save(newAddress);
@@ -100,9 +99,9 @@ public class AddressServiceImpl implements AddressService {
 
     @Transactional
     @Override
-    @CacheEvict(value = "addressInfoCache", key = "#request.userPrincipal.name + ':page' + '0' + ':size' + '10'")
-    public DeleteAddressResponse deleteAddress(Long addressId, HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
+    @CacheEvict(value = "addressInfoCache", key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")
+    public DeleteAddressResponse deleteAddress(Long addressId) {
+        User user = userService.getAuthenticatedUser();
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new AddressNotFoundException("Address not found with ID: " + addressId));
 

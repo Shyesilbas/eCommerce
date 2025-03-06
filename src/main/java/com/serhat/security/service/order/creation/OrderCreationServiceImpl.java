@@ -12,8 +12,6 @@ import com.serhat.security.service.order.finalize.OrderFinalizationService;
 import com.serhat.security.service.order.price.OrderPriceCalculationService;
 import com.serhat.security.service.payment.PaymentProcessingService;
 import com.serhat.security.service.sCard.ShoppingCardService;
-import com.serhat.security.service.user.UserService; // Yeni bağımlılık
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -38,9 +36,9 @@ public class OrderCreationServiceImpl implements OrderCreationService {
 
     @Transactional
     @Override
-    @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
-    public OrderResponse createOrder(HttpServletRequest request, OrderRequest orderRequest) {
-        User user = orderCreationValidation.validateAndGetUser(request, orderRequest);
+    @CacheEvict(value = "userInfoCache",key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")
+    public OrderResponse createOrder(OrderRequest orderRequest) {
+        User user = orderCreationValidation.validateAndGetUser(orderRequest);
         List<ShoppingCard> shoppingCards = shoppingCardService.findShoppingCard(user);
 
         PriceDetails priceDetails = orderPriceCalculationService.calculateOrderPrice(shoppingCards, user, orderRequest);
@@ -49,7 +47,7 @@ public class OrderCreationServiceImpl implements OrderCreationService {
         initializeOrderItems(order, shoppingCards);
         processPayment(order, order.getPaymentMethod());
 
-        finalizeOrder.finalizeOrder(order, user, shoppingCards, request);
+        finalizeOrder.finalizeOrder(order, user, shoppingCards);
         return orderMapper.toOrderResponse(order);
     }
 

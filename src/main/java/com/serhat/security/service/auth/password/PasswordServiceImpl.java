@@ -10,7 +10,6 @@ import com.serhat.security.exception.InvalidCredentialsException;
 import com.serhat.security.repository.UserRepository;
 import com.serhat.security.service.notification.NotificationService;
 import com.serhat.security.service.user.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachePut;
@@ -40,8 +39,8 @@ public class PasswordServiceImpl implements PasswordService{
 
     @Transactional
     @Override
-    @CachePut(value = "userInfoCache", key = "#request.userPrincipal.name")
-    public UpdatePasswordResponse updatePassword(HttpServletRequest request, UpdatePasswordRequest updatePasswordRequest) {
+    @CachePut(value = "userInfoCache", key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")
+    public UpdatePasswordResponse updatePassword( UpdatePasswordRequest updatePasswordRequest) {
         User user = userService.getAuthenticatedUser();
 
         if (user.getPassword().equals(updatePasswordRequest.newPassword())) {
@@ -51,7 +50,7 @@ public class PasswordServiceImpl implements PasswordService{
             throw new RuntimeException("Old password is incorrect.");
         }
 
-        notificationService.addNotification(request, NotificationTopic.PASSWORD_UPDATE);
+        notificationService.addNotification( user ,NotificationTopic.PASSWORD_UPDATE);
         user.setPassword(passwordEncoder.encode(updatePasswordRequest.newPassword()));
         userRepository.save(user);
         return new UpdatePasswordResponse("Password updated successfully.", LocalDateTime.now());

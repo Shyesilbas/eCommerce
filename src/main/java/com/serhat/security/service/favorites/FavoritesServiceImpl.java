@@ -7,11 +7,10 @@ import com.serhat.security.entity.User;
 import com.serhat.security.exception.EmptyFavoriteListException;
 import com.serhat.security.exception.FavoriteProductNotFoundException;
 import com.serhat.security.exception.ProductNotFoundException;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.FavoritesMapper;
 import com.serhat.security.repository.FavoritesRepository;
 import com.serhat.security.repository.ProductRepository;
-import jakarta.servlet.http.HttpServletRequest;
+import com.serhat.security.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,14 +24,14 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 @Slf4j
 public class FavoritesServiceImpl implements FavoritesService {
-    private final TokenInterface tokenInterface;
+    private final UserService userService;
     private final FavoritesRepository favoritesRepository;
     private final ProductRepository productRepository;
     private final FavoritesMapper favoritesMapper;
 
     @Override
-    public Page<FavoriteProductDto> getFavoritesByUser(HttpServletRequest servletRequest, Pageable pageable) {
-        User user = tokenInterface.getUserFromToken(servletRequest);
+    public Page<FavoriteProductDto> getFavoritesByUser(Pageable pageable) {
+        User user = userService.getAuthenticatedUser();
 
         Page<Favorites> favoritesPage = favoritesRepository.findByUser(user, pageable);
 
@@ -46,8 +45,8 @@ public class FavoritesServiceImpl implements FavoritesService {
 
     @Override
     @Transactional
-    public void addFavorite(HttpServletRequest servletRequest, Long productId) {
-        User user = tokenInterface.getUserFromToken(servletRequest);
+    public void addFavorite(Long productId) {
+        User user = userService.getAuthenticatedUser();
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
 
@@ -65,8 +64,8 @@ public class FavoritesServiceImpl implements FavoritesService {
 
     @Override
     @Transactional
-    public void removeFavorite(HttpServletRequest servletRequest, Long productId) {
-        User user = tokenInterface.getUserFromToken(servletRequest);
+    public void removeFavorite(Long productId) {
+        User user = userService.getAuthenticatedUser();
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
 

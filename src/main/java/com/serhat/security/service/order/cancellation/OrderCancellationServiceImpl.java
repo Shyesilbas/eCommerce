@@ -5,7 +5,6 @@ import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.Wallet;
 import com.serhat.security.entity.enums.OrderStatus;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.OrderMapper;
 import com.serhat.security.repository.OrderRepository;
 import com.serhat.security.service.inventory.InventoryService;
@@ -13,7 +12,6 @@ import com.serhat.security.service.notification.NotificationService;
 import com.serhat.security.service.order.details.OrderDetailsService;
 import com.serhat.security.service.payment.TransactionService;
 import com.serhat.security.service.user.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,7 +26,6 @@ import java.time.LocalDateTime;
 public class OrderCancellationServiceImpl implements OrderCancellationService {
     private final OrderRepository orderRepository;
     private final OrderDetailsService orderDetailsService;
-    private final TokenInterface tokenInterface;
     private final NotificationService notificationService;
     private final OrderMapper orderMapper;
     private final OrderCancellationValidationService orderCancellationValidationService;
@@ -38,9 +35,9 @@ public class OrderCancellationServiceImpl implements OrderCancellationService {
 
     @Transactional
     @Override
-    @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
-    public OrderCancellationResponse cancelOrder(Long orderId, HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
+    @CacheEvict(value = "userInfoCache", key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")
+    public OrderCancellationResponse cancelOrder(Long orderId) {
+        User user = userService.getAuthenticatedUser();
         Order order = orderDetailsService.findOrderById(orderId);
         log.info("Total paid : "+order.getTotalPaid());
         finalizeCancellation(order, user);

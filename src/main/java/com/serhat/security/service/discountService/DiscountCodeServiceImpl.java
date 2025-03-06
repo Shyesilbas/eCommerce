@@ -16,6 +16,7 @@ import com.serhat.security.jwt.TokenInterfaceImpl;
 import com.serhat.security.component.mapper.DiscountMapper;
 import com.serhat.security.repository.DiscountCodeRepository;
 import com.serhat.security.repository.UserRepository;
+import com.serhat.security.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -37,16 +38,18 @@ public class DiscountCodeServiceImpl extends TokenInterfaceImpl implements Disco
     private final DiscountCodeRepository discountCodeRepository;
     private final DiscountMapper discountMapper;
     private final DiscountValidationInterface discountValidationInterface;
+    private final UserService userService;
 
     public DiscountCodeServiceImpl(@Qualifier("jwtValidator")
                                    JwtOperations jwtOperations,
                                    UserRepository userRepository,
                                    DiscountCodeRepository discountCodeRepository,
-                                   DiscountMapper discountMapper, DiscountValidationInterface discountValidationInterface) {
+                                   DiscountMapper discountMapper, UserService userService,DiscountValidationInterface discountValidationInterface) {
         super(jwtOperations, userRepository);
         this.discountCodeRepository = discountCodeRepository;
         this.discountMapper = discountMapper;
         this.discountValidationInterface = discountValidationInterface;
+        this.userService=userService;
     }
 
     @Value("${discount.code.threshold}")
@@ -57,8 +60,8 @@ public class DiscountCodeServiceImpl extends TokenInterfaceImpl implements Disco
     }
 
     @Override
-    public DiscountCode generateDiscountCode(HttpServletRequest request) {
-        User user = getUserFromToken(request);
+    public DiscountCode generateDiscountCode() {
+        User user = userService.getAuthenticatedUser();
         DiscountRate discountRate = determineDiscountRate();
         DiscountCode discountCode = discountMapper.createDiscountCode(user,discountRate);
         discountCodeRepository.save(discountCode);
@@ -66,8 +69,8 @@ public class DiscountCodeServiceImpl extends TokenInterfaceImpl implements Disco
     }
 
     @Override
-    public Page<AvailableDiscountResponse> getAvailableDiscountCodes(HttpServletRequest request, Pageable pageable) {
-        User user = getUserFromToken(request);
+    public Page<AvailableDiscountResponse> getAvailableDiscountCodes(Pageable pageable) {
+        User user = userService.getAuthenticatedUser();
         Page<DiscountCode> availableCodes = discountCodeRepository.findByUserAndStatus(user, CouponStatus.NOT_USED, pageable);
 
         if (availableCodes.isEmpty()) {
@@ -78,8 +81,8 @@ public class DiscountCodeServiceImpl extends TokenInterfaceImpl implements Disco
     }
 
     @Override
-    public Page<UsedDiscountResponse> getUsedDiscountCodes(HttpServletRequest request, Pageable pageable) {
-        User user = getUserFromToken(request);
+    public Page<UsedDiscountResponse> getUsedDiscountCodes(Pageable pageable) {
+        User user = userService.getAuthenticatedUser();
         Page<DiscountCode> usedCodes = discountCodeRepository.findByUserAndStatus(user, CouponStatus.USED, pageable);
 
         if (usedCodes.isEmpty()) {
@@ -90,8 +93,8 @@ public class DiscountCodeServiceImpl extends TokenInterfaceImpl implements Disco
     }
 
     @Override
-    public Page<ExpiredDiscountResponse> getExpiredDiscountCodes(HttpServletRequest request, Pageable pageable) {
-        User user = getUserFromToken(request);
+    public Page<ExpiredDiscountResponse> getExpiredDiscountCodes(Pageable pageable) {
+        User user = userService.getAuthenticatedUser();
         Page<DiscountCode> expiredCodes = discountCodeRepository
                 .findByUserAndStatusAndExpiresAtBefore(user, CouponStatus.NOT_USED, LocalDateTime.now(), pageable);
 
@@ -142,9 +145,9 @@ public class DiscountCodeServiceImpl extends TokenInterfaceImpl implements Disco
         }
     }
     @Override
-    public void generateDiscountCodeIfOrderThresholdExceeded(Order order , HttpServletRequest request){
+    public void generateDiscountCodeIfOrderThresholdExceeded(Order order){
         if (order != null && order.getTotalPrice().compareTo(getDiscountThreshold()) >= 0) {
-            generateDiscountCode(request);
+            generateDiscountCode();
         }
     }
     @Override
@@ -155,8 +158,8 @@ public class DiscountCodeServiceImpl extends TokenInterfaceImpl implements Disco
     }
 
     @Override
-    public void handleDiscountCode(HttpServletRequest request , Order order , DiscountCode discountCode){
-        generateDiscountCodeIfOrderThresholdExceeded(order, request);
+    public void handleDiscountCode(Order order , DiscountCode discountCode){
+        generateDiscountCodeIfOrderThresholdExceeded(order);
         updateCouponStatusToUsed(discountCode);
     }
 }

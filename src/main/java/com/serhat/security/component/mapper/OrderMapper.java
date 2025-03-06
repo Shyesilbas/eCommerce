@@ -22,8 +22,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class
-OrderMapper {
+public class OrderMapper {
     private final AddressMapper addressMapper;
     private final DiscountCodeService discountService;
     private final GiftCardRepository giftCardRepository;

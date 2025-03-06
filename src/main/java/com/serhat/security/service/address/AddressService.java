@@ -7,13 +7,12 @@ import com.serhat.security.dto.response.AddAddressResponse;
 import com.serhat.security.dto.response.AddressResponse;
 import com.serhat.security.dto.response.DeleteAddressResponse;
 import com.serhat.security.dto.response.UpdateAddressResponse;
-import jakarta.servlet.http.HttpServletRequest;
 
 public interface AddressService {
-    PageDTO<AddressResponse> addressInfo(HttpServletRequest request, int page, int size);
-    UpdateAddressResponse updateAddress(Long addressId, HttpServletRequest request, UpdateAddressRequest updateAddressRequest);
-    AddAddressResponse addAddress(HttpServletRequest request, AddAddressRequest addAddressRequest);
-    DeleteAddressResponse deleteAddress(Long addressId, HttpServletRequest request);
+    PageDTO<AddressResponse> addressInfo( int page, int size);
+    UpdateAddressResponse updateAddress(Long addressId,  UpdateAddressRequest updateAddressRequest);
+    AddAddressResponse addAddress( AddAddressRequest addAddressRequest);
+    DeleteAddressResponse deleteAddress(Long addressId);
 
     boolean isAddressBelongsToUser(Long addressId, Long userId);
 }

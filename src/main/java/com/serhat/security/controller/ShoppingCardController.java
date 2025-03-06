@@ -5,7 +5,6 @@ import com.serhat.security.dto.response.AddedToCardResponse;
 import com.serhat.security.dto.response.QuantityUpdateResponse;
 import com.serhat.security.dto.response.ShoppingCardInfo;
 import com.serhat.security.service.sCard.ShoppingCardService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,45 +22,44 @@ public class ShoppingCardController {
     private final ShoppingCardService service;
 
     @GetMapping("/get-items")
-    public ResponseEntity<List<CardProductDto>> getShoppingCardItems(HttpServletRequest request) {
-       return ResponseEntity.ok(service.getItems(request));
+    public ResponseEntity<List<CardProductDto>> getShoppingCardItems() {
+       return ResponseEntity.ok(service.getItems());
     }
 
     @GetMapping("/total-price")
-    public ResponseEntity<BigDecimal> totalPriceOnCard(HttpServletRequest request){
-        return ResponseEntity.ok(service.totalPrice(request));
+    public ResponseEntity<BigDecimal> totalPriceOnCard(){
+        return ResponseEntity.ok(service.totalPrice());
     }
 
     @GetMapping("/total-product")
-    public ResponseEntity<Long> totalProductsOnCard(HttpServletRequest request){
-        return ResponseEntity.ok(service.totalProduct(request));
+    public ResponseEntity<Long> totalProductsOnCard(){
+        return ResponseEntity.ok(service.totalProduct());
     }
 
     @GetMapping("/card-details")
-    public ResponseEntity<ShoppingCardInfo> getShoppingCardTotalInfo(HttpServletRequest request) {
-        ShoppingCardInfo ShoppingCardInfo = service.getShoppingCardTotalInfo(request);
+    public ResponseEntity<ShoppingCardInfo> getShoppingCardTotalInfo() {
+        ShoppingCardInfo ShoppingCardInfo = service.getShoppingCardTotalInfo();
         return ResponseEntity.ok(ShoppingCardInfo);
     }
 
     @PostMapping("/add-to-card")
-    public ResponseEntity<AddedToCardResponse> addToCard(HttpServletRequest request, @RequestBody Map<String, Long> requestBody) {
-        Long productId = requestBody.get("productId");
-        return ResponseEntity.ok(service.addToCard(request, productId));
+    public ResponseEntity<AddedToCardResponse> addToCard( @RequestBody Map<String, Long> RequestBody) {
+        Long productId = RequestBody.get("productId");
+        return ResponseEntity.ok(service.addToCard(productId));
     }
 
     @PostMapping("/update-quantity")
     public ResponseEntity<QuantityUpdateResponse> updateQuantity(
-            HttpServletRequest request,
             @RequestParam Long productId,
             @RequestParam int quantity) {
-        return ResponseEntity.ok(service.handleQuantity(request, productId, quantity));
+        return ResponseEntity.ok(service.handleQuantity(productId, quantity));
     }
 
 
     @DeleteMapping("/remove-from-card")
-    public ResponseEntity<?> removeFavorite(HttpServletRequest request, @RequestParam Long productId) {
+    public ResponseEntity<?> removeFavorite( @RequestParam Long productId) {
         try {
-            service.removeFromCard(request, productId);
+            service.removeFromCard(productId);
             return ResponseEntity.ok("Product removed from card successfully");
         } catch (Exception e) {
             log.error("Error removing favorite", e);

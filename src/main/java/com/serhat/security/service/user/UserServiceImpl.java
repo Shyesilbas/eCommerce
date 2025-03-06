@@ -7,12 +7,10 @@ import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.NotificationTopic;
 import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.exception.*;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.UserMapper;
 import com.serhat.security.repository.UserRepository;
 import com.serhat.security.service.notification.NotificationService;
 import com.serhat.security.service.payment.TransactionService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachePut;
@@ -44,10 +42,10 @@ public class UserServiceImpl implements UserService {
         throw new RuntimeException("No authenticated user found");
     }
 
-    @CachePut(value = "userInfoCache", key = "#servletRequest.userPrincipal.name")
+    @CachePut(value = "userInfoCache",key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")
     @Transactional
     @Override
-    public UpdateMembershipPlan updateMembershipPlan(HttpServletRequest servletRequest, UpdateMembershipRequest request) {
+    public UpdateMembershipPlan updateMembershipPlan(UpdateMembershipRequest request) {
         User user = getAuthenticatedUser();
         if (user.getMembershipPlan().equals(request.membershipPlan())) {
             throw new SamePlanRequestException("You requested the same plan that you currently have.");
@@ -62,35 +60,33 @@ public class UserServiceImpl implements UserService {
         return new UpdateMembershipPlan(request.membershipPlan(), fee, "Membership plan updated successfully.");
     }
 
-    @CachePut(value = "userInfoCache", key = "#request.userPrincipal.name")
+    @CachePut(value = "userInfoCache", key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")
     @Transactional
     @Override
-    public UpdatePhoneResponse updatePhone(HttpServletRequest request, UpdatePhoneRequest updatePhoneRequest) {
+    public UpdatePhoneResponse updatePhone(UpdatePhoneRequest updatePhoneRequest) {
         User user = getAuthenticatedUser();
         validateUniquePhone(updatePhoneRequest.phone());
         user.setPhone(updatePhoneRequest.phone());
         userRepository.save(user);
-        notificationService.addNotification(request, NotificationTopic.PHONE_UPDATE);
-
+        notificationService.addNotification(user, NotificationTopic.PHONE_UPDATE);
         return new UpdatePhoneResponse("Phone updated successfully.", user.getPhone(), LocalDateTime.now());
     }
 
-    @CachePut(value = "userInfoCache", key = "#request.userPrincipal.name")
+    @CachePut(value = "userInfoCache", key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")
     @Transactional
     @Override
-    public UpdateEmailResponse updateEmail(HttpServletRequest request, UpdateEmailRequest updateEmailRequest) {
+    public UpdateEmailResponse updateEmail(UpdateEmailRequest updateEmailRequest) {
         User user = getAuthenticatedUser();
         validateUniqueEmail(updateEmailRequest.newEmail());
         user.setEmail(updateEmailRequest.newEmail());
         userRepository.save(user);
-        notificationService.addNotification(request, NotificationTopic.EMAIL_UPDATE);
-
+        notificationService.addNotification(user, NotificationTopic.EMAIL_UPDATE);
         return new UpdateEmailResponse("Email updated successfully.", user.getEmail(), LocalDateTime.now());
     }
 
-    @Cacheable(value = "userInfoCache", key = "#request.userPrincipal.name", unless = "#result == null")
+    @Cacheable(value = "userInfoCache",  key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()", unless = "#result == null")
     @Override
-    public UserResponse userInfo(HttpServletRequest request) {
+    public UserResponse userInfo() {
         User user = getAuthenticatedUser();
         UserResponse response = userMapper.toUserResponse(user);
 

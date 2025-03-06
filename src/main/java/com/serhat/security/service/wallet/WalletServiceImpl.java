@@ -6,14 +6,12 @@ import com.serhat.security.entity.Transaction;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.Wallet;
 import com.serhat.security.exception.*;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.TransactionMapper;
 import com.serhat.security.component.mapper.WalletMapper;
 import com.serhat.security.repository.TransactionRepository;
 import com.serhat.security.repository.WalletRepository;
 import com.serhat.security.service.payment.TransactionService;
 import com.serhat.security.service.user.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,7 +30,6 @@ public class WalletServiceImpl implements WalletService {
     private final WalletMapper walletMapper;
     private final TransactionMapper transactionMapper;
     private final TransactionRepository transactionRepository;
-    private final TokenInterface tokenInterface;
     private final WalletValidationInterface walletValidation;
     private final UserService userService;
 
@@ -42,18 +39,18 @@ public class WalletServiceImpl implements WalletService {
         return walletRepository.findByUser_UserId(user.getUserId())
                 .orElseThrow(()-> new WalletNotFoundException("Wallet not found"));
     }
-    public User getUser(HttpServletRequest request){
-       return tokenInterface.getUserFromToken(request);
+    public User getUser(){
+       return userService.getAuthenticatedUser();
     }
-    public Wallet getUserAndTheirWallet(HttpServletRequest request) {
-        User user = getUser(request);
+    public Wallet getUserAndTheirWallet() {
+        User user = getUser();
         return getWalletByUser(user);
     }
 
     @Override
     @Transactional
-    public WalletCreatedResponse createWallet(HttpServletRequest request, WalletRequest walletRequest) {
-        User user = getUser(request);
+    public WalletCreatedResponse createWallet(WalletRequest walletRequest) {
+        User user = getUser();
         walletValidation.hasUserHaveWallet(user);
 
          Wallet wallet = walletMapper.toWallet(walletRequest);
@@ -63,8 +60,8 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     @Transactional
-    public WalletLimitUpdateResponse limitUpdate(HttpServletRequest servletRequest , BigDecimal newLimit){
-        Wallet wallet = getUserAndTheirWallet(servletRequest);
+    public WalletLimitUpdateResponse limitUpdate(BigDecimal newLimit){
+        Wallet wallet = getUserAndTheirWallet();
         walletValidation.validateLimit(wallet, newLimit);
         wallet.setWalletLimit(newLimit);
         walletRepository.save(wallet);
@@ -73,8 +70,8 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     @Transactional
-    public DepositSuccessfulResponse depositMoney(HttpServletRequest request, BigDecimal amount) {
-        Wallet wallet = getUserAndTheirWallet(request);
+    public DepositSuccessfulResponse depositMoney( BigDecimal amount) {
+        Wallet wallet = getUserAndTheirWallet();
         walletValidation.checkIfDepositValid(wallet,amount);
         wallet.setBalance(wallet.getBalance().add(amount));
         walletRepository.save(wallet);
@@ -88,15 +85,15 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public Page<TransactionResponse> getTransactionHistory(HttpServletRequest request, Pageable pageable) {
-        Wallet wallet = getUserAndTheirWallet(request);
+    public Page<TransactionResponse> getTransactionHistory(Pageable pageable) {
+        Wallet wallet = getUserAndTheirWallet();
         Page<Transaction> transactionPage = transactionRepository.findByWallet(wallet, pageable);
         return transactionPage.map(transactionMapper::toTransactionResponse);
     }
 
     @Override
-    public WalletInfoResponse walletInfo(HttpServletRequest request) {
-        Wallet wallet = getUserAndTheirWallet(request);
+    public WalletInfoResponse walletInfo() {
+        Wallet wallet = getUserAndTheirWallet();
         return walletMapper.toWalletInfoResponse(wallet);
     }
 

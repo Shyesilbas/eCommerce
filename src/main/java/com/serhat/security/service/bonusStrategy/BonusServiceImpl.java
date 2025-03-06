@@ -8,11 +8,11 @@ import com.serhat.security.entity.User;
 import com.serhat.security.dto.request.AddBonusRequest;
 import com.serhat.security.exception.InvalidAmountException;
 import com.serhat.security.exception.NoBonusPointsException;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.UserMapper;
 import com.serhat.security.repository.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
+import com.serhat.security.service.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +21,10 @@ import java.math.BigDecimal;
 @Service
 @RequiredArgsConstructor
 public class BonusServiceImpl implements BonusService {
-    private final TokenInterface tokenInterface;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final BonusStrategyFactory bonusStrategyFactory;
+    private final UserService userService;
 
 
     @Transactional
@@ -58,19 +58,19 @@ public class BonusServiceImpl implements BonusService {
     }
 
     @Override
-    public BonusPointInformation bonusPointInformation(HttpServletRequest request){
-        User user = tokenInterface.getUserFromToken(request);
+    public BonusPointInformation bonusPointInformation(){
+        User user = userService.getAuthenticatedUser();
         return new BonusPointInformation(
                 user.getBonusPointsWon(),
                 user.getCurrentBonusPoints()
         );
     }
 
-   // @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
+    @CachePut(value = "userInfoCache",key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")
     @Transactional
     @Override
-    public AddBonusResponse addBonus(HttpServletRequest request, AddBonusRequest bonusRequest){
-        User user = tokenInterface.getUserFromToken(request);
+    public AddBonusResponse addBonus(AddBonusRequest bonusRequest){
+        User user = userService.getAuthenticatedUser();
         if(bonusRequest.amount().compareTo(BigDecimal.ZERO)<=0){
             throw new InvalidAmountException("Amount must be positive!");
         }

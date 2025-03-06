@@ -7,12 +7,14 @@ import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.NotificationTopic;
 import com.serhat.security.exception.NoNotificationsFoundException;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.NotificationMapper;
 import com.serhat.security.repository.NotificationRepository;
-import jakarta.servlet.http.HttpServletRequest;
+import com.serhat.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,14 +28,12 @@ import java.util.stream.Collectors;
 public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
-    private final TokenInterface tokenInterface;
+    private final UserRepository userRepository;
 
     @Transactional
-    public NotificationAddedResponse addNotification(HttpServletRequest request, NotificationTopic notificationTopic) {
-        User user = tokenInterface.getUserFromToken(request);
-
+    @Override
+    public NotificationAddedResponse addNotification(User user, NotificationTopic notificationTopic) {
         Notification notification = createNotification(user, notificationTopic);
-
         notificationRepository.save(notification);
         log.info("Notification added for user: {}, Topic: {}", user.getUsername(), notificationTopic);
 
@@ -42,6 +42,7 @@ public class NotificationServiceImpl implements NotificationService {
                 notification.getAt(),
                 notification.getNotificationTopic());
     }
+
     private Notification createNotification(User user, NotificationTopic notificationTopic) {
         Notification notification = Notification.builder()
                 .user(user)
@@ -81,15 +82,13 @@ public class NotificationServiceImpl implements NotificationService {
     private void addOrderStatusNotification(User user, Order order, NotificationTopic topic) {
         Notification notification = createNotification(user, topic);
         notification.setMessage("Your order #" + order.getOrderId() + " is now " + topic.name().replace("_", " ").toLowerCase());
-
         notificationRepository.save(notification);
         log.info("Notification added: User {}, Order ID {}, Topic {}", user.getUsername(), order.getOrderId(), topic);
     }
 
     @Override
-    public List<NotificationDTO> getNotifications(HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
-
+    public List<NotificationDTO> getNotifications() {
+        User user = getCurrentUser();
         List<Notification> notifications = notificationRepository.findByUser(user);
 
         if (notifications.isEmpty()) {
@@ -99,5 +98,14 @@ public class NotificationServiceImpl implements NotificationService {
         return notifications.stream()
                 .map(notificationMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
+            return userRepository.findByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        }
+        throw new RuntimeException("No authenticated user found");
     }
 }

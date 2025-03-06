@@ -6,16 +6,15 @@ import com.serhat.security.dto.response.AverageRatingResponse;
 import com.serhat.security.dto.response.CommentResponse;
 import com.serhat.security.entity.Order;
 import com.serhat.security.entity.Product;
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
 public interface CommentService {
-    CommentResponse createComment(HttpServletRequest request, CommentRequest commentRequest);
+    CommentResponse createComment( CommentRequest commentRequest);
     AverageRatingResponse getAverageProductRating(Long productId);
     List<CommentResponse> getCommentsByProduct(Long productId);
-    List<CommentResponse> getCommentsByUser(HttpServletRequest request);
+    List<CommentResponse> getCommentsByUser();
     AverageBrandRatingResponse getAverageRatingForBrand(String brand);
-    void deleteComment(Long commentId, HttpServletRequest request);
+    void deleteComment(Long commentId);
     boolean isProductInUserOrder(Order order, Product product);
 }

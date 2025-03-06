@@ -11,12 +11,11 @@ import com.serhat.security.exception.EmptyShoppingCardException;
 import com.serhat.security.exception.InvalidQuantityException;
 import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.exception.ProductNotFoundInCardException;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.ShoppingCardMapper;
 import com.serhat.security.repository.ProductRepository;
 import com.serhat.security.repository.ShoppingCardRepository;
 import com.serhat.security.service.discountService.DiscountCodeService;
-import jakarta.servlet.http.HttpServletRequest;
+import com.serhat.security.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,15 +27,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Service
+
 @RequiredArgsConstructor
 @Slf4j
+@Service
 public class ShoppingCardServiceImpl implements ShoppingCardService{
     private final ShoppingCardRepository shoppingCardRepository;
-    private final TokenInterface tokenInterface;
     private final ProductRepository productRepository;
     private final ShoppingCardMapper shoppingCardMapper;
     private final DiscountCodeService discountService;
+    private final UserService userService;
 
     @Override
     public List<ShoppingCard> findShoppingCard(User user) {
@@ -55,8 +55,8 @@ public class ShoppingCardServiceImpl implements ShoppingCardService{
     }
 
     @Override
-    public List<CardProductDto> getItems(HttpServletRequest servletRequest) {
-        User user = tokenInterface.getUserFromToken(servletRequest);
+    public List<CardProductDto> getItems() {
+        User user = userService.getAuthenticatedUser();
         List<ShoppingCard> shoppingCards = findShoppingCard(user);
         return shoppingCards.stream()
                 .map(shoppingCardMapper::convertToCardProductDto)
@@ -80,8 +80,8 @@ public class ShoppingCardServiceImpl implements ShoppingCardService{
 
     @Override
     @Transactional
-    public AddedToCardResponse addToCard(HttpServletRequest servletRequest, Long productId) {
-        User user = tokenInterface.getUserFromToken(servletRequest);
+    public AddedToCardResponse addToCard(Long productId) {
+        User user = userService.getAuthenticatedUser();
         Product product = findById(productId);
 
         if (!shoppingCardRepository.existsByUserAndProduct(user, product)) {
@@ -94,11 +94,11 @@ public class ShoppingCardServiceImpl implements ShoppingCardService{
 
     @Override
     @Transactional
-    public QuantityUpdateResponse handleQuantity(HttpServletRequest servletRequest, Long productId, int quantity) {
+    public QuantityUpdateResponse handleQuantity( Long productId, int quantity) {
         if (quantity < 0) {
             throw new InvalidQuantityException("Quantity cannot be negative!");
         }
-        User user = tokenInterface.getUserFromToken(servletRequest);
+        User user = userService.getAuthenticatedUser();
         Product product = findById(productId);
         ShoppingCard shoppingCard = checkProductInShoppingCard(user, product);
 
@@ -114,8 +114,8 @@ public class ShoppingCardServiceImpl implements ShoppingCardService{
     }
 
     @Override
-    public BigDecimal totalPrice(HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
+    public BigDecimal totalPrice() {
+        User user = userService.getAuthenticatedUser();
         List<ShoppingCard> shoppingCards = findShoppingCard(user);
         return shoppingCards
                 .stream()
@@ -124,15 +124,15 @@ public class ShoppingCardServiceImpl implements ShoppingCardService{
     }
 
     @Override
-    public long totalProduct(HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
+    public long totalProduct() {
+        User user = userService.getAuthenticatedUser();
         List<ShoppingCard> shoppingCards = findShoppingCard(user);
         return shoppingCards.size();
     }
 
     @Override
-    public long totalItems(HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
+    public long totalItems() {
+        User user = userService.getAuthenticatedUser();
         List<ShoppingCard> shoppingCards = findShoppingCard(user);
 
         return shoppingCards.stream()
@@ -141,15 +141,15 @@ public class ShoppingCardServiceImpl implements ShoppingCardService{
     }
 
     @Override
-    public ShoppingCardInfo getShoppingCardTotalInfo(HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
+    public ShoppingCardInfo getShoppingCardTotalInfo() {
+        User user = userService.getAuthenticatedUser();
         List<ShoppingCard> shoppingCards = findShoppingCard(user);
 
         List<CardProductDto> shoppingCardItems = shoppingCards.stream()
                 .map(shoppingCardMapper::convertToCardProductDto)
                 .collect(Collectors.toList());
 
-        BigDecimal totalPrice = totalPrice(request);
+        BigDecimal totalPrice = totalPrice();
         BigDecimal leftToDiscountCode = discountService.getDiscountThreshold().subtract(totalPrice);
 
         String message;
@@ -159,7 +159,7 @@ public class ShoppingCardServiceImpl implements ShoppingCardService{
             message = "You will obtain a discount code because cart total exceeds the order threshold";
         }
 
-        long totalItems = totalItems(request);
+        long totalItems = totalItems();
         long totalQuantity = shoppingCards.size();
 
         return new ShoppingCardInfo(totalPrice, totalItems, totalQuantity, message, shoppingCardItems);
@@ -167,8 +167,8 @@ public class ShoppingCardServiceImpl implements ShoppingCardService{
 
     @Override
     @Transactional
-    public void removeFromCard(HttpServletRequest servletRequest, Long productId) {
-        User user = tokenInterface.getUserFromToken(servletRequest);
+    public void removeFromCard(Long productId) {
+        User user = userService.getAuthenticatedUser();
         Product product = findById(productId);
         ShoppingCard shoppingCard = checkProductInShoppingCard(user, product);
         shoppingCardRepository.delete(shoppingCard);

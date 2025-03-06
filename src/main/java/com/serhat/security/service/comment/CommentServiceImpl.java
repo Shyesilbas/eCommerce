@@ -10,11 +10,10 @@ import com.serhat.security.entity.Product;
 import com.serhat.security.entity.User;
 import com.serhat.security.exception.*;
 import com.serhat.security.component.mapper.CommentMapper;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.repository.CommentRepository;
 import com.serhat.security.repository.OrderRepository;
 import com.serhat.security.repository.ProductRepository;
-import jakarta.servlet.http.HttpServletRequest;
+import com.serhat.security.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,13 +30,13 @@ public class CommentServiceImpl implements CommentService{
     private final CommentRepository commentRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
-    private final TokenInterface tokenInterface;
+    private final UserService userService;
     private final CommentMapper commentMapper;
 
     @Transactional
     @Override
-    public CommentResponse createComment(HttpServletRequest request, CommentRequest commentRequest) {
-        User user = tokenInterface.getUserFromToken(request);
+    public CommentResponse createComment(CommentRequest commentRequest) {
+        User user = userService.getAuthenticatedUser();
         Product product = productRepository.findById(commentRequest.productId())
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
         Order order = orderRepository.findById(commentRequest.orderId())
@@ -91,8 +90,8 @@ public class CommentServiceImpl implements CommentService{
     }
 
     @Override
-    public List<CommentResponse> getCommentsByUser(HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
+    public List<CommentResponse> getCommentsByUser() {
+        User user = userService.getAuthenticatedUser();
         List<Comment> comments = commentRepository.findByUserUserId(user.getUserId());
         if (comments.isEmpty()) {
             log.warn("No comments found for user: {}", user.getUsername());
@@ -124,8 +123,8 @@ public class CommentServiceImpl implements CommentService{
     }
     @Override
     @Transactional
-    public void deleteComment(Long commentId, HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
+    public void deleteComment(Long commentId) {
+        User user = userService.getAuthenticatedUser();
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
 

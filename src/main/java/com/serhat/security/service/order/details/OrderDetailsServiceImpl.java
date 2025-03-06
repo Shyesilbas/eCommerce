@@ -5,10 +5,9 @@ import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
 import com.serhat.security.exception.NoOrderException;
 import com.serhat.security.exception.OrderNotFoundException;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.OrderMapper;
 import com.serhat.security.repository.OrderRepository;
-import jakarta.servlet.http.HttpServletRequest;
+import com.serhat.security.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,9 +16,9 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class OrderDetailsServiceImpl implements OrderDetailsService {
-    private final TokenInterface tokenInterface;
     private final OrderMapper orderMapper;
     private final OrderRepository orderRepository;
+    private final UserService userService;
 
     @Override
     public Order findOrderById(Long orderId) {
@@ -28,8 +27,8 @@ public class OrderDetailsServiceImpl implements OrderDetailsService {
     }
 
     @Override
-    public OrderResponse getOrderDetails(Long orderId, HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
+    public OrderResponse getOrderDetails(Long orderId) {
+        User user = userService.getAuthenticatedUser();
         Order order = findOrderById(orderId);
 
         if (!order.getUser().equals(user)) {
@@ -40,8 +39,8 @@ public class OrderDetailsServiceImpl implements OrderDetailsService {
     }
 
     @Override
-    public Page<OrderResponse> getOrdersByUser(HttpServletRequest request, Pageable pageable) {
-        User user = tokenInterface.getUserFromToken(request);
+    public Page<OrderResponse> getOrdersByUser( Pageable pageable) {
+        User user = userService.getAuthenticatedUser();
         Page<Order> orders = orderRepository.findByUser(user, pageable);
 
         if (orders.isEmpty()) {

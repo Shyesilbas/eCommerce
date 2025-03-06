@@ -7,7 +7,6 @@ import com.serhat.security.dto.response.ShoppingCardInfo;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.ShoppingCard;
 import com.serhat.security.entity.User;
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,24 +16,24 @@ public interface ShoppingCardService {
 
     BigDecimal cardTotal(List<ShoppingCard> shoppingCards);
 
-    List<CardProductDto> getItems(HttpServletRequest servletRequest);
+    List<CardProductDto> getItems();
 
     Product findById(Long productId);
 
     ShoppingCard checkProductInShoppingCard(User user, Product product);
 
-    AddedToCardResponse addToCard(HttpServletRequest servletRequest, Long productId);
+    AddedToCardResponse addToCard(Long productId);
 
-    QuantityUpdateResponse handleQuantity(HttpServletRequest servletRequest, Long productId, int quantity);
+    QuantityUpdateResponse handleQuantity(Long productId, int quantity);
 
-    BigDecimal totalPrice(HttpServletRequest request);
+    BigDecimal totalPrice();
 
-    long totalProduct(HttpServletRequest request);
+    long totalProduct();
 
-    long totalItems(HttpServletRequest request);
+    long totalItems();
 
-    ShoppingCardInfo getShoppingCardTotalInfo(HttpServletRequest request);
+    ShoppingCardInfo getShoppingCardTotalInfo();
 
-    void removeFromCard(HttpServletRequest servletRequest, Long productId);
+    void removeFromCard(Long productId);
     void clearShoppingCart(List<ShoppingCard> shoppingCards);
 }

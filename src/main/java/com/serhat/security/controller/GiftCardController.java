@@ -5,7 +5,6 @@ import com.serhat.security.dto.request.GenerateGiftCardRequest;
 import com.serhat.security.dto.response.GiftCardResponse;
 import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.service.giftCard.GiftCardService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,13 +19,13 @@ public class GiftCardController {
     private final GiftCardService giftCardService;
 
     @PostMapping("/generate")
-    public GiftCardDto generateGiftCard(HttpServletRequest request, @RequestBody GenerateGiftCardRequest requestBody) {
-        return giftCardService.generateGiftCard(request, requestBody.amount());
+    public GiftCardDto generateGiftCard( @RequestBody GenerateGiftCardRequest requestBody) {
+        return giftCardService.generateGiftCard(requestBody.amount());
     }
     @GetMapping("/getByStatus")
     public ResponseEntity<Page<GiftCardResponse>> getAvailableGiftCards(
-            HttpServletRequest request, Pageable pageable , @RequestParam CouponStatus couponStatus) {
-        Page<GiftCardResponse> availableGiftCards = giftCardService.getGiftCardsByStatus(request, couponStatus ,pageable);
+           Pageable pageable , @RequestParam CouponStatus couponStatus) {
+        Page<GiftCardResponse> availableGiftCards = giftCardService.getGiftCardsByStatus(couponStatus ,pageable);
         return ResponseEntity.ok(availableGiftCards);
     }
 

@@ -7,7 +7,6 @@ import com.serhat.security.service.inventory.InventoryService;
 import com.serhat.security.service.sCard.ShoppingCardService;
 import com.serhat.security.repository.OrderRepository;
 import com.serhat.security.service.user.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +24,12 @@ public class OrderFinalizationService {
     private final InventoryService inventoryService;
 
     @Transactional
-    public void finalizeOrder(Order order, User user, List<ShoppingCard> shoppingCards, HttpServletRequest request) {
+    public void finalizeOrder(Order order, User user, List<ShoppingCard> shoppingCards) {
         orderRepository.save(order);
         userService.updateUserAfterOrder(order, user);
         shoppingCardService.clearShoppingCart(shoppingCards);
         inventoryService.updateProductsAfterOrder(order.getOrderItems());
-        discountCodeService.handleDiscountCode(request, order, order.getDiscountCode());
+        discountCodeService.handleDiscountCode(order, order.getDiscountCode());
         notificationService.addOrderCreationNotification(user, order);
     }
 }
