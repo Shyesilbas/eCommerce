@@ -1,4 +1,4 @@
-package com.serhat.security.service.order;
+package com.serhat.security.service.order.finalize;
 
 import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.PriceDetails;

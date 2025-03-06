@@ -7,6 +7,7 @@ import com.serhat.security.dto.response.ProductPriceUpdate;
 import com.serhat.security.dto.response.ProductQuantityUpdate;
 import com.serhat.security.dto.response.ProductResponse;
 import com.serhat.security.entity.enums.Category;
+import com.serhat.security.service.inventory.InventoryService;
 import com.serhat.security.service.product.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.List;
 @RequestMapping("/api/products")
 public class ProductController {
     private final ProductService productService;
+    private final InventoryService inventoryService;
 
     @GetMapping("/totalCountByCategory")
     public ResponseEntity<Long> getTotalProductCountByCategory(@RequestParam Category category) {
@@ -74,7 +76,7 @@ public class ProductController {
             @RequestParam Long productId,
             @RequestParam int quantity,
             HttpServletRequest servletRequest) {
-        return ResponseEntity.ok(productService.updateProductQuantity(productId, quantity, servletRequest));
+        return ResponseEntity.ok(inventoryService.updateProductQuantity(productId, quantity, servletRequest));
     }
 
     @GetMapping("/most-sellers")

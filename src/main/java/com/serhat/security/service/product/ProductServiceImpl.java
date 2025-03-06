@@ -5,7 +5,6 @@ import com.serhat.security.dto.object.ProductDto;
 import com.serhat.security.dto.request.ProductRequest;
 import com.serhat.security.dto.response.PriceChangeInfo;
 import com.serhat.security.dto.response.ProductPriceUpdate;
-import com.serhat.security.dto.response.ProductQuantityUpdate;
 import com.serhat.security.dto.response.ProductResponse;
 import com.serhat.security.entity.Order;
 import com.serhat.security.entity.OrderItem;
@@ -21,7 +20,6 @@ import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.ProductMapper;
 import com.serhat.security.repository.OrderRepository;
 import com.serhat.security.repository.ProductRepository;
-import com.serhat.security.service.inventory.StockAlertService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,67 +39,19 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
-    private final TokenInterface tokenInterface;
     private final ProductMapper productMapper;
     private final PriceHistoryService priceHistoryService;
-    private final StockAlertService stockAlertService;
+    private final TokenInterface tokenInterface;
 
-    private void validateRole(HttpServletRequest request, Role... allowedRoles) {
-       tokenInterface.validateRole(request, allowedRoles);
-    }
 
     @Override
     public Product getProductById(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found for: " + productId));
     }
-
-    public void manageStockAlerts(Long productId) {
-        stockAlertService.handleStockAlert(productId);
-    }
-    @Override
-    public ProductQuantityUpdate updateProductQuantity(Long productId, int quantity, HttpServletRequest request) {
-        validateRole(request, Role.ADMIN, Role.MANAGER);
-        Product product = getProductById(productId);
-
-        if (quantity < 0) {
-            throw new InvalidAmountException("Product quantity cannot be negative");
-        }
-        if(quantity == 0){
-            product.setStockStatus(StockStatus.OUT_OF_STOCKS);
-        }
-        if(quantity>0){
-            product.setStockStatus(StockStatus.AVAILABLE);
-        }
-
-        product.setQuantity(quantity);
-        productRepository.save(product);
-        log.info("Product quantity updated: id {} -> {}", productId, quantity);
-        manageStockAlerts(product.getProductId());
-        return new ProductQuantityUpdate(product.getName(), product.getProductCode(), quantity);
-    }
-
-    @Override
-    public void updateProductStock(Product product, int quantity) {
-        int newQuantity = product.getQuantity() - quantity;
-        if (newQuantity < 0) {
-            throw new InvalidQuantityException("Quantity cannot be negative");
-        }
-        product.setQuantity(newQuantity);
-        product.setStockStatus(newQuantity == 0 ? StockStatus.OUT_OF_STOCKS : StockStatus.AVAILABLE);
-    }
-
-    @Override
-    public void updateProductsAfterOrder(List<OrderItem> orderItems) {
-        productRepository.saveAll(orderItems.stream()
-                .map(OrderItem::getProduct)
-                .collect(Collectors.toList()));
-    }
-
-
     @Override
     public ProductPriceUpdate updateProductPrice(Long productId, BigDecimal price, HttpServletRequest request) {
-        validateRole(request, Role.ADMIN, Role.MANAGER);
+        tokenInterface.validateRole(request, Role.ADMIN, Role.MANAGER);
         Product product = getProductById(productId);
 
         if (price.compareTo(BigDecimal.ZERO) < 0) {
@@ -167,7 +117,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponse addProduct(ProductRequest productRequest, HttpServletRequest request) {
-        validateRole(request);
+        tokenInterface.validateRole(request);
 
         Product product = productMapper.mapToProduct(productRequest);
         Product savedProduct = productRepository.save(product);

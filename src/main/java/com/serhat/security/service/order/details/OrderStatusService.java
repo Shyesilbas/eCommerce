@@ -1,12 +1,14 @@
-package com.serhat.security.service.order;
+package com.serhat.security.service.order.details;
 
 import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.OrderStatus;
-import com.serhat.security.service.notification.NotificationInterface;
+import com.serhat.security.service.notification.NotificationService;
 import com.serhat.security.repository.OrderRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +21,11 @@ import java.util.List;
 @Slf4j
 public class OrderStatusService {
     private final OrderRepository orderRepository;
-    private final NotificationInterface notificationInterface;
+    private final NotificationService notificationService;
 
     @Transactional
+    @PostConstruct
+    @Scheduled(fixedRate = 60000)
     public void updateOrderStatuses() {
         List<Order> orders = orderRepository.findByStatusInAndOrderDateBefore(
                 List.of(OrderStatus.APPROVED, OrderStatus.SHIPPED),
@@ -45,12 +49,11 @@ public class OrderStatusService {
         }
     }
 
-
     public void addOrderShippedNotification(Order order , User user){
-        notificationInterface.addOrderShippedNotification(user, order);
+        notificationService.addOrderShippedNotification(user, order);
     }
     public void addOrderDeliveredNotification(Order order , User user){
-        notificationInterface.addOrderDeliveredNotification(user, order);
+        notificationService.addOrderDeliveredNotification(user, order);
     }
 
 

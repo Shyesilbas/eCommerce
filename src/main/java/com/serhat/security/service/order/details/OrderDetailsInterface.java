@@ -1,4 +1,4 @@
-package com.serhat.security.service.order;
+package com.serhat.security.service.order.details;
 
 import com.serhat.security.dto.response.OrderResponse;
 import com.serhat.security.entity.Order;

@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -175,7 +176,11 @@ public class ShoppingCardServiceImpl implements ShoppingCardService{
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void clearShoppingCart(List<ShoppingCard> shoppingCards) {
+        log.debug("Deleting {} shopping cart items", shoppingCards.size());
         shoppingCardRepository.deleteAll(shoppingCards);
+        log.debug("Shopping cart items deleted successfully");
+
     }
 }

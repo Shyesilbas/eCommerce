@@ -16,15 +16,12 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface ProductService {
-     ProductQuantityUpdate updateProductQuantity(Long productId, int quantity, HttpServletRequest request);
-     void updateProductStock(Product product, int quantity);
      ProductPriceUpdate updateProductPrice(Long productId, BigDecimal price, HttpServletRequest request);
      long totalProductCountByCategory(Category category);
      List<BestSellerProductDTO> bestSellersByCategory(Category category, int size);
      List<BestSellerProductDTO> bestSellers(int size);
      long totalProductCount();
      Product getProductById(Long productId);
-     void updateProductsAfterOrder(List<OrderItem> orderItems);
      ProductDto productInfo(String productCode);
      ProductResponse addProduct(ProductRequest productRequest, HttpServletRequest request);
      Page<ProductDto> getFilteredProducts(BigDecimal minPrice, BigDecimal maxPrice, Category category, String brand, int page, int size);

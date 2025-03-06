@@ -5,7 +5,7 @@ import com.serhat.security.dto.response.DiscountCalculationResult;
 import com.serhat.security.dto.response.DiscountDetails;
 import com.serhat.security.entity.GiftCard;
 import com.serhat.security.entity.User;
-import com.serhat.security.service.discountService.DiscountInterface;
+import com.serhat.security.service.discountService.DiscountCodeService;
 import com.serhat.security.service.giftCard.GiftCardService;
 import com.serhat.security.service.payment.PaymentRulesService;
 import lombok.RequiredArgsConstructor;
@@ -16,14 +16,14 @@ import java.math.BigDecimal;
 @Service
 @RequiredArgsConstructor
 public class DiscountCalculationService {
-    private final DiscountInterface discountInterface;
+    private final DiscountCodeService discountCodeService;
     private final GiftCardService giftCardService;
     private final PaymentRulesService paymentRulesService;
 
     public DiscountCalculationResult calculateDiscounts(OrderRequest orderRequest, BigDecimal originalPrice, User user) {
         paymentRulesService.validateDiscountRules(orderRequest);
 
-        DiscountDetails discountDetails = discountInterface.applyDiscount(orderRequest, originalPrice, user);
+        DiscountDetails discountDetails = discountCodeService.applyDiscount(orderRequest, originalPrice, user);
         BigDecimal priceAfterDiscount = originalPrice.subtract(discountDetails.discountAmount());
 
         GiftCard giftCard = giftCardService.applyGiftCard(orderRequest, priceAfterDiscount);

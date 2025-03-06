@@ -1,4 +1,4 @@
-package com.serhat.security.service.order;
+package com.serhat.security.service.order.creation;
 
 import com.serhat.security.service.address.AddressService;
 import com.serhat.security.dto.request.OrderRequest;
@@ -26,5 +26,7 @@ public class OrderCreationValidation implements CheckPaymentMethodInterface {
         isAddressBelongsToUser(orderRequest.shippingAddressId(), user.getUserId());
         return user;
     }
+
+
 
 }

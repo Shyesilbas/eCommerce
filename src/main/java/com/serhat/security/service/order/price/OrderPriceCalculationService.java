@@ -1,4 +1,4 @@
-package com.serhat.security.service.order;
+package com.serhat.security.service.order.price;
 
 import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.BonusCalculationResult;
@@ -28,8 +28,8 @@ public class OrderPriceCalculationService {
         BigDecimal originalPrice = shoppingCardService.cardTotal(shoppingCards);
         BigDecimal shippingFee = shippingService.calculateShippingFee(user, originalPrice);
 
-        DiscountCalculationResult discountResult = discountCalculationService.calculateDiscounts(orderRequest, originalPrice, user);
-        BonusCalculationResult bonusResult = bonusCalculationService.calculateBonus(user, orderRequest, discountResult.finalPrice());
+        DiscountCalculationResult discountResult = discountCalculationService.calculateDiscounts(orderRequest, originalPrice, user); //includes both gift card and d code
+        BonusCalculationResult bonusResult = bonusCalculationService.calculateBonus(user, orderRequest, discountResult.finalPrice()); // calculates bonus
 
         return PriceDetails.builder()
                 .totalPrice(originalPrice)
