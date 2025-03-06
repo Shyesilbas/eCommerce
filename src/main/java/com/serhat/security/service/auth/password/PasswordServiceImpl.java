@@ -1,4 +1,4 @@
-package com.serhat.security.service.password;
+package com.serhat.security.service.auth.password;
 
 import com.serhat.security.dto.request.ForgotPasswordRequest;
 import com.serhat.security.dto.request.UpdatePasswordRequest;
@@ -7,9 +7,9 @@ import com.serhat.security.dto.response.UpdatePasswordResponse;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.NotificationTopic;
 import com.serhat.security.exception.InvalidCredentialsException;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.repository.UserRepository;
 import com.serhat.security.service.notification.NotificationService;
+import com.serhat.security.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ public class PasswordServiceImpl implements PasswordService{
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
-    private final TokenInterface tokenInterface;
+    private final UserService userService;
 
     @Override
     public void validatePassword(String rawPassword, String encodedPassword) {
@@ -42,7 +42,7 @@ public class PasswordServiceImpl implements PasswordService{
     @Override
     @CachePut(value = "userInfoCache", key = "#request.userPrincipal.name")
     public UpdatePasswordResponse updatePassword(HttpServletRequest request, UpdatePasswordRequest updatePasswordRequest) {
-        User user = tokenInterface.getUserFromToken(request);
+        User user = userService.getAuthenticatedUser();
 
         if (user.getPassword().equals(updatePasswordRequest.newPassword())) {
             throw new RuntimeException("Passwords are same.");

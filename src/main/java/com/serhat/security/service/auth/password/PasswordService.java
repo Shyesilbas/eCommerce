@@ -1,4 +1,4 @@
-package com.serhat.security.service.password;
+package com.serhat.security.service.auth.password;
 
 import com.serhat.security.dto.request.ForgotPasswordRequest;
 import com.serhat.security.dto.request.UpdatePasswordRequest;

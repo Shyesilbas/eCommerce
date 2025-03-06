@@ -12,6 +12,7 @@ import com.serhat.security.component.mapper.WalletMapper;
 import com.serhat.security.repository.TransactionRepository;
 import com.serhat.security.repository.WalletRepository;
 import com.serhat.security.service.payment.TransactionService;
+import com.serhat.security.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,9 @@ public class WalletServiceImpl implements WalletService {
     private final TransactionRepository transactionRepository;
     private final TokenInterface tokenInterface;
     private final WalletValidationInterface walletValidation;
+    private final UserService userService;
+
+
     @Override
     public Wallet getWalletByUser(User user){
         return walletRepository.findByUser_UserId(user.getUserId())

@@ -1,5 +1,6 @@
 package com.serhat.security.jwt;
 
+import com.serhat.security.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.userdetails.UserDetails;
 

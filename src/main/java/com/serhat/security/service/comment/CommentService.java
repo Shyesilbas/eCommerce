@@ -15,8 +15,6 @@ public interface CommentService {
     AverageRatingResponse getAverageProductRating(Long productId);
     List<CommentResponse> getCommentsByProduct(Long productId);
     List<CommentResponse> getCommentsByUser(HttpServletRequest request);
-    List<CommentResponse> getMostHelpfulComments(Long productId);
-    List<CommentResponse> getLeastHelpfulComments(Long productId);
     AverageBrandRatingResponse getAverageRatingForBrand(String brand);
     void deleteComment(Long commentId, HttpServletRequest request);
     boolean isProductInUserOrder(Order order, Product product);

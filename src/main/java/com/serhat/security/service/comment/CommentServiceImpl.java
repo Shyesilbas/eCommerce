@@ -9,8 +9,8 @@ import com.serhat.security.entity.Order;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.User;
 import com.serhat.security.exception.*;
-import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.component.mapper.CommentMapper;
+import com.serhat.security.jwt.TokenInterface;
 import com.serhat.security.repository.CommentRepository;
 import com.serhat.security.repository.OrderRepository;
 import com.serhat.security.repository.ProductRepository;
@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,15 +47,7 @@ public class CommentServiceImpl implements CommentService{
             throw new CommentNotAllowedException("You can only comment on products you have ordered.");
         }
 
-        Comment comment = Comment.builder()
-                .user(user)
-                .product(product)
-                .order(order)
-                .content(commentRequest.content())
-                .rating(commentRequest.rating())
-                .createdAt(LocalDateTime.now())
-                .build();
-
+        Comment comment =commentMapper.toComment(user,product,order,commentRequest);
         commentRepository.save(comment);
         log.info("Comment created by user: {}", user.getUsername());
 
@@ -106,28 +97,6 @@ public class CommentServiceImpl implements CommentService{
         if (comments.isEmpty()) {
             log.warn("No comments found for user: {}", user.getUsername());
             throw new CommentNotFoundForUserException("No comments found for this user.");
-        }
-        return comments.stream()
-                .map(commentMapper::mapToCommentResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CommentResponse> getMostHelpfulComments(Long productId) {
-        List<Comment> comments = commentRepository.findByProductProductIdAndRatingGreaterThanEqual(productId, 4);
-        if (comments.isEmpty()) {
-            throw new CommentNotFoundForProductException("No highly rated comments found for this product.");
-        }
-        return comments.stream()
-                .map(commentMapper::mapToCommentResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CommentResponse> getLeastHelpfulComments(Long productId) {
-        List<Comment> comments = commentRepository.findByProductProductIdAndRatingLessThanEqual(productId, 2);
-        if (comments.isEmpty()) {
-            throw new CommentNotFoundForProductException("No low-rated comments found for this product.");
         }
         return comments.stream()
                 .map(commentMapper::mapToCommentResponse)

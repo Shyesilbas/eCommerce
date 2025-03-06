@@ -17,6 +17,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,13 +34,21 @@ public class UserServiceImpl implements UserService {
     private final NotificationService notificationService;
     private final TransactionService transactionService;
     private final UserMapper userMapper;
-    private final TokenInterface tokenInterface;
+
+    public User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
+            return userRepository.findByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        }
+        throw new RuntimeException("No authenticated user found");
+    }
 
     @CachePut(value = "userInfoCache", key = "#servletRequest.userPrincipal.name")
     @Transactional
     @Override
     public UpdateMembershipPlan updateMembershipPlan(HttpServletRequest servletRequest, UpdateMembershipRequest request) {
-        User user = tokenInterface.getUserFromToken(servletRequest);
+        User user = getAuthenticatedUser();
         if (user.getMembershipPlan().equals(request.membershipPlan())) {
             throw new SamePlanRequestException("You requested the same plan that you currently have.");
         }
@@ -55,7 +66,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public UpdatePhoneResponse updatePhone(HttpServletRequest request, UpdatePhoneRequest updatePhoneRequest) {
-        User user = tokenInterface.getUserFromToken(request);
+        User user = getAuthenticatedUser();
         validateUniquePhone(updatePhoneRequest.phone());
         user.setPhone(updatePhoneRequest.phone());
         userRepository.save(user);
@@ -68,7 +79,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public UpdateEmailResponse updateEmail(HttpServletRequest request, UpdateEmailRequest updateEmailRequest) {
-        User user = tokenInterface.getUserFromToken(request);
+        User user = getAuthenticatedUser();
         validateUniqueEmail(updateEmailRequest.newEmail());
         user.setEmail(updateEmailRequest.newEmail());
         userRepository.save(user);
@@ -80,7 +91,7 @@ public class UserServiceImpl implements UserService {
     @Cacheable(value = "userInfoCache", key = "#request.userPrincipal.name", unless = "#result == null")
     @Override
     public UserResponse userInfo(HttpServletRequest request) {
-        User user = tokenInterface.getUserFromToken(request);
+        User user = getAuthenticatedUser();
         UserResponse response = userMapper.toUserResponse(user);
 
         log.info("User details fetched from DATABASE: userId={}, email={}, username={}, role={}, total orders={}",

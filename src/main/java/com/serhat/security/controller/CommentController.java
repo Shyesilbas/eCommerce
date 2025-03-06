@@ -38,16 +38,6 @@ public class CommentController {
         return ResponseEntity.ok(commentService.getAverageProductRating(productId));
     }
 
-    @GetMapping("/most-helpful-comments")
-    public ResponseEntity<List<CommentResponse>> mostHelpfulComments(@RequestParam Long productId){
-        return ResponseEntity.ok(commentService.getMostHelpfulComments(productId));
-    }
-
-    @GetMapping("/least-helpful-comments")
-    public ResponseEntity<List<CommentResponse>> leastHelpfulComments(@RequestParam Long productId){
-        return ResponseEntity.ok(commentService.getLeastHelpfulComments(productId));
-    }
-
     @GetMapping("/average-rating-for-brand")
     public ResponseEntity<AverageBrandRatingResponse> averageRatingForBrand(@RequestParam String brand){
         return ResponseEntity.ok(commentService.getAverageRatingForBrand(brand));

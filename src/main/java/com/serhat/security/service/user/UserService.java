@@ -16,4 +16,5 @@ public interface UserService {
     void updateUserTotalFees(User user);
     void updateUserAfterOrderCancel(User user, Order order);
     void updateUserAfterOrder(Order order, User user);
+    User getAuthenticatedUser();
 }

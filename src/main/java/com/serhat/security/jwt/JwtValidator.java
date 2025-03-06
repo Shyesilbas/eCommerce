@@ -80,6 +80,7 @@ public class JwtValidator implements JwtOperations {
         tokenRepository.save(storedToken);
     }
 
+
     // Delegate to JwtProvider for these methods
     @Override
     public String generateToken(UserDetails userDetails) {

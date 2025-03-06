@@ -10,7 +10,7 @@ import com.serhat.security.component.mapper.OrderMapper;
 import com.serhat.security.repository.OrderRepository;
 import com.serhat.security.service.inventory.InventoryService;
 import com.serhat.security.service.notification.NotificationService;
-import com.serhat.security.service.order.details.OrderDetailsInterface;
+import com.serhat.security.service.order.details.OrderDetailsService;
 import com.serhat.security.service.payment.TransactionService;
 import com.serhat.security.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,7 +27,7 @@ import java.time.LocalDateTime;
 @Slf4j
 public class OrderCancellationServiceImpl implements OrderCancellationService {
     private final OrderRepository orderRepository;
-    private final OrderDetailsInterface orderDetailsInterface;
+    private final OrderDetailsService orderDetailsService;
     private final TokenInterface tokenInterface;
     private final NotificationService notificationService;
     private final OrderMapper orderMapper;
@@ -41,7 +41,7 @@ public class OrderCancellationServiceImpl implements OrderCancellationService {
     @CacheEvict(value = "userInfoCache", key = "#request.userPrincipal.name")
     public OrderCancellationResponse cancelOrder(Long orderId, HttpServletRequest request) {
         User user = tokenInterface.getUserFromToken(request);
-        Order order = orderDetailsInterface.findOrderById(orderId);
+        Order order = orderDetailsService.findOrderById(orderId);
         log.info("Total paid : "+order.getTotalPaid());
         finalizeCancellation(order, user);
         return orderMapper.toOrderCancellationResponse(order, order.getTotalPaid());
@@ -50,9 +50,9 @@ public class OrderCancellationServiceImpl implements OrderCancellationService {
     @Override
     public void finalizeCancellation(Order order, User user) {
         orderCancellationValidationService.checkIsOrderCancellable(order, user);
-        Wallet wallet =user.getWallet();
-        log.info("Wallet balance before refund: {}", wallet.getBalance());
-        transactionService.createRefundTransaction(order,user,order.getTotalPaid(),order.getShippingFee());
+        Wallet wallet =user.getWallet(); // *
+        log.info("Wallet balance before refund: {}", wallet.getBalance()); // *
+        transactionService.createRefundTransaction(order,user,order.getTotalPaid(),order.getShippingFee()); // * refund will be transferred to e-wallet
         userService.updateUserAfterOrderCancel(user, order);
         updateOrderAfterCancellation(order);
         updateProductsAfterCancellation(order);
