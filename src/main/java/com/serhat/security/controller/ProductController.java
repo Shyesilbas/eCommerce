@@ -7,7 +7,7 @@ import com.serhat.security.dto.response.ProductPriceUpdate;
 import com.serhat.security.dto.response.ProductQuantityUpdate;
 import com.serhat.security.dto.response.ProductResponse;
 import com.serhat.security.entity.enums.Category;
-import com.serhat.security.service.ProductService;
+import com.serhat.security.service.product.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

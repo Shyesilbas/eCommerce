@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Date;
 
 @Component
@@ -75,6 +76,7 @@ public class JwtValidator implements JwtOperations {
         Token storedToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new InvalidTokenException("Token not found in database"));
         storedToken.setTokenStatus(TokenStatus.LOGGED_OUT);
+        storedToken.setExpired_at(Date.from(Instant.now()));
         tokenRepository.save(storedToken);
     }
 

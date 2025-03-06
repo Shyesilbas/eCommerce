@@ -5,7 +5,6 @@ import com.serhat.security.entity.Wallet;
 import com.serhat.security.exception.AlreadyHasWalletException;
 import com.serhat.security.exception.InvalidAmountException;
 import com.serhat.security.exception.LimitExceededException;
-import com.serhat.security.interfaces.WalletValidationInterface;
 import com.serhat.security.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

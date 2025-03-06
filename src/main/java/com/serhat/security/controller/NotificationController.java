@@ -3,7 +3,7 @@ package com.serhat.security.controller;
 import com.serhat.security.dto.object.NotificationDTO;
 import com.serhat.security.dto.response.NotificationAddedResponse;
 import com.serhat.security.entity.enums.NotificationTopic;
-import com.serhat.security.service.NotificationService;
+import com.serhat.security.service.notification.NotificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

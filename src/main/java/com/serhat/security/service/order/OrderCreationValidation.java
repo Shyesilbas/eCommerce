@@ -1,14 +1,11 @@
 package com.serhat.security.service.order;
 
+import com.serhat.security.service.address.AddressService;
 import com.serhat.security.dto.request.OrderRequest;
-import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
-import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.exception.AddressNotBelongToUserException;
-import com.serhat.security.exception.OrderCancellationException;
-import com.serhat.security.interfaces.AddressInterface;
-import com.serhat.security.interfaces.CheckPaymentMethodInterface;
-import com.serhat.security.interfaces.TokenInterface;
+import com.serhat.security.service.payment.CheckPaymentMethodInterface;
+import com.serhat.security.jwt.TokenInterface;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,11 +13,11 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class OrderCreationValidation implements CheckPaymentMethodInterface {
-    private final AddressInterface addressInterface;
+    private final AddressService addressService;
     private final TokenInterface tokenInterface;
 
     public void isAddressBelongsToUser(Long addressId, Long userId) {
-        if (!addressInterface.isAddressBelongsToUser(addressId, userId)) {
+        if (!addressService.isAddressBelongsToUser(addressId, userId)) {
             throw new AddressNotBelongToUserException("Shipping address does not belong to the user!");
         }
     }

@@ -1,7 +1,6 @@
 package com.serhat.security.service.payment;
 
 import com.serhat.security.entity.*;
-import com.serhat.security.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

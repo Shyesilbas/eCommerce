@@ -6,7 +6,6 @@ import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.exception.CouponAlreadyUsedException;
 import com.serhat.security.exception.DiscountCodeExpiredException;
 import com.serhat.security.exception.InvalidDiscountCodeException;
-import com.serhat.security.interfaces.DiscountValidationInterface;
 import com.serhat.security.repository.DiscountCodeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

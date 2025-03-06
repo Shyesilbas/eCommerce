@@ -3,12 +3,10 @@ package com.serhat.security.service.order;
 import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.OrderStatus;
-import com.serhat.security.interfaces.NotificationInterface;
+import com.serhat.security.service.notification.NotificationInterface;
 import com.serhat.security.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

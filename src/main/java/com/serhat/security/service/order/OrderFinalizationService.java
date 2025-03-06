@@ -1,12 +1,13 @@
 package com.serhat.security.service.order;
 
 import com.serhat.security.entity.*;
-import com.serhat.security.interfaces.DiscountInterface;
-import com.serhat.security.interfaces.NotificationInterface;
-import com.serhat.security.interfaces.UserInterface;
-import com.serhat.security.interfaces.bonus.BonusInterface;
+import com.serhat.security.service.discountService.DiscountInterface;
+import com.serhat.security.service.notification.NotificationInterface;
+import com.serhat.security.service.product.ProductService;
+import com.serhat.security.service.sCard.ShoppingCardService;
+import com.serhat.security.service.user.UserInterface;
+import com.serhat.security.service.bonusStrategy.BonusService;
 import com.serhat.security.repository.OrderRepository;
-import com.serhat.security.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public class OrderFinalizationService {
     private final NotificationInterface notificationInterface;
     private final DiscountInterface discountInterface;
     private final UserInterface userInterface;
-    private final BonusInterface bonusInterface;
+    private final BonusService bonusService;
 
     @Transactional
     public void finalizeOrder(Order order, User user, List<ShoppingCard> shoppingCards, HttpServletRequest request) {
@@ -42,7 +43,7 @@ public class OrderFinalizationService {
     }
 
     public void updateUserBonus(User user , BigDecimal amount){
-       bonusInterface.updateUserBonusPoints(user, amount);
+       bonusService.updateUserBonusPoints(user, amount);
     }
 
     private void cleanupAfterOrder(List<ShoppingCard> shoppingCards, List<OrderItem> orderItems) {

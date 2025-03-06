@@ -1,14 +1,12 @@
 package com.serhat.security.controller;
 
-import com.serhat.security.dto.object.PageDTO;
 import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
-import com.serhat.security.exception.AddBonusRequest;
-import com.serhat.security.service.user.AddressService;
+import com.serhat.security.dto.request.AddBonusRequest;
 import com.serhat.security.service.bonusStrategy.BonusService;
+import com.serhat.security.service.password.PasswordService;
 import com.serhat.security.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +22,11 @@ import java.time.LocalDateTime;
 @Slf4j
 public class UserController {
     private final UserService userService;
+    private final PasswordService passwordService;
     private final BonusService bonusService;
-    private final AddressService addressService;
 
     @GetMapping("/myInfo")
-    public ResponseEntity<UserResponse> getUserInfo(HttpServletRequest request) throws InterruptedException{
+    public ResponseEntity<UserResponse> getUserInfo(HttpServletRequest request){
         UserResponse userResponse = userService.userInfo(request);
         return ResponseEntity.ok(userResponse);
     }
@@ -44,33 +42,13 @@ public class UserController {
         return "Should response after 5 seconds every time.";
     }
 
-    @GetMapping("/addressInfo")
-    public ResponseEntity<PageDTO<AddressResponse>> getAddressInfo(
-            HttpServletRequest request,
-            @RequestParam int page,
-            @RequestParam int size) {
-        PageDTO<AddressResponse> addressResponse = addressService.addressInfo(request, page, size);
-        return ResponseEntity.ok(addressResponse);
-    }
-
-    @PutMapping("/update-address")
-    public ResponseEntity<UpdateAddressResponse> updateAddress(
-            @RequestParam Long addressId,
-            @RequestBody UpdateAddressRequest updateAddressRequest,
-            HttpServletRequest request
-    ) {
-        UpdateAddressResponse response = addressService.updateAddress(addressId, request, updateAddressRequest);
-        return ResponseEntity.ok(response);
-    }
-
     @PostMapping("/update-password")
     public ResponseEntity<UpdatePasswordResponse> updatePassword(
             HttpServletRequest servletRequest,
-            HttpServletResponse response,
             @RequestBody UpdatePasswordRequest request) {
 
         try {
-            UpdatePasswordResponse updatePasswordResponse = userService.updatePassword(servletRequest,  request);
+            UpdatePasswordResponse updatePasswordResponse = passwordService.updatePassword(servletRequest,  request);
             return ResponseEntity.ok(updatePasswordResponse);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -83,7 +61,7 @@ public class UserController {
     public ResponseEntity<ForgotPasswordResponse> forgotPassword(
             @RequestBody ForgotPasswordRequest request ) {
         try {
-            ForgotPasswordResponse forgotPasswordResponse = userService.forgotPassword(request);
+            ForgotPasswordResponse forgotPasswordResponse = passwordService.forgotPassword(request);
             return ResponseEntity.ok(forgotPasswordResponse);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -94,7 +72,6 @@ public class UserController {
     @PostMapping("/update-Email")
     public ResponseEntity<UpdateEmailResponse> updatePassword(
             HttpServletRequest servletRequest,
-            HttpServletResponse response,
             @RequestBody UpdateEmailRequest request) {
 
         try {
@@ -119,20 +96,9 @@ public class UserController {
         return ResponseEntity.ok(userService.updateMembershipPlan(servletRequest,request));
     }
 
-
-    @PostMapping("/add-address")
-    public ResponseEntity<AddAddressResponse> addAddress(@RequestBody AddAddressRequest request , HttpServletRequest servletRequest){
-        return ResponseEntity.ok(addressService.addAddress(servletRequest, request));
-    }
-
     @PostMapping("/add-bonus")
     public ResponseEntity<AddBonusResponse> addAddress(@RequestBody AddBonusRequest addBonusRequest  , HttpServletRequest request){
         return ResponseEntity.ok(bonusService.addBonus(request, addBonusRequest));
-    }
-
-    @DeleteMapping("/delete-address")
-    public ResponseEntity<DeleteAddressResponse> deleteAddress(@RequestParam Long addressId , HttpServletRequest request){
-        return ResponseEntity.ok(addressService.deleteAddress(addressId, request));
     }
 
 }

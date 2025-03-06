@@ -1,7 +1,6 @@
 package com.serhat.security.service.bonusStrategy;
 
 import com.serhat.security.entity.User;
-import com.serhat.security.interfaces.bonus.BonusStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

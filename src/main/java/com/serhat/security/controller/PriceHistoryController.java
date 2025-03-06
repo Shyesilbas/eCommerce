@@ -1,7 +1,7 @@
 package com.serhat.security.controller;
 
 import com.serhat.security.dto.response.PriceHistoryResponse;
-import com.serhat.security.service.PriceHistoryService;
+import com.serhat.security.service.product.PriceHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

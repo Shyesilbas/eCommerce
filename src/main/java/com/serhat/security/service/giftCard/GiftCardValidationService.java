@@ -5,7 +5,6 @@ import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.exception.GiftCardNotFoundException;
 import com.serhat.security.exception.InvalidGiftCardException;
 import com.serhat.security.exception.UsedGiftCardException;
-import com.serhat.security.interfaces.GiftCardValidationInterface;
 import com.serhat.security.repository.GiftCardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

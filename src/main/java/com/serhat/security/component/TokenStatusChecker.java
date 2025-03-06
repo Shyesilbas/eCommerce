@@ -2,7 +2,7 @@ package com.serhat.security.component;
 
 import com.serhat.security.entity.Token;
 import com.serhat.security.entity.enums.TokenStatus;
-import com.serhat.security.service.auth.TokenService;
+import com.serhat.security.jwt.TokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;

@@ -1,7 +1,6 @@
 package com.serhat.security.service.shippingStrategy;
 
 import com.serhat.security.entity.User;
-import com.serhat.security.interfaces.ShippingStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

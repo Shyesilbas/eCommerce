@@ -6,7 +6,7 @@ import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.exception.OrderAlreadyCanceledException;
 import com.serhat.security.exception.OrderCancellationException;
 import com.serhat.security.exception.WrongOrderIdException;
-import com.serhat.security.interfaces.CheckPaymentMethodInterface;
+import com.serhat.security.service.payment.CheckPaymentMethodInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

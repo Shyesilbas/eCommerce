@@ -3,7 +3,7 @@ package com.serhat.security.service.payment;
 import com.serhat.security.entity.Order;
 import com.serhat.security.entity.Transaction;
 import com.serhat.security.entity.enums.PaymentMethod;
-import com.serhat.security.interfaces.WalletService;
+import com.serhat.security.service.wallet.WalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

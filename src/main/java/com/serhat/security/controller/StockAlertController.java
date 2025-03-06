@@ -2,7 +2,7 @@ package com.serhat.security.controller;
 
 import com.serhat.security.dto.response.StockAlertResponse;
 import com.serhat.security.entity.enums.StockAlertType;
-import com.serhat.security.service.StockAlertService;
+import com.serhat.security.service.inventory.StockAlertService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

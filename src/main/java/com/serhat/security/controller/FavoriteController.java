@@ -1,7 +1,7 @@
 package com.serhat.security.controller;
 
 import com.serhat.security.dto.object.FavoriteProductDto;
-import com.serhat.security.service.FavoritesService;
+import com.serhat.security.service.favorites.FavoritesService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController

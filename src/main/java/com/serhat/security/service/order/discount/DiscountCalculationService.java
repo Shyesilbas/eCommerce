@@ -5,7 +5,7 @@ import com.serhat.security.dto.response.DiscountCalculationResult;
 import com.serhat.security.dto.response.DiscountDetails;
 import com.serhat.security.entity.GiftCard;
 import com.serhat.security.entity.User;
-import com.serhat.security.interfaces.DiscountInterface;
+import com.serhat.security.service.discountService.DiscountInterface;
 import com.serhat.security.service.giftCard.GiftCardService;
 import com.serhat.security.service.payment.PaymentRulesService;
 import lombok.RequiredArgsConstructor;

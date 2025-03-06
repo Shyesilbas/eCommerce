@@ -2,7 +2,6 @@ package com.serhat.security.service.payment;
 
 import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.exception.InvalidOrderException;
-import com.serhat.security.interfaces.PaymentRuleServiceInterface;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 @Service
