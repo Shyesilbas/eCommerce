@@ -63,7 +63,7 @@ public class JwtValidator implements JwtOperations {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
-        throw new RuntimeException("JWT token not found in Authorization header");
+        return null;
     }
 
     @Override

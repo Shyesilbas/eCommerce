@@ -13,18 +13,12 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 
-public interface DiscountCodeService{
+public interface DiscountCodeService {
     DiscountDetails applyDiscount(OrderRequest orderRequest, BigDecimal originalPrice, User user);
-
     void handleDiscountCode(Order order, DiscountCode discountCode);
     DiscountCode generateDiscountCode();
     Page<AvailableDiscountResponse> getAvailableDiscountCodes(Pageable pageable);
-    Page<UsedDiscountResponse> getUsedDiscountCodes( Pageable pageable);
-    Page<ExpiredDiscountResponse> getExpiredDiscountCodes( Pageable pageable);
-    BigDecimal calculateDiscountAmount(BigDecimal originalPrice, DiscountCode discountCode);
-    void validateDiscountCode(DiscountCode discountCode , User user);
-    void updateCouponStatusToUsed( DiscountCode discountCode);
-    void generateDiscountCodeIfOrderThresholdExceeded(Order order);
+    Page<UsedDiscountResponse> getUsedDiscountCodes(Pageable pageable);
+    Page<ExpiredDiscountResponse> getExpiredDiscountCodes(Pageable pageable);
     BigDecimal getDiscountThreshold();
-
 }

@@ -1,7 +1,6 @@
 package com.serhat.security.component.mapper;
 
 import com.serhat.security.dto.object.GiftCardDto;
-import com.serhat.security.dto.response.GiftCardResponse;
 import com.serhat.security.entity.GiftCard;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.CouponStatus;
@@ -19,14 +18,6 @@ public class GiftCardMapper {
                 giftCard.getCode(),
                 giftCard.getGiftAmount(),
                 giftCard.getCreatedAt(),
-                giftCard.getExpiresAt(),
-                giftCard.getStatus()
-        );
-    }
-
-    public GiftCardResponse toGiftCardResponse(GiftCard giftCard) {
-        return new GiftCardResponse(
-                giftCard.getGiftAmount(),
                 giftCard.getExpiresAt(),
                 giftCard.getStatus()
         );

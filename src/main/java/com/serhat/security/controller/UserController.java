@@ -3,7 +3,7 @@ package com.serhat.security.controller;
 import com.serhat.security.dto.request.*;
 import com.serhat.security.dto.response.*;
 import com.serhat.security.dto.request.AddBonusRequest;
-import com.serhat.security.service.bonusStrategy.BonusService;
+import com.serhat.security.service.bonus.BonusService;
 import com.serhat.security.service.auth.password.PasswordService;
 import com.serhat.security.service.user.UserService;
 import jakarta.validation.Valid;

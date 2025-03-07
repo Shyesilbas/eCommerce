@@ -4,7 +4,7 @@ import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.BonusCalculationResult;
 import com.serhat.security.dto.response.BonusUsageResult;
 import com.serhat.security.entity.User;
-import com.serhat.security.service.bonusStrategy.BonusService;
+import com.serhat.security.service.bonus.BonusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -88,5 +89,25 @@ public class InventoryServiceImpl implements InventoryService{
         }
         updateProductStockAfterOrder(product, requestedQuantity);
         stockAlertService.handleStockAlert(product.getProductId());
+    }
+
+    @Override
+    @Transactional
+    public void updateStockForOrderItems(List<OrderItem> orderItems) {
+        if (orderItems == null || orderItems.isEmpty()) {
+            log.warn("No order items provided for stock update");
+            return;
+        }
+
+        for (OrderItem item : orderItems) {
+            Product product = item.getProduct();
+            int requestedQuantity = item.getQuantity();
+            validateAndUpdateProductStock(product, requestedQuantity);
+            log.info("Stock updated for product {}: requested quantity {}, new quantity {}",
+                    product.getName(), requestedQuantity, product.getQuantity());
+        }
+        productRepository.saveAll(orderItems.stream()
+                .map(OrderItem::getProduct)
+                .collect(Collectors.toList()));
     }
 }

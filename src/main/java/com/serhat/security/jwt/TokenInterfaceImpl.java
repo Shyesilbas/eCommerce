@@ -1,21 +1,27 @@
 package com.serhat.security.jwt;
 
-import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.Role;
 import com.serhat.security.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-@RequiredArgsConstructor
-public abstract class TokenInterfaceImpl implements TokenInterface {
+@Service
+public class TokenInterfaceImpl implements TokenInterface {
+
     protected final JwtOperations jwtOperations;
     protected final UserRepository userRepository;
+
+    public TokenInterfaceImpl(@Qualifier("jwtValidator") JwtOperations jwtOperations, UserRepository userRepository) {
+        this.jwtOperations = jwtOperations;
+        this.userRepository = userRepository;
+    }
 
     @Override
     public String extractTokenFromRequest(HttpServletRequest request) {
@@ -30,18 +36,6 @@ public abstract class TokenInterfaceImpl implements TokenInterface {
                         .findFirst()
                         .map(Cookie::getValue))
                 .orElse(null);
-    }
-
-    @Override
-    public User getUserFromToken(HttpServletRequest request) {
-        String token = extractTokenFromRequest(request);
-        if (token == null) {
-            throw new RuntimeException("Token not found in request");
-        }
-
-        String username = jwtOperations.extractUsername(token);
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
     }
 
     @Override

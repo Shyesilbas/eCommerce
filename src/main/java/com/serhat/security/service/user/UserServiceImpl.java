@@ -90,7 +90,7 @@ public class UserServiceImpl implements UserService {
         User user = getAuthenticatedUser();
         UserResponse response = userMapper.toUserResponse(user);
 
-        log.info("User details fetched from DATABASE: userId={}, email={}, username={}, role={}, total orders={}",
+        log.info("User details fetched: userId={}, email={}, username={}, role={}, total orders={}",
                 user.getUserId(), user.getEmail(), user.getUsername(), user.getRole(), user.getTotalOrders());
 
         return response;
@@ -107,23 +107,15 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Transactional
     @Override
-    public void updateUserTotalFees(User user) {
-        BigDecimal totalShippingFee = user.getOrders().stream()
-                .map(Order::getShippingFee)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    public void updateUserBonusPoints(User user, BigDecimal bonusPoints) {
+        user.setBonusPointsWon(user.getBonusPointsWon().add(bonusPoints));
+        user.setCurrentBonusPoints(user.getCurrentBonusPoints().add(bonusPoints));
+    }
 
-        BigDecimal totalOrderFee = user.getOrders().stream()
-                .map(order -> order.getTotalPaid().subtract(order.getShippingFee()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalSaved = user.getOrders().stream()
-                .map(Order::getTotalSaved)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        user.setTotalShippingFeePaid(totalShippingFee);
-        user.setTotalOrderFeePaid(totalOrderFee);
-        user.setTotalSaved(totalSaved);
+    @Override
+    public void saveUser(User user) {
         userRepository.save(user);
     }
 
@@ -132,8 +124,12 @@ public class UserServiceImpl implements UserService {
         user.setTotalOrders(user.getTotalOrders() + 1);
         user.setBonusPointsWon(safeAdd(user.getBonusPointsWon(), order.getBonusWon()));
         user.setCurrentBonusPoints(safeAdd(user.getCurrentBonusPoints(), order.getBonusWon()));
-        updateUserTotalFees(user);
+        user.setTotalShippingFeePaid(safeAdd(user.getTotalShippingFeePaid(), order.getShippingFee()));
+        user.setTotalOrderFeePaid(safeAdd(user.getTotalOrderFeePaid(), order.getTotalPaid()));
+        user.setTotalSaved(safeAdd(user.getTotalSaved(), order.getTotalSaved()));
         userRepository.save(user);
+        log.info("User updated after order: username={}, totalOrderFeePaid={}, orderTotalPaid={}",
+                user.getUsername(), user.getTotalOrderFeePaid(), order.getTotalPaid());
     }
 
     private void validateUniquePhone(String phone) {

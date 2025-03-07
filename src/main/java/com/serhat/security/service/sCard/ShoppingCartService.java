@@ -11,7 +11,7 @@ import com.serhat.security.entity.User;
 import java.math.BigDecimal;
 import java.util.List;
 
-public interface ShoppingCardService {
+public interface ShoppingCartService {
     List<ShoppingCard> findShoppingCard(User user);
 
     BigDecimal cardTotal(List<ShoppingCard> shoppingCards);

@@ -8,4 +8,5 @@ public interface GiftCardValidationService {
     void validateGiftCardStatusAndAmount(GiftCard giftCard);
     GiftCard findGiftCardById(Long id);
     void compareGiftCardAmountWithOrderPrice(GiftCard giftCard, BigDecimal totalPrice);
+    void saveGiftCard(GiftCard giftCard);
 }

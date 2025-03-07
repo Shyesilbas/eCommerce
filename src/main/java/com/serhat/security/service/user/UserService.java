@@ -7,13 +7,16 @@ import com.serhat.security.dto.response.*;
 import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
 
+import java.math.BigDecimal;
+
 public interface UserService {
     UserResponse userInfo();
     UpdatePhoneResponse updatePhone( UpdatePhoneRequest updatePhoneRequest);
     UpdateEmailResponse updateEmail( UpdateEmailRequest updateEmailRequest);
     UpdateMembershipPlan updateMembershipPlan(UpdateMembershipRequest request);
-    void updateUserTotalFees(User user);
     void updateUserAfterOrderCancel(User user, Order order);
     void updateUserAfterOrder(Order order, User user);
     User getAuthenticatedUser();
+    void updateUserBonusPoints(User user, BigDecimal bonusPoints);
+    void saveUser(User user);
 }

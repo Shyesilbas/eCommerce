@@ -1,4 +1,4 @@
-package com.serhat.security.service.bonusStrategy;
+package com.serhat.security.service.bonus;
 
 import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.AddBonusResponse;
@@ -14,6 +14,5 @@ public interface BonusService {
     BonusPointInformation bonusPointInformation();
     BigDecimal calculateBonusPoints(User user, BigDecimal totalPrice);
      AddBonusResponse addBonus( AddBonusRequest bonusRequest);
-      void updateUserBonusPoints(User user, BigDecimal bonusPoints);
 
 }

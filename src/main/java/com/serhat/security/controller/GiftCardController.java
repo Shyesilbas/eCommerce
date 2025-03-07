@@ -2,7 +2,6 @@ package com.serhat.security.controller;
 
 import com.serhat.security.dto.object.GiftCardDto;
 import com.serhat.security.dto.request.GenerateGiftCardRequest;
-import com.serhat.security.dto.response.GiftCardResponse;
 import com.serhat.security.entity.enums.CouponStatus;
 import com.serhat.security.service.giftCard.GiftCardService;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +22,9 @@ public class GiftCardController {
         return giftCardService.generateGiftCard(requestBody.amount());
     }
     @GetMapping("/getByStatus")
-    public ResponseEntity<Page<GiftCardResponse>> getAvailableGiftCards(
+    public ResponseEntity<Page<GiftCardDto>> getAvailableGiftCards(
            Pageable pageable , @RequestParam CouponStatus couponStatus) {
-        Page<GiftCardResponse> availableGiftCards = giftCardService.getGiftCardsByStatus(couponStatus ,pageable);
+        Page<GiftCardDto> availableGiftCards = giftCardService.getGiftCardsByStatus(couponStatus ,pageable);
         return ResponseEntity.ok(availableGiftCards);
     }
 

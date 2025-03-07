@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.serhat.security.exception.InvalidTokenException;
 import com.serhat.security.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -40,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/v3/api-docs",
             "/swagger-ui/",
             "/swagger-resources/",
-            "/actuator/",
+            "/actuator/metrics",
             "/health"
     );
 
@@ -55,7 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
+    ) throws  IOException {
         try {
             String requestId = request.getHeader("X-Request-ID");
             if (requestId == null) {
@@ -111,7 +110,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain,
             String jwt
-    ) throws IOException, ServletException {
+    ) throws IOException {
         try {
             String username = jwtValidator.extractUsername(jwt);
 

@@ -3,6 +3,7 @@ package com.serhat.security.service.order.details;
 import com.serhat.security.dto.response.OrderResponse;
 import com.serhat.security.entity.Order;
 import com.serhat.security.entity.User;
+import com.serhat.security.entity.enums.OrderStatus;
 import com.serhat.security.exception.NoOrderException;
 import com.serhat.security.exception.OrderNotFoundException;
 import com.serhat.security.component.mapper.OrderMapper;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -47,5 +50,12 @@ public class OrderDetailsServiceImpl implements OrderDetailsService {
             throw new NoOrderException("No orders found");
         }
         return orders.map(orderMapper::toOrderResponse);
+    }
+
+
+    public void updateOrderAfterCancellation(Order order) {
+        order.setStatus(OrderStatus.REFUNDED);
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
     }
 }

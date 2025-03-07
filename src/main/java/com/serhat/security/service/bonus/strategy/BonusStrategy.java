@@ -1,4 +1,4 @@
-package com.serhat.security.service.bonusStrategy;
+package com.serhat.security.service.bonus.strategy;
 
 import com.serhat.security.entity.User;
 

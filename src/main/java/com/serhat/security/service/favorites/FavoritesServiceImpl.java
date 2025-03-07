@@ -4,12 +4,10 @@ import com.serhat.security.dto.object.FavoriteProductDto;
 import com.serhat.security.entity.Favorites;
 import com.serhat.security.entity.Product;
 import com.serhat.security.entity.User;
-import com.serhat.security.exception.EmptyFavoriteListException;
 import com.serhat.security.exception.FavoriteProductNotFoundException;
-import com.serhat.security.exception.ProductNotFoundException;
 import com.serhat.security.component.mapper.FavoritesMapper;
 import com.serhat.security.repository.FavoritesRepository;
-import com.serhat.security.repository.ProductRepository;
+import com.serhat.security.service.product.ProductService;
 import com.serhat.security.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,19 +25,13 @@ import java.time.LocalDate;
 public class FavoritesServiceImpl implements FavoritesService {
     private final UserService userService;
     private final FavoritesRepository favoritesRepository;
-    private final ProductRepository productRepository;
+    private final ProductService productService;
     private final FavoritesMapper favoritesMapper;
 
     @Override
     public Page<FavoriteProductDto> getFavoritesByUser(Pageable pageable) {
         User user = userService.getAuthenticatedUser();
-
         Page<Favorites> favoritesPage = favoritesRepository.findByUser(user, pageable);
-
-        if (favoritesPage.isEmpty()) {
-            throw new EmptyFavoriteListException("Favorite list is empty");
-        }
-
         return favoritesPage.map(favoritesMapper::mapToFavoriteProductDto);
     }
 
@@ -47,10 +40,10 @@ public class FavoritesServiceImpl implements FavoritesService {
     @Transactional
     public void addFavorite(Long productId) {
         User user = userService.getAuthenticatedUser();
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+        Product product = productService.getProductById(productId);
 
-        if (!favoritesRepository.existsByUserAndProduct(user, product)) {
+        Optional<Favorites> existingFavorite = favoritesRepository.findByUserAndProduct(user, product);
+        if (existingFavorite.isEmpty()) {
             Favorites favorite = Favorites.builder()
                     .user(user)
                     .product(product)
@@ -66,13 +59,11 @@ public class FavoritesServiceImpl implements FavoritesService {
     @Transactional
     public void removeFavorite(Long productId) {
         User user = userService.getAuthenticatedUser();
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+        Product product = productService.getProductById(productId);
 
         Favorites favorite = favoritesRepository.findByUserAndProduct(user, product)
                 .orElseThrow(() -> new FavoriteProductNotFoundException("Favorite not found"));
 
-        favorite.setFavorite(false);
         favoritesRepository.delete(favorite);
         log.info("Product {} removed from favorites for user {}", productId, user.getUsername());
     }

@@ -30,8 +30,8 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
-@Service
-public class ShoppingCardServiceImpl implements ShoppingCardService{
+@Service("shoppingCardService")
+public class ShoppingCardServiceImpl implements ShoppingCartService {
     private final ShoppingCardRepository shoppingCardRepository;
     private final ProductRepository productRepository;
     private final ShoppingCardMapper shoppingCardMapper;

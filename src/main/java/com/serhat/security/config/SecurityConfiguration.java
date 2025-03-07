@@ -65,8 +65,6 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/products/byPriceRange").permitAll()
                         .requestMatchers("/api/products/allProductsWithoutPagination").permitAll()
                         .requestMatchers("/comment/comments-by-product").permitAll()
-                        .requestMatchers("/comment/least-helpful-comments").permitAll()
-                        .requestMatchers("/comment/most-helpful-comments").permitAll()
                         .requestMatchers("/comment/products/average-rating").permitAll()
                         .requestMatchers("/comment/average-rating-for-brand").permitAll()
                         .requestMatchers("/auth/test/CUSTOMER").hasRole("CUSTOMER")

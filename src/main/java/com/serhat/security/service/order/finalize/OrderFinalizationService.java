@@ -4,8 +4,8 @@ import com.serhat.security.entity.*;
 import com.serhat.security.service.discountService.DiscountCodeService;
 import com.serhat.security.service.notification.NotificationService;
 import com.serhat.security.service.inventory.InventoryService;
-import com.serhat.security.service.sCard.ShoppingCardService;
 import com.serhat.security.repository.OrderRepository;
+import com.serhat.security.service.sCard.ShoppingCartService;
 import com.serhat.security.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderFinalizationService {
     private final OrderRepository orderRepository;
-    private final ShoppingCardService shoppingCardService;
+    private final ShoppingCartService shoppingCardService;
     private final NotificationService notificationService;
     private final DiscountCodeService discountCodeService;
     private final UserService userService;

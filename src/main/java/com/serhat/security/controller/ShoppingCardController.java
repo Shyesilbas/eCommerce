@@ -4,7 +4,7 @@ import com.serhat.security.dto.object.CardProductDto;
 import com.serhat.security.dto.response.AddedToCardResponse;
 import com.serhat.security.dto.response.QuantityUpdateResponse;
 import com.serhat.security.dto.response.ShoppingCardInfo;
-import com.serhat.security.service.sCard.ShoppingCardService;
+import com.serhat.security.service.sCard.ShoppingCartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class ShoppingCardController {
-    private final ShoppingCardService service;
+    private final ShoppingCartService service;
 
     @GetMapping("/get-items")
     public ResponseEntity<List<CardProductDto>> getShoppingCardItems() {

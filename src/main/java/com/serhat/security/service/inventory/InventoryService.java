@@ -12,5 +12,6 @@ public interface InventoryService {
     void updateProductStockAfterOrder(Product product, int quantity);
     void updateProductStockAfterOrderCancellation(Product product, int quantity);
     void updateProductsAfterOrder(List<OrderItem> orderItems);
-    void validateAndUpdateProductStock(Product product, int requestedQuantity);;
+    void validateAndUpdateProductStock(Product product, int requestedQuantity);
+    void updateStockForOrderItems(List<OrderItem> orderItems);
 }

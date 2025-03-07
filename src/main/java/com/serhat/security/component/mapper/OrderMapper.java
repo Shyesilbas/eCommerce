@@ -9,8 +9,8 @@ import com.serhat.security.dto.response.PriceDetails;
 import com.serhat.security.entity.*;
 import com.serhat.security.entity.enums.DiscountRate;
 import com.serhat.security.entity.enums.OrderStatus;
-import com.serhat.security.repository.GiftCardRepository;
 import com.serhat.security.service.discountService.DiscountCodeService;
+import com.serhat.security.service.giftCard.GiftCardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class OrderMapper {
     private final AddressMapper addressMapper;
     private final DiscountCodeService discountService;
-    private final GiftCardRepository giftCardRepository;
+    private final GiftCardService giftCardService;
 
     public OrderCancellationResponse toOrderCancellationResponse(Order order, BigDecimal totalPaid) {
         BigDecimal giftCardAmount = (order.getGiftCard() != null) ? order.getGiftCard().getGiftAmount().getAmount() : BigDecimal.ZERO;
@@ -93,14 +93,13 @@ public class OrderMapper {
         );
     }
 
-
     public Order createOrderEntity(User user, OrderRequest orderRequest, PriceDetails priceDetails) {
         List<ShoppingCard> shoppingCards = user.getS_card();
         boolean isOrderReturnable = shoppingCards.stream()
                 .allMatch(shoppingCard -> shoppingCard.getProduct().isReturnable());
 
         Optional<GiftCard> giftCardOptional = orderRequest.giftCardId() != null ?
-                giftCardRepository.findById(orderRequest.giftCardId()) :
+                Optional.ofNullable(giftCardService.findById(orderRequest.giftCardId())) :
                 Optional.empty();
 
         return Order.builder()
@@ -138,6 +137,4 @@ public class OrderMapper {
                         .build())
                 .collect(Collectors.toList());
     }
-
-
 }

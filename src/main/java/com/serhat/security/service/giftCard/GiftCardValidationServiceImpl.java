@@ -37,4 +37,9 @@ public class GiftCardValidationServiceImpl implements GiftCardValidationService 
             throw new InvalidGiftCardException("Gift card balance exceeds the total price.");
         }
     }
+
+    @Override
+    public void saveGiftCard(GiftCard giftCard) {
+        giftCardRepository.save(giftCard);
+    }
 }

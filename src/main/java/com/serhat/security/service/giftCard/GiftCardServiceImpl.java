@@ -1,8 +1,6 @@
 package com.serhat.security.service.giftCard;
 
 import com.serhat.security.dto.object.GiftCardDto;
-import com.serhat.security.dto.request.OrderRequest;
-import com.serhat.security.dto.response.GiftCardResponse;
 import com.serhat.security.entity.GiftCard;
 import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.CouponStatus;
@@ -10,7 +8,6 @@ import com.serhat.security.entity.enums.GiftAmount;
 import com.serhat.security.exception.GiftCardNotFoundException;
 import com.serhat.security.component.mapper.GiftCardMapper;
 import com.serhat.security.repository.GiftCardRepository;
-import com.serhat.security.service.payment.TransactionService;
 import com.serhat.security.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,76 +16,35 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class GiftCardServiceImpl implements GiftCardService {
-    private final GiftCardRepository repository;
+    private final GiftCardRepository giftCardRepository;
     private final UserService userService;
+    private final GiftCardProcessor giftCardProcessor;
     private final GiftCardMapper giftCardMapper;
-    private final TransactionService transactionService;
-    private final GiftCardValidationService giftCardValidationService;
-
-
-    public void validateGiftCardStatusAndAmount(GiftCard giftCard){
-        giftCardValidationService.validateGiftCardStatusAndAmount(giftCard);
-    }
-
-    public GiftCard findGiftCardById(Long id){
-        return giftCardValidationService.findGiftCardById(id);
-    }
-
-    public void compareGiftCardAmountWithOrderPrice(GiftCard giftCard, BigDecimal totalPrice){
-        giftCardValidationService.compareGiftCardAmountWithOrderPrice(giftCard, totalPrice);
-    }
-
-    @Override
-    @Transactional
-    public GiftCard applyGiftCard(OrderRequest orderRequest, BigDecimal totalPrice) {
-        if (orderRequest.giftCardId() == null) {
-            return null;
-        }
-        try {
-            GiftCard giftCard = findGiftCardById(orderRequest.giftCardId());
-            validateGiftCardStatusAndAmount(giftCard);
-            compareGiftCardAmountWithOrderPrice(giftCard, totalPrice);
-            giftCard.setStatus(CouponStatus.USED);
-            repository.save(giftCard);
-            return giftCard;
-        } catch (GiftCardNotFoundException e) {
-            log.warn("Gift card not found: {}", orderRequest.giftCardId());
-            return null;
-        }
-    }
-
-    public void createGiftCardTransaction(User user , GiftAmount requestedAmount){
-        transactionService.createGiftCardTransaction(user,requestedAmount.getAmount());
-    }
 
     @Override
     @Transactional
     public GiftCardDto generateGiftCard(GiftAmount requestedAmount) {
         User user = userService.getAuthenticatedUser();
-        GiftCard giftCard = giftCardMapper.toGiftCard(user, requestedAmount);
-        createGiftCardTransaction(user,requestedAmount); // wallet existence and balance update will be handled
-        repository.save(giftCard);
-        return giftCardMapper.toGiftCardDto(giftCard);
+        return giftCardProcessor.generateGiftCard(user, requestedAmount);
     }
 
-
     @Override
-    public Page<GiftCardResponse> getGiftCardsByStatus(CouponStatus status, Pageable pageable) {
+    public Page<GiftCardDto> getGiftCardsByStatus(CouponStatus status, Pageable pageable) {
         User user = userService.getAuthenticatedUser();
-        Page<GiftCard> giftCards = repository.findByUserAndStatus(user, status, pageable);
-
+        Page<GiftCard> giftCards = giftCardRepository.findByUserAndStatus(user, status, pageable);
         if (giftCards.isEmpty()) {
             throw new GiftCardNotFoundException("No " + status.toString().toLowerCase() + " gift cards found.");
         }
-
-        return giftCards.map(giftCardMapper::toGiftCardResponse);
+        return giftCards.map(giftCardMapper::toGiftCardDto);
     }
 
+    @Override
+    public GiftCard findById(Long giftCardId) {
+        return giftCardRepository.findById(giftCardId)
+                .orElseThrow(() -> new GiftCardNotFoundException("Gift card not found with ID: " + giftCardId));
+    }
 }

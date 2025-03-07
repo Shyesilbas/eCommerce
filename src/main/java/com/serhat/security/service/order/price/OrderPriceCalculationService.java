@@ -7,7 +7,7 @@ import com.serhat.security.dto.response.PriceDetails;
 import com.serhat.security.entity.ShoppingCard;
 import com.serhat.security.entity.User;
 import com.serhat.security.service.shipping.ShippingService;
-import com.serhat.security.service.sCard.ShoppingCardService;
+import com.serhat.security.service.sCard.ShoppingCartService;
 import com.serhat.security.service.order.discount.BonusCalculationService;
 import com.serhat.security.service.order.discount.DiscountCalculationService;
 import lombok.RequiredArgsConstructor;
@@ -19,17 +19,17 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class OrderPriceCalculationService {
-    private final ShoppingCardService shoppingCardService;
+    private final ShoppingCartService shoppingCartService;
     private final ShippingService shippingService;
     private final DiscountCalculationService discountCalculationService;
     private final BonusCalculationService bonusCalculationService;
 
     public PriceDetails calculateOrderPrice(List<ShoppingCard> shoppingCards, User user, OrderRequest orderRequest) {
-        BigDecimal originalPrice = shoppingCardService.cardTotal(shoppingCards);
+        BigDecimal originalPrice = shoppingCartService.cardTotal(shoppingCards);
         BigDecimal shippingFee = shippingService.calculateShippingFee(user, originalPrice);
 
-        DiscountCalculationResult discountResult = discountCalculationService.calculateDiscounts(orderRequest, originalPrice, user); //includes both gift card and d code
-        BonusCalculationResult bonusResult = bonusCalculationService.calculateBonus(user, orderRequest, discountResult.finalPrice()); // calculates bonus
+        DiscountCalculationResult discountResult = discountCalculationService.calculateDiscounts(orderRequest, originalPrice);
+        BonusCalculationResult bonusResult = bonusCalculationService.calculateBonus(user, orderRequest, discountResult.finalPrice());
 
         return PriceDetails.builder()
                 .totalPrice(originalPrice)

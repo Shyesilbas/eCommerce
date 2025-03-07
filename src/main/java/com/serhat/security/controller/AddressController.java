@@ -1,4 +1,4 @@
-package com.serhat.security.service.address;
+package com.serhat.security.controller;
 
 import com.serhat.security.dto.object.PageDTO;
 import com.serhat.security.dto.request.AddAddressRequest;
@@ -7,6 +7,7 @@ import com.serhat.security.dto.response.AddAddressResponse;
 import com.serhat.security.dto.response.AddressResponse;
 import com.serhat.security.dto.response.DeleteAddressResponse;
 import com.serhat.security.dto.response.UpdateAddressResponse;
+import com.serhat.security.service.address.AddressService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

@@ -4,17 +4,13 @@ import com.serhat.security.dto.request.OrderRequest;
 import com.serhat.security.dto.response.OrderResponse;
 import com.serhat.security.dto.response.PriceDetails;
 import com.serhat.security.entity.*;
-import com.serhat.security.entity.enums.PaymentMethod;
 import com.serhat.security.component.mapper.OrderMapper;
-import com.serhat.security.repository.OrderRepository;
-import com.serhat.security.service.inventory.InventoryService;
-import com.serhat.security.service.order.finalize.OrderFinalizationService;
+import com.serhat.security.service.order.OrderStockService;
 import com.serhat.security.service.order.price.OrderPriceCalculationService;
-import com.serhat.security.service.payment.PaymentProcessingService;
-import com.serhat.security.service.sCard.ShoppingCardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,41 +19,30 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Lazy
 public class OrderCreationServiceImpl implements OrderCreationService {
 
-    private final OrderRepository orderRepository;
-    private final PaymentProcessingService paymentProcessingService;
-    private final OrderMapper orderMapper;
-    private final InventoryService inventoryService;
-    private final ShoppingCardService shoppingCardService;
-    private final OrderCreationValidation orderCreationValidation;
-    private final OrderFinalizationService finalizeOrder;
+    private final OrderValidationService orderValidationService;
     private final OrderPriceCalculationService orderPriceCalculationService;
+    private final OrderProcessingService orderProcessingService;
+    private final OrderMapper orderMapper;
+    private final OrderStockService orderStockService;
 
     @Transactional
     @Override
-    @CacheEvict(value = "userInfoCache",key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")
+    @CacheEvict(value = "userInfoCache", key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")
     public OrderResponse createOrder(OrderRequest orderRequest) {
-        User user = orderCreationValidation.validateAndGetUser(orderRequest);
-        List<ShoppingCard> shoppingCards = shoppingCardService.findShoppingCard(user);
+
+        OrderValidationService.ShoppingCartValidationResult validationResult = orderValidationService.validateUserAndGetShoppingCart(orderRequest);
+        User user = validationResult.user();
+        List<ShoppingCard> shoppingCards = validationResult.shoppingCards();
 
         PriceDetails priceDetails = orderPriceCalculationService.calculateOrderPrice(shoppingCards, user, orderRequest);
-        Order order = orderMapper.createOrderEntity(user, orderRequest, priceDetails);
-        order = orderRepository.save(order);
-        initializeOrderItems(order, shoppingCards);
-        processPayment(order, order.getPaymentMethod());
+        Order order = orderProcessingService.processOrder(user, orderRequest, shoppingCards, priceDetails); // initializes and converts the order items
+        orderStockService.updateStock(order.getOrderItems());
 
-        finalizeOrder.finalizeOrder(order, user, shoppingCards);
+        orderProcessingService.completeOrder(order, user, shoppingCards);
         return orderMapper.toOrderResponse(order);
     }
 
-    private void initializeOrderItems(Order order, List<ShoppingCard> shoppingCards) {
-        List<OrderItem> orderItems = orderMapper.convertShoppingCartToOrderItems(order, shoppingCards);
-        order.setOrderItems(orderItems);
-        orderItems.forEach(item -> inventoryService.validateAndUpdateProductStock(item.getProduct(), item.getQuantity()));
-    }
-
-    private void processPayment(Order order, PaymentMethod paymentMethod) {
-        paymentProcessingService.processPayment(order, paymentMethod);
-    }
 }
