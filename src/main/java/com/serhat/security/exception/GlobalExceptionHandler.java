@@ -168,17 +168,6 @@ public class GlobalExceptionHandler{
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(AddressNotBelongToUserException.class)
-    public ResponseEntity<ErrorResponse> handleAddressNotBelongToUserException(AddressNotBelongToUserException e){
-
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                e.getMessage(),
-                "Address Not belongs to you!",
-                LocalDateTime.now()
-        );
-        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
-    }
 
     @ExceptionHandler(EmptyShoppingCardException.class)
     public ResponseEntity<ErrorResponse> handleEmptyShoppingCardException(EmptyShoppingCardException e){
@@ -216,17 +205,6 @@ public class GlobalExceptionHandler{
         return new ResponseEntity<>(errorResponse,HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(AddressNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleAddressNotFoundException(AddressNotFoundException e){
-
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                e.getMessage(),
-                "Address Not Found",
-                LocalDateTime.now()
-        );
-        return new ResponseEntity<>(errorResponse,HttpStatus.NOT_FOUND);
-    }
 
     @ExceptionHandler(WrongOrderIdException.class)
     public ResponseEntity<ErrorResponse> handleWrongOrderIdException(WrongOrderIdException e){

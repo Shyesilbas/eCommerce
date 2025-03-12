@@ -56,6 +56,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/user/forgot-password").permitAll()
                         .requestMatchers("/user/redisTest").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/swagger-ui/index.html","/swagger-resources/**","/v3/api-docs/**").permitAll()
                         .requestMatchers("/price-history/**").permitAll()
                         .requestMatchers("/api/products/totalCountByCategory").permitAll()
                         .requestMatchers("/api/products/byBrand").permitAll()
