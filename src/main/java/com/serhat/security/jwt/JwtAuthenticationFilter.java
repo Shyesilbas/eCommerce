@@ -2,7 +2,7 @@ package com.serhat.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.serhat.security.exception.InvalidTokenException;
-import com.serhat.security.service.UserDetailsServiceImpl;
+import com.serhat.security.service.user.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

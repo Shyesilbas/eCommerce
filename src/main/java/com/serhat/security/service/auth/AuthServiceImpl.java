@@ -12,7 +12,7 @@ import com.serhat.security.component.mapper.AuthMapper;
 import com.serhat.security.component.mapper.UserMapper;
 import com.serhat.security.repository.UserRepository;
 import com.serhat.security.jwt.TokenBlacklistService;
-import com.serhat.security.service.UserDetailsServiceImpl;
+import com.serhat.security.service.user.UserDetailsServiceImpl;
 import com.serhat.security.service.auth.password.PasswordService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;

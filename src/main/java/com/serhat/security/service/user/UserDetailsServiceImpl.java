@@ -1,9 +1,7 @@
-package com.serhat.security.service;
+package com.serhat.security.service.user;
 
-import com.serhat.security.entity.User;
 import com.serhat.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

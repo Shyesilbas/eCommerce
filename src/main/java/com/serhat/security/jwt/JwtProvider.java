@@ -1,6 +1,7 @@
 package com.serhat.security.jwt;
 
 import com.serhat.security.entity.Token;
+import com.serhat.security.entity.User;
 import com.serhat.security.entity.enums.TokenStatus;
 import com.serhat.security.repository.TokenRepository;
 import io.jsonwebtoken.*;
@@ -50,6 +51,14 @@ public class JwtProvider implements JwtOperations {
                 .orElse("ROLE_USER");
         claims.put("role", role);
 
+        Long userId;
+        if (userDetails instanceof User) {
+            userId = ((User) userDetails).getUserId();
+        } else {
+            throw new IllegalArgumentException("UserDetails does not contain userId");
+        }
+        claims.put("userId", userId);
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
@@ -82,6 +91,10 @@ public class JwtProvider implements JwtOperations {
         return extractClaim(token, Claims::getSubject);
     }
 
+    @Override
+    public Long extractUserId(String token) {
+        return extractClaim(token, claims -> claims.get("userId", Long.class));
+    }
     @Override
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);

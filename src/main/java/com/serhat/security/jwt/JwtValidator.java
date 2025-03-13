@@ -28,6 +28,11 @@ public class JwtValidator implements JwtOperations {
     }
 
     @Override
+    public Long extractUserId(String token) {
+        return jwtProvider.extractUserId(token);
+    }
+
+    @Override
     public boolean validateToken(String token, UserDetails userDetails) {
         try {
             final String username = jwtProvider.extractUsername(token);

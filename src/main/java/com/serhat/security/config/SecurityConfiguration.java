@@ -2,7 +2,7 @@ package com.serhat.security.config;
 
 import com.serhat.security.component.CustomAccessDeniedHandler;
 import com.serhat.security.jwt.JwtAuthenticationFilter;
-import com.serhat.security.service.UserDetailsServiceImpl;
+import com.serhat.security.service.user.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,6 +57,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/user/redisTest").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/swagger-ui/index.html","/swagger-resources/**","/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/price-history/**").permitAll()
                         .requestMatchers("/api/products/totalCountByCategory").permitAll()
                         .requestMatchers("/api/products/byBrand").permitAll()

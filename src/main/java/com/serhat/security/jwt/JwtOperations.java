@@ -1,6 +1,5 @@
 package com.serhat.security.jwt;
 
-import com.serhat.security.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -17,4 +16,5 @@ public interface JwtOperations {
 
     void invalidateToken(String token);
     String extractRole(String token);
+    Long extractUserId(String token);
 }
