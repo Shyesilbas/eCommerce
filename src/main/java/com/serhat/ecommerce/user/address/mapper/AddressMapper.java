@@ -2,10 +2,10 @@ package com.serhat.ecommerce.user.address.mapper;
 
 import com.serhat.ecommerce.user.address.entity.Address;
 import com.serhat.ecommerce.user.address.repository.AddressRepository;
-import com.serhat.ecommerce.user.address.dto.AddressDto;
-import com.serhat.ecommerce.user.address.dto.AddAddressRequest;
-import com.serhat.ecommerce.user.address.dto.UpdateAddressRequest;
-import com.serhat.ecommerce.dto.response.AddressResponse;
+import com.serhat.ecommerce.user.address.dto.object.AddressDto;
+import com.serhat.ecommerce.user.address.dto.request.AddAddressRequest;
+import com.serhat.ecommerce.user.address.dto.request.UpdateAddressRequest;
+import com.serhat.ecommerce.user.address.dto.response.AddressResponse;
 import com.serhat.ecommerce.user.userS.entity.User;
 import com.serhat.ecommerce.user.userException.addressException.AddressNotFoundException;
 import lombok.RequiredArgsConstructor;

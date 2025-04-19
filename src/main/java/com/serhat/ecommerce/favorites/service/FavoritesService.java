@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.favorites.service;
 
-import com.serhat.ecommerce.dto.object.FavoriteProductDto;
+import com.serhat.ecommerce.favorites.dto.FavoriteProductDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

@@ -1,13 +1,13 @@
 package com.serhat.ecommerce.payment.service;
 
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.order.entity.Order;
 import com.serhat.ecommerce.payment.entity.Transaction;
 import com.serhat.ecommerce.payment.mapper.TransactionMapper;
 import com.serhat.ecommerce.payment.repository.TransactionRepository;
 import com.serhat.ecommerce.user.userS.entity.User;
 import com.serhat.ecommerce.wallet.entity.Wallet;
-import com.serhat.ecommerce.enums.PaymentMethod;
-import com.serhat.ecommerce.enums.TransactionType;
+import com.serhat.ecommerce.payment.enums.PaymentMethod;
+import com.serhat.ecommerce.payment.enums.TransactionType;
 import com.serhat.ecommerce.payment.paymentException.InsufficientFundsException;
 import com.serhat.ecommerce.wallet.walletException.WalletNotFoundException;
 import com.serhat.ecommerce.wallet.repository.WalletRepository;

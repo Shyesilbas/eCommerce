@@ -2,10 +2,10 @@ package com.serhat.ecommerce.discount.discountService.service;
 
 import com.serhat.ecommerce.discount.discountService.entity.DiscountCode;
 import com.serhat.ecommerce.discount.discountService.mapper.DiscountMapper;
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.order.entity.Order;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.CouponStatus;
-import com.serhat.ecommerce.enums.DiscountRate;
+import com.serhat.ecommerce.discount.enums.CouponStatus;
+import com.serhat.ecommerce.discount.enums.DiscountRate;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

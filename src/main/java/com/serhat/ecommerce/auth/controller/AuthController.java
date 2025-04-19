@@ -1,10 +1,10 @@
 package com.serhat.ecommerce.auth.controller;
 
 import com.serhat.ecommerce.auth.authService.AuthService;
-import com.serhat.ecommerce.auth.dto.LoginRequest;
-import com.serhat.ecommerce.auth.dto.RegisterRequest;
-import com.serhat.ecommerce.dto.response.AuthResponse;
-import com.serhat.ecommerce.dto.response.RegisterResponse;
+import com.serhat.ecommerce.auth.dto.request.LoginRequest;
+import com.serhat.ecommerce.auth.dto.request.RegisterRequest;
+import com.serhat.ecommerce.auth.dto.response.AuthResponse;
+import com.serhat.ecommerce.auth.dto.response.RegisterResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

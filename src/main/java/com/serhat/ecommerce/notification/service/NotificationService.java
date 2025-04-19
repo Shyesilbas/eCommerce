@@ -1,10 +1,10 @@
 package com.serhat.ecommerce.notification.service;
 
-import com.serhat.ecommerce.dto.object.NotificationDTO;
-import com.serhat.ecommerce.dto.response.NotificationAddedResponse;
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.notification.dto.NotificationDTO;
+import com.serhat.ecommerce.notification.dto.NotificationAddedResponse;
+import com.serhat.ecommerce.order.entity.Order;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.NotificationTopic;
+import com.serhat.ecommerce.notification.enums.NotificationTopic;
 
 import java.util.List;
 

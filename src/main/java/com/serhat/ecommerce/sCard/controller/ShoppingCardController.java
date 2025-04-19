@@ -1,9 +1,9 @@
 package com.serhat.ecommerce.sCard.controller;
 
-import com.serhat.ecommerce.dto.object.CardProductDto;
-import com.serhat.ecommerce.dto.response.AddedToCardResponse;
-import com.serhat.ecommerce.dto.response.QuantityUpdateResponse;
-import com.serhat.ecommerce.dto.response.ShoppingCardInfo;
+import com.serhat.ecommerce.product.dto.CardProductDto;
+import com.serhat.ecommerce.sCard.dto.AddedToCardResponse;
+import com.serhat.ecommerce.product.dto.QuantityUpdateResponse;
+import com.serhat.ecommerce.sCard.dto.ShoppingCardInfo;
 import com.serhat.ecommerce.sCard.service.ShoppingCartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

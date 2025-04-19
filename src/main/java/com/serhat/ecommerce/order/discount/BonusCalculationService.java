@@ -1,8 +1,8 @@
 package com.serhat.ecommerce.order.discount;
 
-import com.serhat.ecommerce.dto.request.OrderRequest;
-import com.serhat.ecommerce.dto.response.BonusCalculationResult;
-import com.serhat.ecommerce.dto.response.BonusUsageResult;
+import com.serhat.ecommerce.order.dto.request.OrderRequest;
+import com.serhat.ecommerce.discount.dto.response.BonusCalculationResult;
+import com.serhat.ecommerce.discount.dto.response.BonusUsageResult;
 import com.serhat.ecommerce.user.userS.entity.User;
 import com.serhat.ecommerce.discount.bonus.service.BonusService;
 import lombok.RequiredArgsConstructor;

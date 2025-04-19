@@ -1,9 +1,9 @@
 package com.serhat.ecommerce.discount.bonus.service;
 
 import com.serhat.ecommerce.discount.bonus.dto.AddBonusRequest;
-import com.serhat.ecommerce.dto.request.OrderRequest;
-import com.serhat.ecommerce.dto.response.AddBonusResponse;
-import com.serhat.ecommerce.dto.response.BonusUsageResult;
+import com.serhat.ecommerce.order.dto.request.OrderRequest;
+import com.serhat.ecommerce.discount.dto.response.AddBonusResponse;
+import com.serhat.ecommerce.discount.dto.response.BonusUsageResult;
 import com.serhat.ecommerce.user.userS.entity.User;
 import com.serhat.ecommerce.user.userS.mapper.UserMapper;
 import com.serhat.ecommerce.user.userS.service.UserService;

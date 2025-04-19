@@ -1,11 +1,11 @@
 package com.serhat.ecommerce.order.creation;
 
-import com.serhat.ecommerce.dto.request.OrderRequest;
-import com.serhat.ecommerce.dto.response.OrderResponse;
-import com.serhat.ecommerce.dto.response.PriceDetails;
-import com.serhat.ecommerce.order.OrderMapper;
-import com.serhat.ecommerce.order.Order;
-import com.serhat.ecommerce.order.OrderStockService;
+import com.serhat.ecommerce.order.dto.request.OrderRequest;
+import com.serhat.ecommerce.order.dto.response.OrderResponse;
+import com.serhat.ecommerce.product.dto.PriceDetails;
+import com.serhat.ecommerce.order.service.OrderMapper;
+import com.serhat.ecommerce.order.entity.Order;
+import com.serhat.ecommerce.order.service.OrderStockService;
 import com.serhat.ecommerce.order.price.OrderPriceCalculationService;
 import com.serhat.ecommerce.sCard.entity.ShoppingCard;
 import com.serhat.ecommerce.user.userS.entity.User;

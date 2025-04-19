@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.product.entity;
 
-import com.serhat.ecommerce.enums.StockStatus;
-import com.serhat.ecommerce.enums.Category;
+import com.serhat.ecommerce.product.enums.StockStatus;
+import com.serhat.ecommerce.product.enums.Category;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

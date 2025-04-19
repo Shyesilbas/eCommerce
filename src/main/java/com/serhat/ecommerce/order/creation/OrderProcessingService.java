@@ -1,14 +1,14 @@
 package com.serhat.ecommerce.order.creation;
 
-import com.serhat.ecommerce.order.OrderMapper;
-import com.serhat.ecommerce.dto.request.OrderRequest;
-import com.serhat.ecommerce.dto.response.PriceDetails;
-import com.serhat.ecommerce.order.Order;
-import com.serhat.ecommerce.order.OrderItem;
+import com.serhat.ecommerce.order.service.OrderMapper;
+import com.serhat.ecommerce.order.dto.request.OrderRequest;
+import com.serhat.ecommerce.product.dto.PriceDetails;
+import com.serhat.ecommerce.order.entity.Order;
+import com.serhat.ecommerce.order.entity.OrderItem;
 import com.serhat.ecommerce.order.finalize.OrderFinalizationService;
 import com.serhat.ecommerce.sCard.entity.ShoppingCard;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.order.OrderRepository;
+import com.serhat.ecommerce.order.repo.OrderRepository;
 import com.serhat.ecommerce.payment.service.PaymentProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

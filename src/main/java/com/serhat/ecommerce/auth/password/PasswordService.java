@@ -1,9 +1,9 @@
 package com.serhat.ecommerce.auth.password;
 
-import com.serhat.ecommerce.auth.dto.ForgotPasswordRequest;
-import com.serhat.ecommerce.auth.dto.UpdatePasswordRequest;
-import com.serhat.ecommerce.dto.response.ForgotPasswordResponse;
-import com.serhat.ecommerce.dto.response.UpdatePasswordResponse;
+import com.serhat.ecommerce.auth.dto.request.ForgotPasswordRequest;
+import com.serhat.ecommerce.auth.dto.request.UpdatePasswordRequest;
+import com.serhat.ecommerce.auth.dto.response.ForgotPasswordResponse;
+import com.serhat.ecommerce.auth.dto.response.UpdatePasswordResponse;
 
 public interface PasswordService {
     void validatePassword(String rawPassword, String encodedPassword);

@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.config.configs;
 
-import com.serhat.ecommerce.jwt.CustomAccessDeniedHandler;
-import com.serhat.ecommerce.jwt.JwtAuthenticationFilter;
+import com.serhat.ecommerce.jwt.service.CustomAccessDeniedHandler;
+import com.serhat.ecommerce.jwt.service.JwtAuthenticationFilter;
 import com.serhat.ecommerce.user.userS.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

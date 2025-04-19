@@ -2,11 +2,11 @@ package com.serhat.ecommerce.discount.giftCard.service;
 
 import com.serhat.ecommerce.discount.giftCard.entity.GiftCard;
 import com.serhat.ecommerce.discount.giftCard.mapper.GiftCardMapper;
-import com.serhat.ecommerce.dto.object.GiftCardDto;
-import com.serhat.ecommerce.dto.request.OrderRequest;
+import com.serhat.ecommerce.discount.dto.object.GiftCardDto;
+import com.serhat.ecommerce.order.dto.request.OrderRequest;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.CouponStatus;
-import com.serhat.ecommerce.enums.GiftAmount;
+import com.serhat.ecommerce.discount.enums.CouponStatus;
+import com.serhat.ecommerce.discount.enums.GiftAmount;
 import com.serhat.ecommerce.payment.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

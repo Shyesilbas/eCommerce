@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.notification.entity;
 
-import com.serhat.ecommerce.enums.NotificationTopic;
+import com.serhat.ecommerce.notification.enums.NotificationTopic;
 import com.serhat.ecommerce.user.userS.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.exception;
 
 import com.serhat.ecommerce.discount.discountException.*;
-import com.serhat.ecommerce.dto.response.AuthResponse;
+import com.serhat.ecommerce.auth.dto.response.AuthResponse;
 import com.serhat.ecommerce.jwt.TokenException.InvalidTokenException;
 import com.serhat.ecommerce.jwt.TokenException.InvalidTokenFormat;
 import com.serhat.ecommerce.jwt.TokenException.TokenNotFoundException;

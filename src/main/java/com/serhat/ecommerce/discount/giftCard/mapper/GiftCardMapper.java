@@ -1,10 +1,10 @@
 package com.serhat.ecommerce.discount.giftCard.mapper;
 
 import com.serhat.ecommerce.discount.giftCard.entity.GiftCard;
-import com.serhat.ecommerce.dto.object.GiftCardDto;
+import com.serhat.ecommerce.discount.dto.object.GiftCardDto;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.CouponStatus;
-import com.serhat.ecommerce.enums.GiftAmount;
+import com.serhat.ecommerce.discount.enums.CouponStatus;
+import com.serhat.ecommerce.discount.enums.GiftAmount;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;

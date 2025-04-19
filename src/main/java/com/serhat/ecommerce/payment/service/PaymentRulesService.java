@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.payment.service;
 
-import com.serhat.ecommerce.dto.request.OrderRequest;
+import com.serhat.ecommerce.order.dto.request.OrderRequest;
 import com.serhat.ecommerce.order.orderException.InvalidOrderException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

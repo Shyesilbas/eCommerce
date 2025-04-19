@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.order.cancellation;
 
-import com.serhat.ecommerce.dto.response.OrderCancellationResponse;
+import com.serhat.ecommerce.order.dto.response.OrderCancellationResponse;
 
 
 

@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.user.address.service;
 
-import com.serhat.ecommerce.dto.object.PageDTO;
-import com.serhat.ecommerce.dto.response.AddressResponse;
+import com.serhat.ecommerce.config.PageDTO;
+import com.serhat.ecommerce.user.address.dto.response.AddressResponse;
 import com.serhat.ecommerce.user.address.entity.Address;
 import com.serhat.ecommerce.user.address.mapper.AddressMapper;
 import com.serhat.ecommerce.user.address.repository.AddressRepository;

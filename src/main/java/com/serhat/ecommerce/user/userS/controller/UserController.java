@@ -1,12 +1,15 @@
 package com.serhat.ecommerce.user.userS.controller;
 
-import com.serhat.ecommerce.auth.dto.ForgotPasswordRequest;
-import com.serhat.ecommerce.auth.dto.UpdatePasswordRequest;
-import com.serhat.ecommerce.dto.request.*;
-import com.serhat.ecommerce.dto.response.*;
+import com.serhat.ecommerce.auth.dto.request.ForgotPasswordRequest;
+import com.serhat.ecommerce.auth.dto.request.UpdatePasswordRequest;
+import com.serhat.ecommerce.auth.dto.response.ForgotPasswordResponse;
+import com.serhat.ecommerce.auth.dto.response.UpdatePasswordResponse;
+import com.serhat.ecommerce.discount.dto.response.AddBonusResponse;
+import com.serhat.ecommerce.discount.dto.response.BonusPointInformation;
 import com.serhat.ecommerce.discount.bonus.dto.AddBonusRequest;
 import com.serhat.ecommerce.discount.bonus.service.BonusService;
 import com.serhat.ecommerce.auth.password.PasswordService;
+import com.serhat.ecommerce.user.userS.dto.*;
 import com.serhat.ecommerce.user.userS.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

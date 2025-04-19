@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.order.creation;
 
-import com.serhat.ecommerce.dto.request.OrderRequest;
+import com.serhat.ecommerce.order.dto.request.OrderRequest;
 import com.serhat.ecommerce.sCard.entity.ShoppingCard;
 import com.serhat.ecommerce.user.userS.entity.User;
 import com.serhat.ecommerce.sCard.service.ShoppingCartService;

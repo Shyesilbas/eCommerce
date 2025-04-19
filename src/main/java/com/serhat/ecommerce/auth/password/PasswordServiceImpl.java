@@ -1,11 +1,11 @@
 package com.serhat.ecommerce.auth.password;
 
-import com.serhat.ecommerce.auth.dto.ForgotPasswordRequest;
-import com.serhat.ecommerce.auth.dto.UpdatePasswordRequest;
-import com.serhat.ecommerce.dto.response.ForgotPasswordResponse;
-import com.serhat.ecommerce.dto.response.UpdatePasswordResponse;
+import com.serhat.ecommerce.auth.dto.request.ForgotPasswordRequest;
+import com.serhat.ecommerce.auth.dto.request.UpdatePasswordRequest;
+import com.serhat.ecommerce.auth.dto.response.ForgotPasswordResponse;
+import com.serhat.ecommerce.auth.dto.response.UpdatePasswordResponse;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.NotificationTopic;
+import com.serhat.ecommerce.notification.enums.NotificationTopic;
 import com.serhat.ecommerce.auth.authException.InvalidCredentialsException;
 import com.serhat.ecommerce.user.userS.repository.UserRepository;
 import com.serhat.ecommerce.notification.service.NotificationService;

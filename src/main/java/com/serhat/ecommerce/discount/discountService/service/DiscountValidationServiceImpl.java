@@ -3,7 +3,7 @@ package com.serhat.ecommerce.discount.discountService.service;
 import com.serhat.ecommerce.discount.discountService.entity.DiscountCode;
 import com.serhat.ecommerce.discount.discountService.repository.DiscountCodeRepository;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.CouponStatus;
+import com.serhat.ecommerce.discount.enums.CouponStatus;
 import com.serhat.ecommerce.discount.discountException.CouponAlreadyUsedException;
 import com.serhat.ecommerce.discount.discountException.DiscountCodeExpiredException;
 import com.serhat.ecommerce.discount.discountException.DiscountCodeNotFoundException;

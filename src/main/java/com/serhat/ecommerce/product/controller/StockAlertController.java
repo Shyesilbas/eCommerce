@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.product.controller;
 
-import com.serhat.ecommerce.dto.response.StockAlertResponse;
-import com.serhat.ecommerce.enums.StockAlertType;
+import com.serhat.ecommerce.product.dto.StockAlertResponse;
+import com.serhat.ecommerce.product.enums.StockAlertType;
 import com.serhat.ecommerce.product.inventory.StockAlertService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

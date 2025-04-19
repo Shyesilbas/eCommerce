@@ -1,9 +1,9 @@
 package com.serhat.ecommerce.order.price;
 
-import com.serhat.ecommerce.dto.request.OrderRequest;
-import com.serhat.ecommerce.dto.response.BonusCalculationResult;
-import com.serhat.ecommerce.dto.response.DiscountCalculationResult;
-import com.serhat.ecommerce.dto.response.PriceDetails;
+import com.serhat.ecommerce.order.dto.request.OrderRequest;
+import com.serhat.ecommerce.discount.dto.response.BonusCalculationResult;
+import com.serhat.ecommerce.discount.dto.response.DiscountCalculationResult;
+import com.serhat.ecommerce.product.dto.PriceDetails;
 import com.serhat.ecommerce.order.discount.BonusCalculationService;
 import com.serhat.ecommerce.order.discount.DiscountCalculationService;
 import com.serhat.ecommerce.sCard.entity.ShoppingCard;

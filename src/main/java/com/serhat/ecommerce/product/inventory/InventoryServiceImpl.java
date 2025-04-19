@@ -1,14 +1,14 @@
 package com.serhat.ecommerce.product.inventory;
 
-import com.serhat.ecommerce.dto.response.ProductQuantityUpdate;
-import com.serhat.ecommerce.order.OrderItem;
+import com.serhat.ecommerce.product.dto.ProductQuantityUpdate;
+import com.serhat.ecommerce.order.entity.OrderItem;
 import com.serhat.ecommerce.product.entity.Product;
-import com.serhat.ecommerce.enums.Role;
-import com.serhat.ecommerce.enums.StockStatus;
+import com.serhat.ecommerce.user.enums.Role;
+import com.serhat.ecommerce.product.enums.StockStatus;
 import com.serhat.ecommerce.product.productException.InsufficientStockException;
 import com.serhat.ecommerce.payment.paymentException.InvalidAmountException;
 import com.serhat.ecommerce.product.productException.InvalidQuantityException;
-import com.serhat.ecommerce.jwt.TokenInterface;
+import com.serhat.ecommerce.jwt.service.TokenInterface;
 import com.serhat.ecommerce.product.repository.ProductRepository;
 import com.serhat.ecommerce.product.service.ProductService;
 import jakarta.servlet.http.HttpServletRequest;

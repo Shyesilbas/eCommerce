@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.favorites.mapper;
 
-import com.serhat.ecommerce.dto.object.FavoriteProductDto;
+import com.serhat.ecommerce.favorites.dto.FavoriteProductDto;
 import com.serhat.ecommerce.favorites.entity.Favorites;
 import com.serhat.ecommerce.product.entity.Product;
 import org.springframework.stereotype.Component;

@@ -1,13 +1,13 @@
 package com.serhat.ecommerce.order.details;
 
-import com.serhat.ecommerce.dto.response.OrderResponse;
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.order.dto.response.OrderResponse;
+import com.serhat.ecommerce.order.entity.Order;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.OrderStatus;
+import com.serhat.ecommerce.order.enums.OrderStatus;
 import com.serhat.ecommerce.order.orderException.NoOrderException;
 import com.serhat.ecommerce.order.orderException.OrderNotFoundException;
-import com.serhat.ecommerce.order.OrderMapper;
-import com.serhat.ecommerce.order.OrderRepository;
+import com.serhat.ecommerce.order.service.OrderMapper;
+import com.serhat.ecommerce.order.repo.OrderRepository;
 import com.serhat.ecommerce.user.userS.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

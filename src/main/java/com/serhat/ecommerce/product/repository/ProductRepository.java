@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.product.repository;
 
-import com.serhat.ecommerce.enums.Category;
+import com.serhat.ecommerce.product.enums.Category;
 import com.serhat.ecommerce.product.entity.Product;
 import jakarta.annotation.Nonnull;
 import org.springframework.data.domain.Page;

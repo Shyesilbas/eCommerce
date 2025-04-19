@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.product.service;
 
-import com.serhat.ecommerce.enums.Category;
+import com.serhat.ecommerce.product.enums.Category;
 import com.serhat.ecommerce.product.entity.Product;
 import org.springframework.data.jpa.domain.Specification;
 

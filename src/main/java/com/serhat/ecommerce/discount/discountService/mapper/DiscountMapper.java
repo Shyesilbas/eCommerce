@@ -1,15 +1,15 @@
 package com.serhat.ecommerce.discount.discountService.mapper;
 
 import com.serhat.ecommerce.discount.discountService.entity.DiscountCode;
-import com.serhat.ecommerce.dto.response.AvailableDiscountResponse;
-import com.serhat.ecommerce.dto.response.ExpiredDiscountResponse;
-import com.serhat.ecommerce.dto.response.UsedDiscountResponse;
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.discount.dto.response.AvailableDiscountResponse;
+import com.serhat.ecommerce.discount.dto.response.ExpiredDiscountResponse;
+import com.serhat.ecommerce.discount.dto.response.UsedDiscountResponse;
+import com.serhat.ecommerce.order.entity.Order;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.CouponStatus;
-import com.serhat.ecommerce.enums.DiscountRate;
+import com.serhat.ecommerce.discount.enums.CouponStatus;
+import com.serhat.ecommerce.discount.enums.DiscountRate;
 import com.serhat.ecommerce.discount.discountException.DiscountCodeNotFoundException;
-import com.serhat.ecommerce.order.OrderRepository;
+import com.serhat.ecommerce.order.repo.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.discount.bonus.service;
 
 import com.serhat.ecommerce.discount.bonus.strategy.BonusStrategy;
-import com.serhat.ecommerce.dto.response.BonusPointInformation;
+import com.serhat.ecommerce.discount.dto.response.BonusPointInformation;
 import com.serhat.ecommerce.user.userS.entity.User;
 import com.serhat.ecommerce.discount.bonus.strategy.BonusStrategyFactory;
 import com.serhat.ecommerce.user.userS.service.UserService;

@@ -1,8 +1,8 @@
 package com.serhat.ecommerce.product.mapper;
 
-import com.serhat.ecommerce.dto.response.StockAlertResponse;
+import com.serhat.ecommerce.product.dto.StockAlertResponse;
 import com.serhat.ecommerce.product.entity.Product;
-import com.serhat.ecommerce.enums.StockAlertType;
+import com.serhat.ecommerce.product.enums.StockAlertType;
 import com.serhat.ecommerce.product.entity.StockAlert;
 import org.springframework.stereotype.Component;
 

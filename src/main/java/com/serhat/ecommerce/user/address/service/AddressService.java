@@ -1,12 +1,12 @@
 package com.serhat.ecommerce.user.address.service;
 
-import com.serhat.ecommerce.dto.object.PageDTO;
-import com.serhat.ecommerce.user.address.dto.AddAddressRequest;
-import com.serhat.ecommerce.user.address.dto.UpdateAddressRequest;
-import com.serhat.ecommerce.dto.response.AddAddressResponse;
-import com.serhat.ecommerce.dto.response.AddressResponse;
-import com.serhat.ecommerce.dto.response.DeleteAddressResponse;
-import com.serhat.ecommerce.dto.response.UpdateAddressResponse;
+import com.serhat.ecommerce.config.PageDTO;
+import com.serhat.ecommerce.user.address.dto.request.AddAddressRequest;
+import com.serhat.ecommerce.user.address.dto.request.UpdateAddressRequest;
+import com.serhat.ecommerce.user.address.dto.response.AddAddressResponse;
+import com.serhat.ecommerce.user.address.dto.response.AddressResponse;
+import com.serhat.ecommerce.user.address.dto.response.DeleteAddressResponse;
+import com.serhat.ecommerce.user.address.dto.response.UpdateAddressResponse;
 
 public interface AddressService {
     PageDTO<AddressResponse> addressInfo( int page, int size);

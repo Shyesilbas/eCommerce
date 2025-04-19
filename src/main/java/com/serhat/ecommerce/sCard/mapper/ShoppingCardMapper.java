@@ -1,8 +1,8 @@
 package com.serhat.ecommerce.sCard.mapper;
 
-import com.serhat.ecommerce.dto.object.CardProductDto;
-import com.serhat.ecommerce.dto.response.AddedToCardResponse;
-import com.serhat.ecommerce.dto.response.QuantityUpdateResponse;
+import com.serhat.ecommerce.product.dto.CardProductDto;
+import com.serhat.ecommerce.sCard.dto.AddedToCardResponse;
+import com.serhat.ecommerce.product.dto.QuantityUpdateResponse;
 import com.serhat.ecommerce.product.entity.Product;
 import com.serhat.ecommerce.sCard.entity.ShoppingCard;
 import com.serhat.ecommerce.user.userS.entity.User;

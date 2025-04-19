@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.auth.mapper;
 
-import com.serhat.ecommerce.dto.response.AuthResponse;
-import com.serhat.ecommerce.enums.Role;
+import com.serhat.ecommerce.auth.dto.response.AuthResponse;
+import com.serhat.ecommerce.user.enums.Role;
 import org.springframework.stereotype.Component;
 
 @Component

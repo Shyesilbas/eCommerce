@@ -1,9 +1,9 @@
 package com.serhat.ecommerce.notification.mapper;
 
-import com.serhat.ecommerce.dto.object.NotificationDTO;
+import com.serhat.ecommerce.notification.dto.NotificationDTO;
 import com.serhat.ecommerce.notification.entity.Notification;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.NotificationTopic;
+import com.serhat.ecommerce.notification.enums.NotificationTopic;
 import com.serhat.ecommerce.user.userS.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

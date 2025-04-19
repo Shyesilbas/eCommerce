@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.product.service;
 
-import com.serhat.ecommerce.dto.response.PriceChangeInfo;
-import com.serhat.ecommerce.dto.response.PriceHistoryResponse;
+import com.serhat.ecommerce.product.dto.PriceChangeInfo;
+import com.serhat.ecommerce.product.dto.PriceHistoryResponse;
 import com.serhat.ecommerce.product.entity.PriceHistory;
 import com.serhat.ecommerce.product.entity.Product;
 import com.serhat.ecommerce.product.mapper.PriceHistoryMapper;

@@ -1,7 +1,11 @@
 package com.serhat.ecommerce.wallet.controller;
 
-import com.serhat.ecommerce.dto.request.WalletRequest;
-import com.serhat.ecommerce.dto.response.*;
+import com.serhat.ecommerce.wallet.dto.WalletRequest;
+import com.serhat.ecommerce.payment.dto.TransactionResponse;
+import com.serhat.ecommerce.wallet.dto.DepositSuccessfulResponse;
+import com.serhat.ecommerce.wallet.dto.WalletCreatedResponse;
+import com.serhat.ecommerce.wallet.dto.WalletInfoResponse;
+import com.serhat.ecommerce.wallet.dto.WalletLimitUpdateResponse;
 import com.serhat.ecommerce.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

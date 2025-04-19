@@ -1,14 +1,13 @@
 package com.serhat.ecommerce.user.userS.service;
 
-import com.serhat.ecommerce.dto.request.*;
-import com.serhat.ecommerce.dto.response.*;
 import com.serhat.ecommerce.user.userException.EmailAlreadyExistException;
 import com.serhat.ecommerce.user.userException.SamePlanRequestException;
-import com.serhat.ecommerce.order.Order;
-import com.serhat.ecommerce.enums.NotificationTopic;
-import com.serhat.ecommerce.enums.PaymentMethod;
+import com.serhat.ecommerce.order.entity.Order;
+import com.serhat.ecommerce.notification.enums.NotificationTopic;
+import com.serhat.ecommerce.payment.enums.PaymentMethod;
 import com.serhat.ecommerce.notification.service.NotificationService;
 import com.serhat.ecommerce.payment.service.TransactionService;
+import com.serhat.ecommerce.user.userS.dto.*;
 import com.serhat.ecommerce.user.userS.mapper.UserMapper;
 import com.serhat.ecommerce.user.userS.entity.User;
 import com.serhat.ecommerce.user.userS.repository.UserRepository;

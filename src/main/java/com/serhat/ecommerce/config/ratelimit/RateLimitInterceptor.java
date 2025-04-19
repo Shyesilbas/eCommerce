@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.config.ratelimit;
 
-import com.serhat.ecommerce.jwt.JwtProvider;
+import com.serhat.ecommerce.jwt.service.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;

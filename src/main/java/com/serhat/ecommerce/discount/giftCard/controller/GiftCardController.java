@@ -1,8 +1,8 @@
 package com.serhat.ecommerce.discount.giftCard.controller;
 
-import com.serhat.ecommerce.dto.object.GiftCardDto;
-import com.serhat.ecommerce.dto.request.GenerateGiftCardRequest;
-import com.serhat.ecommerce.enums.CouponStatus;
+import com.serhat.ecommerce.discount.dto.object.GiftCardDto;
+import com.serhat.ecommerce.discount.dto.request.GenerateGiftCardRequest;
+import com.serhat.ecommerce.discount.enums.CouponStatus;
 import com.serhat.ecommerce.discount.giftCard.service.GiftCardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

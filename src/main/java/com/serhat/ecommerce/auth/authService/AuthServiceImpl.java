@@ -1,17 +1,17 @@
 package com.serhat.ecommerce.auth.authService;
 
 import com.serhat.ecommerce.auth.mapper.AuthMapper;
-import com.serhat.ecommerce.auth.dto.LoginRequest;
-import com.serhat.ecommerce.auth.dto.RegisterRequest;
-import com.serhat.ecommerce.dto.response.AuthResponse;
-import com.serhat.ecommerce.dto.response.RegisterResponse;
+import com.serhat.ecommerce.auth.dto.request.LoginRequest;
+import com.serhat.ecommerce.auth.dto.request.RegisterRequest;
+import com.serhat.ecommerce.auth.dto.response.AuthResponse;
+import com.serhat.ecommerce.auth.dto.response.RegisterResponse;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.Role;
+import com.serhat.ecommerce.user.enums.Role;
 import com.serhat.ecommerce.user.userS.service.UserValidationService;
-import com.serhat.ecommerce.jwt.JwtOperations;
+import com.serhat.ecommerce.jwt.service.JwtOperations;
 import com.serhat.ecommerce.user.userS.mapper.UserMapper;
 import com.serhat.ecommerce.user.userS.repository.UserRepository;
-import com.serhat.ecommerce.jwt.TokenBlacklistService;
+import com.serhat.ecommerce.jwt.service.TokenBlacklistService;
 import com.serhat.ecommerce.user.userS.service.UserDetailsServiceImpl;
 import com.serhat.ecommerce.auth.password.PasswordService;
 import jakarta.servlet.http.HttpServletRequest;

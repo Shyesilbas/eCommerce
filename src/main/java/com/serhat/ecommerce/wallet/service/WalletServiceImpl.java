@@ -1,10 +1,14 @@
 package com.serhat.ecommerce.wallet.service;
 
-import com.serhat.ecommerce.dto.request.WalletRequest;
-import com.serhat.ecommerce.dto.response.*;
+import com.serhat.ecommerce.wallet.dto.WalletRequest;
+import com.serhat.ecommerce.payment.dto.TransactionResponse;
 import com.serhat.ecommerce.payment.entity.Transaction;
 import com.serhat.ecommerce.payment.mapper.TransactionMapper;
 import com.serhat.ecommerce.payment.repository.TransactionRepository;
+import com.serhat.ecommerce.wallet.dto.DepositSuccessfulResponse;
+import com.serhat.ecommerce.wallet.dto.WalletCreatedResponse;
+import com.serhat.ecommerce.wallet.dto.WalletInfoResponse;
+import com.serhat.ecommerce.wallet.dto.WalletLimitUpdateResponse;
 import com.serhat.ecommerce.wallet.repository.WalletRepository;
 import com.serhat.ecommerce.wallet.entity.Wallet;
 import com.serhat.ecommerce.wallet.mapper.WalletMapper;
@@ -70,7 +74,7 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     @Transactional
-    public DepositSuccessfulResponse depositMoney( BigDecimal amount) {
+    public DepositSuccessfulResponse depositMoney(BigDecimal amount) {
         Wallet wallet = getUserAndTheirWallet();
         walletValidation.checkIfDepositValid(wallet,amount);
         wallet.setBalance(wallet.getBalance().add(amount));

@@ -1,11 +1,11 @@
 package com.serhat.ecommerce.user.address.service;
 
 import com.serhat.ecommerce.user.address.enums.AddressType;
-import com.serhat.ecommerce.user.address.dto.AddAddressRequest;
-import com.serhat.ecommerce.user.address.dto.UpdateAddressRequest;
-import com.serhat.ecommerce.dto.response.AddAddressResponse;
-import com.serhat.ecommerce.dto.response.DeleteAddressResponse;
-import com.serhat.ecommerce.dto.response.UpdateAddressResponse;
+import com.serhat.ecommerce.user.address.dto.request.AddAddressRequest;
+import com.serhat.ecommerce.user.address.dto.request.UpdateAddressRequest;
+import com.serhat.ecommerce.user.address.dto.response.AddAddressResponse;
+import com.serhat.ecommerce.user.address.dto.response.DeleteAddressResponse;
+import com.serhat.ecommerce.user.address.dto.response.UpdateAddressResponse;
 import com.serhat.ecommerce.user.address.entity.Address;
 import com.serhat.ecommerce.user.address.mapper.AddressMapper;
 import com.serhat.ecommerce.user.address.repository.AddressRepository;

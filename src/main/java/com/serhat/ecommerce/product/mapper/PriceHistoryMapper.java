@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.product.mapper;
 
-import com.serhat.ecommerce.dto.response.PriceHistoryResponse;
+import com.serhat.ecommerce.product.dto.PriceHistoryResponse;
 import com.serhat.ecommerce.product.entity.PriceHistory;
 import org.springframework.stereotype.Component;
 

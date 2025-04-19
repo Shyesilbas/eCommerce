@@ -1,7 +1,6 @@
 package com.serhat.ecommerce.product.entity;
 
-import com.serhat.ecommerce.enums.StockAlertType;
-import com.serhat.ecommerce.product.entity.Product;
+import com.serhat.ecommerce.product.enums.StockAlertType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

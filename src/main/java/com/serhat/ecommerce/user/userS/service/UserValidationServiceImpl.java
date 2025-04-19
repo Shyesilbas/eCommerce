@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.user.userS.service;
 
-import com.serhat.ecommerce.auth.dto.RegisterRequest;
+import com.serhat.ecommerce.auth.dto.request.RegisterRequest;
 import com.serhat.ecommerce.user.userException.EmailAlreadyExistException;
 import com.serhat.ecommerce.user.userException.PhoneAlreadyExistsException;
 import com.serhat.ecommerce.user.userException.UsernameAlreadyExists;

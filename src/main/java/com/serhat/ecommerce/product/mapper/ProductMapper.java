@@ -1,11 +1,11 @@
 package com.serhat.ecommerce.product.mapper;
 
-import com.serhat.ecommerce.dto.object.BestSellerProductDTO;
-import com.serhat.ecommerce.dto.object.ProductDto;
-import com.serhat.ecommerce.dto.request.ProductRequest;
+import com.serhat.ecommerce.product.dto.BestSellerProductDTO;
+import com.serhat.ecommerce.product.dto.ProductDto;
+import com.serhat.ecommerce.product.dto.ProductRequest;
 import com.serhat.ecommerce.product.entity.Product;
-import com.serhat.ecommerce.enums.Category;
-import com.serhat.ecommerce.enums.StockStatus;
+import com.serhat.ecommerce.product.enums.Category;
+import com.serhat.ecommerce.product.enums.StockStatus;
 import org.springframework.stereotype.Component;
 
 @Component

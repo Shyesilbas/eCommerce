@@ -1,12 +1,12 @@
 package com.serhat.ecommerce.wallet.mapper;
 
-import com.serhat.ecommerce.dto.request.WalletRequest;
-import com.serhat.ecommerce.dto.response.DepositSuccessfulResponse;
-import com.serhat.ecommerce.dto.response.WalletCreatedResponse;
-import com.serhat.ecommerce.dto.response.WalletInfoResponse;
-import com.serhat.ecommerce.dto.response.WalletLimitUpdateResponse;
+import com.serhat.ecommerce.wallet.dto.WalletRequest;
+import com.serhat.ecommerce.wallet.dto.DepositSuccessfulResponse;
+import com.serhat.ecommerce.wallet.dto.WalletCreatedResponse;
+import com.serhat.ecommerce.wallet.dto.WalletInfoResponse;
+import com.serhat.ecommerce.wallet.dto.WalletLimitUpdateResponse;
 import com.serhat.ecommerce.wallet.entity.Wallet;
-import com.serhat.ecommerce.enums.TransactionType;
+import com.serhat.ecommerce.payment.enums.TransactionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

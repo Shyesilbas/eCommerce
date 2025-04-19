@@ -1,9 +1,9 @@
 package com.serhat.ecommerce.comment.controller;
 
-import com.serhat.ecommerce.dto.request.CommentRequest;
-import com.serhat.ecommerce.dto.response.AverageBrandRatingResponse;
-import com.serhat.ecommerce.dto.response.AverageRatingResponse;
-import com.serhat.ecommerce.dto.response.CommentResponse;
+import com.serhat.ecommerce.comment.dto.request.CommentRequest;
+import com.serhat.ecommerce.comment.dto.response.AverageBrandRatingResponse;
+import com.serhat.ecommerce.comment.dto.response.AverageRatingResponse;
+import com.serhat.ecommerce.comment.dto.response.CommentResponse;
 import com.serhat.ecommerce.comment.service.CommentDetailsService;
 import com.serhat.ecommerce.comment.service.CommentOperationService;
 import lombok.RequiredArgsConstructor;

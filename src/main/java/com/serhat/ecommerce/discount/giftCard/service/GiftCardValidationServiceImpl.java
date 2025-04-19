@@ -2,7 +2,7 @@ package com.serhat.ecommerce.discount.giftCard.service;
 
 import com.serhat.ecommerce.discount.giftCard.entity.GiftCard;
 import com.serhat.ecommerce.discount.giftCard.repository.GiftCardRepository;
-import com.serhat.ecommerce.enums.CouponStatus;
+import com.serhat.ecommerce.discount.enums.CouponStatus;
 import com.serhat.ecommerce.discount.discountException.GiftCardNotFoundException;
 import com.serhat.ecommerce.discount.discountException.InvalidGiftCardException;
 import com.serhat.ecommerce.discount.discountException.UsedGiftCardException;

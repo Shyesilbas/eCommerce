@@ -1,8 +1,8 @@
 package com.serhat.ecommerce.order.cancellation;
 
-import com.serhat.ecommerce.dto.response.OrderCancellationResponse;
-import com.serhat.ecommerce.order.Order;
-import com.serhat.ecommerce.order.OrderMapper;
+import com.serhat.ecommerce.order.dto.response.OrderCancellationResponse;
+import com.serhat.ecommerce.order.entity.Order;
+import com.serhat.ecommerce.order.service.OrderMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;

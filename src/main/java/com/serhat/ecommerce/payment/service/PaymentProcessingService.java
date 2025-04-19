@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.payment.service;
 
-import com.serhat.ecommerce.order.Order;
-import com.serhat.ecommerce.enums.PaymentMethod;
+import com.serhat.ecommerce.order.entity.Order;
+import com.serhat.ecommerce.payment.enums.PaymentMethod;
 import com.serhat.ecommerce.payment.entity.PaymentService;
 import com.serhat.ecommerce.payment.entity.Transaction;
 import com.serhat.ecommerce.wallet.service.WalletService;

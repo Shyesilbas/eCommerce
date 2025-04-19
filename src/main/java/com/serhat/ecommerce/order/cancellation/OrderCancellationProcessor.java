@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.order.cancellation;
 
-import com.serhat.ecommerce.order.Order;
-import com.serhat.ecommerce.order.OrderStockService;
+import com.serhat.ecommerce.order.entity.Order;
+import com.serhat.ecommerce.order.service.OrderStockService;
 import com.serhat.ecommerce.order.details.OrderDetailsService;
 import com.serhat.ecommerce.user.userS.entity.User;
 import com.serhat.ecommerce.user.userS.service.UserService;

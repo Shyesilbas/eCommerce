@@ -1,11 +1,11 @@
 package com.serhat.ecommerce.payment.mapper;
 
-import com.serhat.ecommerce.dto.response.TransactionResponse;
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.payment.dto.TransactionResponse;
+import com.serhat.ecommerce.order.entity.Order;
 import com.serhat.ecommerce.payment.entity.Transaction;
 import com.serhat.ecommerce.user.userS.entity.User;
 import com.serhat.ecommerce.wallet.entity.Wallet;
-import com.serhat.ecommerce.enums.TransactionType;
+import com.serhat.ecommerce.payment.enums.TransactionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

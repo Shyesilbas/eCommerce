@@ -1,10 +1,10 @@
 package com.serhat.ecommerce.discount.bonus.service;
 
 import com.serhat.ecommerce.discount.bonus.dto.AddBonusRequest;
-import com.serhat.ecommerce.dto.request.OrderRequest;
-import com.serhat.ecommerce.dto.response.AddBonusResponse;
-import com.serhat.ecommerce.dto.response.BonusPointInformation;
-import com.serhat.ecommerce.dto.response.BonusUsageResult;
+import com.serhat.ecommerce.order.dto.request.OrderRequest;
+import com.serhat.ecommerce.discount.dto.response.AddBonusResponse;
+import com.serhat.ecommerce.discount.dto.response.BonusPointInformation;
+import com.serhat.ecommerce.discount.dto.response.BonusUsageResult;
 import com.serhat.ecommerce.user.userS.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,10 +1,10 @@
 package com.serhat.ecommerce.notification.controller;
 
-import com.serhat.ecommerce.dto.object.NotificationDTO;
-import com.serhat.ecommerce.dto.response.NotificationAddedResponse;
+import com.serhat.ecommerce.notification.dto.NotificationDTO;
+import com.serhat.ecommerce.notification.dto.NotificationAddedResponse;
 import com.serhat.ecommerce.notification.service.NotificationService;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.NotificationTopic;
+import com.serhat.ecommerce.notification.enums.NotificationTopic;
 import com.serhat.ecommerce.user.userS.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

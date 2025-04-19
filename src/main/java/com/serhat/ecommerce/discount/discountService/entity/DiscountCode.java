@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.discount.discountService.entity;
 
-import com.serhat.ecommerce.enums.CouponStatus;
-import com.serhat.ecommerce.enums.DiscountRate;
+import com.serhat.ecommerce.discount.enums.CouponStatus;
+import com.serhat.ecommerce.discount.enums.DiscountRate;
 import com.serhat.ecommerce.user.userS.entity.User;
 import jakarta.persistence.*;
 import lombok.*;

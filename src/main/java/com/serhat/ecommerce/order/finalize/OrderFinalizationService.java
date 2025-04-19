@@ -1,10 +1,10 @@
 package com.serhat.ecommerce.order.finalize;
 
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.order.entity.Order;
 import com.serhat.ecommerce.discount.discountService.service.DiscountCodeService;
 import com.serhat.ecommerce.notification.service.NotificationService;
 import com.serhat.ecommerce.product.inventory.InventoryService;
-import com.serhat.ecommerce.order.OrderRepository;
+import com.serhat.ecommerce.order.repo.OrderRepository;
 import com.serhat.ecommerce.sCard.entity.ShoppingCard;
 import com.serhat.ecommerce.sCard.service.ShoppingCartService;
 import com.serhat.ecommerce.user.userS.entity.User;

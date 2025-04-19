@@ -1,12 +1,12 @@
 package com.serhat.ecommerce.product.controller;
 
-import com.serhat.ecommerce.dto.object.BestSellerProductDTO;
-import com.serhat.ecommerce.dto.object.ProductDto;
-import com.serhat.ecommerce.dto.request.ProductRequest;
-import com.serhat.ecommerce.dto.response.ProductPriceUpdate;
-import com.serhat.ecommerce.dto.response.ProductQuantityUpdate;
-import com.serhat.ecommerce.dto.response.ProductResponse;
-import com.serhat.ecommerce.enums.Category;
+import com.serhat.ecommerce.product.dto.BestSellerProductDTO;
+import com.serhat.ecommerce.product.dto.ProductDto;
+import com.serhat.ecommerce.product.dto.ProductRequest;
+import com.serhat.ecommerce.product.dto.ProductPriceUpdate;
+import com.serhat.ecommerce.product.dto.ProductQuantityUpdate;
+import com.serhat.ecommerce.product.dto.ProductResponse;
+import com.serhat.ecommerce.product.enums.Category;
 import com.serhat.ecommerce.product.service.ProductService;
 import com.serhat.ecommerce.product.inventory.InventoryService;
 import jakarta.servlet.http.HttpServletRequest;

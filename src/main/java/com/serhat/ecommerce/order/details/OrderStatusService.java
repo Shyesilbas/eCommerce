@@ -1,10 +1,10 @@
 package com.serhat.ecommerce.order.details;
 
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.order.entity.Order;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.OrderStatus;
+import com.serhat.ecommerce.order.enums.OrderStatus;
 import com.serhat.ecommerce.notification.service.NotificationService;
-import com.serhat.ecommerce.order.OrderRepository;
+import com.serhat.ecommerce.order.repo.OrderRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

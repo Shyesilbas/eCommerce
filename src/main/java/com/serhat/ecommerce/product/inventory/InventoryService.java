@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.product.inventory;
 
-import com.serhat.ecommerce.dto.response.ProductQuantityUpdate;
-import com.serhat.ecommerce.order.OrderItem;
+import com.serhat.ecommerce.product.dto.ProductQuantityUpdate;
+import com.serhat.ecommerce.order.entity.OrderItem;
 import com.serhat.ecommerce.product.entity.Product;
 import jakarta.servlet.http.HttpServletRequest;
 

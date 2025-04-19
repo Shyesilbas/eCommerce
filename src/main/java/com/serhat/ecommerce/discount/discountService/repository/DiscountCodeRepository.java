@@ -2,7 +2,7 @@ package com.serhat.ecommerce.discount.discountService.repository;
 
 import com.serhat.ecommerce.discount.discountService.entity.DiscountCode;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.CouponStatus;
+import com.serhat.ecommerce.discount.enums.CouponStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

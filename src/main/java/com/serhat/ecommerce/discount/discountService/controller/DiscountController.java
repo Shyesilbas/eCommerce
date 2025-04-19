@@ -2,9 +2,9 @@ package com.serhat.ecommerce.discount.discountService.controller;
 
 import com.serhat.ecommerce.discount.discountService.entity.DiscountCode;
 import com.serhat.ecommerce.discount.discountService.service.DiscountCodeService;
-import com.serhat.ecommerce.dto.response.AvailableDiscountResponse;
-import com.serhat.ecommerce.dto.response.ExpiredDiscountResponse;
-import com.serhat.ecommerce.dto.response.UsedDiscountResponse;
+import com.serhat.ecommerce.discount.dto.response.AvailableDiscountResponse;
+import com.serhat.ecommerce.discount.dto.response.ExpiredDiscountResponse;
+import com.serhat.ecommerce.discount.dto.response.UsedDiscountResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

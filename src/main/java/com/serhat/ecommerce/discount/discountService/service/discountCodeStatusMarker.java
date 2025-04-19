@@ -2,7 +2,7 @@ package com.serhat.ecommerce.discount.discountService.service;
 
 import com.serhat.ecommerce.discount.discountService.entity.DiscountCode;
 import com.serhat.ecommerce.discount.discountService.repository.DiscountCodeRepository;
-import com.serhat.ecommerce.enums.CouponStatus;
+import com.serhat.ecommerce.discount.enums.CouponStatus;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

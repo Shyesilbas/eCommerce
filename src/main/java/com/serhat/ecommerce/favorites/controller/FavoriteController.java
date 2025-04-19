@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.favorites.controller;
 
-import com.serhat.ecommerce.dto.object.FavoriteProductDto;
+import com.serhat.ecommerce.favorites.dto.FavoriteProductDto;
 import com.serhat.ecommerce.favorites.service.FavoritesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

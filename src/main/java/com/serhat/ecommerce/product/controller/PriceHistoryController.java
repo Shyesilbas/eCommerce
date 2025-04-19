@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.product.controller;
 
-import com.serhat.ecommerce.dto.response.PriceHistoryResponse;
+import com.serhat.ecommerce.product.dto.PriceHistoryResponse;
 import com.serhat.ecommerce.product.service.PriceHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

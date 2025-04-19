@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.payment.entity;
 
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.order.entity.Order;
 
 
 public abstract class PaymentService<T> {

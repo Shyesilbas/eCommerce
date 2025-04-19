@@ -2,7 +2,7 @@ package com.serhat.ecommerce.product.inventory;
 
 import com.serhat.ecommerce.product.entity.Product;
 import com.serhat.ecommerce.product.entity.StockAlert;
-import com.serhat.ecommerce.enums.StockAlertType;
+import com.serhat.ecommerce.product.enums.StockAlertType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

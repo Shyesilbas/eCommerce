@@ -1,8 +1,8 @@
 package com.serhat.ecommerce.order.discount;
 
-import com.serhat.ecommerce.dto.request.OrderRequest;
-import com.serhat.ecommerce.dto.response.DiscountCalculationResult;
-import com.serhat.ecommerce.dto.response.DiscountDetails;
+import com.serhat.ecommerce.order.dto.request.OrderRequest;
+import com.serhat.ecommerce.discount.dto.response.DiscountCalculationResult;
+import com.serhat.ecommerce.discount.dto.response.DiscountDetails;
 import com.serhat.ecommerce.discount.giftCard.entity.GiftCard;
 import com.serhat.ecommerce.user.userS.entity.User;
 import com.serhat.ecommerce.discount.discountService.service.DiscountCodeService;

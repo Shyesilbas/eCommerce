@@ -1,7 +1,7 @@
 package com.serhat.ecommerce.payment.entity;
 
-import com.serhat.ecommerce.enums.TransactionType;
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.payment.enums.TransactionType;
+import com.serhat.ecommerce.order.entity.Order;
 import com.serhat.ecommerce.user.userS.entity.User;
 import com.serhat.ecommerce.wallet.entity.Wallet;
 import jakarta.persistence.*;

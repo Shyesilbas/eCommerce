@@ -1,13 +1,13 @@
 package com.serhat.ecommerce.notification.service;
 
-import com.serhat.ecommerce.dto.object.NotificationDTO;
-import com.serhat.ecommerce.dto.response.NotificationAddedResponse;
+import com.serhat.ecommerce.notification.dto.NotificationDTO;
+import com.serhat.ecommerce.notification.dto.NotificationAddedResponse;
 import com.serhat.ecommerce.notification.entity.Notification;
 import com.serhat.ecommerce.notification.mapper.NotificationMapper;
 import com.serhat.ecommerce.notification.repository.NotificationRepository;
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.order.entity.Order;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.NotificationTopic;
+import com.serhat.ecommerce.notification.enums.NotificationTopic;
 import com.serhat.ecommerce.notification.notificatioException.NoNotificationsFoundException;
 import com.serhat.ecommerce.user.userS.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

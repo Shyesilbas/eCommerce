@@ -1,8 +1,8 @@
 package com.serhat.ecommerce.order.cancellation;
 
-import com.serhat.ecommerce.order.Order;
+import com.serhat.ecommerce.order.entity.Order;
 import com.serhat.ecommerce.user.userS.entity.User;
-import com.serhat.ecommerce.enums.OrderStatus;
+import com.serhat.ecommerce.order.enums.OrderStatus;
 import com.serhat.ecommerce.order.orderException.OrderAlreadyCanceledException;
 import com.serhat.ecommerce.order.orderException.OrderCancellationException;
 import com.serhat.ecommerce.order.orderException.WrongOrderIdException;

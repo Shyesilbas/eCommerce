@@ -1,6 +1,6 @@
 package com.serhat.ecommerce.payment.service;
 
-import com.serhat.ecommerce.enums.PaymentMethod;
+import com.serhat.ecommerce.payment.enums.PaymentMethod;
 import com.serhat.ecommerce.payment.entity.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

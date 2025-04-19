@@ -1,11 +1,11 @@
 package com.serhat.ecommerce.user.userS.mapper;
 
-import com.serhat.ecommerce.auth.dto.RegisterRequest;
+import com.serhat.ecommerce.auth.dto.request.RegisterRequest;
 import com.serhat.ecommerce.user.address.mapper.AddressMapper;
-import com.serhat.ecommerce.dto.response.AddBonusResponse;
-import com.serhat.ecommerce.dto.response.UserResponse;
+import com.serhat.ecommerce.discount.dto.response.AddBonusResponse;
+import com.serhat.ecommerce.user.userS.dto.UserResponse;
 import com.serhat.ecommerce.user.address.entity.Address;
-import com.serhat.ecommerce.enums.MembershipPlan;
+import com.serhat.ecommerce.user.enums.MembershipPlan;
 import com.serhat.ecommerce.user.userS.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;

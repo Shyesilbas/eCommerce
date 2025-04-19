@@ -1,9 +1,9 @@
 package com.serhat.ecommerce.discount.giftCard.service;
 
 import com.serhat.ecommerce.discount.giftCard.entity.GiftCard;
-import com.serhat.ecommerce.dto.object.GiftCardDto;
-import com.serhat.ecommerce.enums.CouponStatus;
-import com.serhat.ecommerce.enums.GiftAmount;
+import com.serhat.ecommerce.discount.dto.object.GiftCardDto;
+import com.serhat.ecommerce.discount.enums.CouponStatus;
+import com.serhat.ecommerce.discount.enums.GiftAmount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
